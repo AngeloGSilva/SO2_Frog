@@ -1,13 +1,6 @@
-//#define MAX_CARS 10
-//#define MAX_FROGS 10
-//#define MAX_ROWS 20
-//#define MAX_COLS 40
-//
-//
 #include <windows.h>
 #include <tchar.h>
 #include <math.h>
-
 #include <stdio.h>
 #include <fcntl.h> 
 #include <io.h>
@@ -19,7 +12,7 @@
 
 
 typedef struct {
-	HANDLE Serv_HSem,Serv_HMutex,Serv_HEvent;
+	HANDLE Serv_HSem, Serv_HMutex, Serv_HEvent;
 	int num_cars;
 	int num_frogs;
 	int car_pos[MAX_CARS][2]; //2 seria para representar o x e o y
@@ -51,14 +44,11 @@ int _tmain(int argc, TCHAR* argv[]) {
 
 	GameData data;
 
-	data.num_cars = 10;
-	data.num_frogs = 99;
-
 	for (int i = 0; i < MAX_ROWS; i++)
 	{
 		for (int j = 0; j < MAX_COLS; j++)
 		{
-			if (i == 3 && j == 5) 
+			if (i == 3 && j == 5)
 				data.map[i][j] = 'h';
 			else
 				data.map[i][j] = '-';
@@ -95,7 +85,7 @@ int _tmain(int argc, TCHAR* argv[]) {
 	}
 	while (1)
 	{
-	
+
 		for (int i = 0; i < MAX_ROWS; i++)
 		{
 			for (int j = 0; j < MAX_COLS; j++)
@@ -113,19 +103,19 @@ int _tmain(int argc, TCHAR* argv[]) {
 				}
 			}
 		}
-	WaitForSingleObject(data.Serv_HMutex, INFINITE);
+		WaitForSingleObject(data.Serv_HMutex, INFINITE);
 
-	ZeroMemory(pBuf, sizeof(GameData));
-	CopyMemory(pBuf,&data,sizeof(GameData));
+		ZeroMemory(pBuf, sizeof(GameData));
+		CopyMemory(pBuf, &data, sizeof(GameData));
 
-	//libertat o mutex
-	ReleaseMutex(data.Serv_HMutex);
+		//libertat o mutex
+		ReleaseMutex(data.Serv_HMutex);
 
-	//Criamos evento para que as threads ja consiga ler
-	SetEvent(data.Serv_HEvent);
+		//Criamos evento para que as threads ja consiga ler
+		SetEvent(data.Serv_HEvent);
 
-	Sleep(500);
-	ResetEvent(data.Serv_HEvent);
+		Sleep(500);
+		ResetEvent(data.Serv_HEvent);
 
 
 	}
