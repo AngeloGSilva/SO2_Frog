@@ -41,9 +41,6 @@
 
 
 typedef struct {
-	HANDLE sem;
-	HANDLE event;
-	HANDLE mutex;
 	int num_cars;
 	int num_frogs;
 	int car_pos[MAX_CARS][2]; //2 seria para representar o x e o y
@@ -64,21 +61,21 @@ int _tmain(int argc, TCHAR* argv[]) {
 		data.num_frogs = 0;
 		HANDLE HMapFile = CreateFileMapping(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, sizeof(GameData), TEXT("TP_GameData"));
 		//TCHAR* pbuf = OpenFileMapping(FILE_MAP_ALL_ACCESS, TRUE, TEXT("TP_GameData"));
-		TCHAR* pBuf = (TCHAR*)MapViewOfFile(HMapFile, FILE_MAP_ALL_ACCESS, 0, 0, 0);
+		GameData* pBuf = (TCHAR*)MapViewOfFile(HMapFile, FILE_MAP_ALL_ACCESS, 0, 0, 0);
 		//data.event = OpenEvent(READ_CONTROL,TRUE, TEXT("TP_Evento"));
-		data.event = CreateEvent(NULL, TRUE, FALSE, TEXT("TP_Evento"));
+		HANDLE event = CreateEvent(NULL, TRUE, FALSE, TEXT("TP_Evento"));
 		//data.mutex = OpenMutex(READ_CONTROL, TRUE, TEXT("TP_Mutex"));
-		data.mutex = CreateMutex(NULL, FALSE, TEXT("TP_Mutex"));
+		HANDLE mutex = CreateMutex(NULL, FALSE, TEXT("TP_Mutex"));
+
 		while (1)
 		{
-			WaitForSingleObject(data.event, INFINITE);
+			WaitForSingleObject(event, INFINITE);
 
-			WaitForSingleObject(data.mutex, INFINITE);
-
-			_tprintf(TEXT("Mensagem Recebida: %d %d\n"), data.num_cars,data.num_frogs);
+			WaitForSingleObject(mutex, INFINITE);
+			_tprintf(TEXT("Mensagem Recebida: %d %d\n"), pBuf->num_cars,pBuf->num_frogs);
 
 			//libertat o mutex
-			ReleaseMutex(data.mutex);
+			ReleaseMutex(mutex);
 
 			Sleep(1000);
 		}

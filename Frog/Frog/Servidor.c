@@ -19,9 +19,6 @@
 
 
 typedef struct {
-	HANDLE sem;
-	HANDLE event;
-	HANDLE mutex;
 	int num_cars;
 	int num_frogs;
 	int car_pos[MAX_CARS][2]; //2 seria para representar o x e o y
@@ -66,48 +63,49 @@ int _tmain(int argc, TCHAR* argv[]) {
 
 
 
-	TCHAR* pBuf = (TCHAR*)MapViewOfFile(HMapFile, FILE_MAP_ALL_ACCESS, 0, 0, 0);
+	GameData* pBuf = (TCHAR*)MapViewOfFile(HMapFile, FILE_MAP_ALL_ACCESS, 0, 0, 0);
 	if (pBuf == NULL)
 	{
 		_tprintf(TEXT("ERRO MapViewOfFile\n"));
 		return 0;
 	}
 
-	dados.event = CreateEvent(NULL, TRUE, FALSE, TEXT("TP_Evento"));
-	if (dados.event == NULL)
+	HANDLE event = CreateEvent(NULL, TRUE, FALSE, TEXT("TP_Evento"));
+	if (event == NULL)
 	{
 		_tprintf(TEXT("ERRO CreateEvent\n"));
 		return 0;
 	}
 
 	//criar mutex
-	dados.mutex = CreateMutex(NULL, FALSE, TEXT("TP_Mutex"));
-	if (dados.mutex == NULL)
+	HANDLE mutex = CreateMutex(NULL, FALSE, TEXT("TP_Mutex"));
+	if (mutex == NULL)
 	{
 		_tprintf(TEXT("ERRO CreateMutex\n"));
 		return 0;
 	}
+	while (1)
+	{
 	
 	_tprintf(TEXT("Enter the number of cars: "));
 	_tscanf_s(TEXT("%d"), &dados.num_cars);
 	_tprintf(TEXT("Enter the number of frogs: "));
 	_tscanf_s(TEXT("%d"), &dados.num_frogs);
 
-	WaitForSingleObject(dados.mutex, INFINITE);
+	WaitForSingleObject(mutex, INFINITE);
 
+	ZeroMemory(pBuf, sizeof(GameData));
 	CopyMemory(pBuf,&dados,sizeof(GameData));
 
 	//libertat o mutex
-	ReleaseMutex(dados.mutex);
+	ReleaseMutex(mutex);
 
 	//Criamos evento para que as threads ja consiga ler
-	SetEvent(dados.event);
+	SetEvent(event);
 
 	//Sleep(500);
-	ResetEvent(dados.event);
+	ResetEvent(event);
 
-	while (1)
-	{
 
 	}
 
