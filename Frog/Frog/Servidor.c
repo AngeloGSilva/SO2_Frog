@@ -19,6 +19,7 @@
 
 
 typedef struct {
+	HANDLE Serv_HSem,Serv_HMutex,Serv_HEvent;
 	int num_cars;
 	int num_frogs;
 	int car_pos[MAX_CARS][2]; //2 seria para representar o x e o y
@@ -48,10 +49,18 @@ int _tmain(int argc, TCHAR* argv[]) {
 	WaitForSingleObject(hSem, INFINITE);
 	_tprintf(TEXT("Got in!\n"));
 
-	GameData dados;
+	GameData data;
 
-	dados.num_cars = 10;
-	dados.num_frogs = 99;
+	data.num_cars = 10;
+	data.num_frogs = 99;
+
+	for (int i = 0; i < MAX_ROWS; i++)
+	{
+		for (int j = 0; j < MAX_COLS; i++)
+		{
+			data.map[i][j] = '-';
+		}
+	}
 
 	HANDLE HMapFile = CreateFileMapping(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, sizeof(GameData), TEXT("TP_GameData"));
 	if (HMapFile == NULL)
@@ -61,8 +70,6 @@ int _tmain(int argc, TCHAR* argv[]) {
 	}
 
 
-
-
 	GameData* pBuf = (TCHAR*)MapViewOfFile(HMapFile, FILE_MAP_ALL_ACCESS, 0, 0, 0);
 	if (pBuf == NULL)
 	{
@@ -70,16 +77,16 @@ int _tmain(int argc, TCHAR* argv[]) {
 		return 0;
 	}
 
-	HANDLE event = CreateEvent(NULL, TRUE, FALSE, TEXT("TP_Evento"));
-	if (event == NULL)
+	data.Serv_HEvent = CreateEvent(NULL, TRUE, FALSE, TEXT("TP_Evento"));
+	if (data.Serv_HEvent == NULL)
 	{
 		_tprintf(TEXT("ERRO CreateEvent\n"));
 		return 0;
 	}
 
 	//criar mutex
-	HANDLE mutex = CreateMutex(NULL, FALSE, TEXT("TP_Mutex"));
-	if (mutex == NULL)
+	data.Serv_HMutex = CreateMutex(NULL, FALSE, TEXT("TP_Mutex"));
+	if (data.Serv_HMutex == NULL)
 	{
 		_tprintf(TEXT("ERRO CreateMutex\n"));
 		return 0;
@@ -88,23 +95,23 @@ int _tmain(int argc, TCHAR* argv[]) {
 	{
 	
 	_tprintf(TEXT("Enter the number of cars: "));
-	_tscanf_s(TEXT("%d"), &dados.num_cars);
+	_tscanf_s(TEXT("%d"), &data.num_cars);
 	_tprintf(TEXT("Enter the number of frogs: "));
-	_tscanf_s(TEXT("%d"), &dados.num_frogs);
+	_tscanf_s(TEXT("%d"), &data.num_frogs);
 
-	WaitForSingleObject(mutex, INFINITE);
+	WaitForSingleObject(data.Serv_HMutex, INFINITE);
 
 	ZeroMemory(pBuf, sizeof(GameData));
-	CopyMemory(pBuf,&dados,sizeof(GameData));
+	CopyMemory(pBuf,&data,sizeof(GameData));
 
 	//libertat o mutex
-	ReleaseMutex(mutex);
+	ReleaseMutex(data.Serv_HMutex);
 
 	//Criamos evento para que as threads ja consiga ler
-	SetEvent(event);
+	SetEvent(data.Serv_HEvent);
 
-	//Sleep(500);
-	ResetEvent(event);
+	Sleep(500);
+	ResetEvent(data.Serv_HEvent);
 
 
 	}

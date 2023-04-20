@@ -41,6 +41,7 @@
 
 
 typedef struct {
+	HANDLE Serv_HSem, Serv_HMutex, Serv_HEvent;
 	int num_cars;
 	int num_frogs;
 	int car_pos[MAX_CARS][2]; //2 seria para representar o x e o y
@@ -63,19 +64,27 @@ int _tmain(int argc, TCHAR* argv[]) {
 		//TCHAR* pbuf = OpenFileMapping(FILE_MAP_ALL_ACCESS, TRUE, TEXT("TP_GameData"));
 		GameData* pBuf = (TCHAR*)MapViewOfFile(HMapFile, FILE_MAP_ALL_ACCESS, 0, 0, 0);
 		//data.event = OpenEvent(READ_CONTROL,TRUE, TEXT("TP_Evento"));
-		HANDLE event = CreateEvent(NULL, TRUE, FALSE, TEXT("TP_Evento"));
+		data.Serv_HEvent = CreateEvent(NULL, TRUE, FALSE, TEXT("TP_Evento"));
 		//data.mutex = OpenMutex(READ_CONTROL, TRUE, TEXT("TP_Mutex"));
-		HANDLE mutex = CreateMutex(NULL, FALSE, TEXT("TP_Mutex"));
+		data.Serv_HMutex = CreateMutex(NULL, FALSE, TEXT("TP_Mutex"));
 
 		while (1)
 		{
-			WaitForSingleObject(event, INFINITE);
+			WaitForSingleObject(data.Serv_HEvent, INFINITE);
 
-			WaitForSingleObject(mutex, INFINITE);
-			_tprintf(TEXT("Mensagem Recebida: %d %d\n"), pBuf->num_cars,pBuf->num_frogs);
+			WaitForSingleObject(data.Serv_HMutex, INFINITE);
+			//_tprintf(TEXT("Mensagem Recebida: %d %d\n"), pBuf->num_cars,pBuf->num_frogs);
+			for (int i = 0; i < MAX_ROWS; i++)
+			{
+				for (int j = 0; j < MAX_COLS; i++)
+				{
+					_tprintf(_T("%s"), pBuf->map[i][j]);
+				}
+				_tprintf("\n");
+			}
 
 			//libertat o mutex
-			ReleaseMutex(mutex);
+			ReleaseMutex(data.Serv_HMutex);
 
 			Sleep(1000);
 		}
