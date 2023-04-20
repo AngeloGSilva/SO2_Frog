@@ -49,9 +49,9 @@ int _tmain(int argc, TCHAR* argv[]) {
 		for (int j = 0; j < MAX_COLS; j++)
 		{
 			if (i == 3 && j == 5)
-				data.map[i][j] = 'h';
+				data.map[i][j] = 'H';
 			else
-				data.map[i][j] = '-';
+				data.map[i][j] = '_';
 		}
 	}
 
@@ -90,15 +90,15 @@ int _tmain(int argc, TCHAR* argv[]) {
 		{
 			for (int j = 0; j < MAX_COLS; j++)
 			{
-				if (data.map[i][j] == 'h' && j + 1 != MAX_COLS) {
+				if (data.map[i][j] == 'H' && j + 1 != MAX_COLS) {
 					data.map[i][j] = '-';
-					data.map[i][j + 1] = 'h';
+					data.map[i][j + 1] = 'H';
 					break;
 				}
-				else if (data.map[i][j] == 'h' && j + 1 == MAX_COLS)
+				else if (data.map[i][j] == 'H' && j + 1 == MAX_COLS)
 				{
 					data.map[i][j] = '-';
-					data.map[i][0] = 'h';
+					data.map[i][0] = 'H';
 					break;
 				}
 			}
