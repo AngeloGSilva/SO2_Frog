@@ -14,8 +14,8 @@
 
 #define MAX_CARS 10
 #define MAX_FROGS 10
-#define MAX_ROWS 20
-#define MAX_COLS 40
+#define MAX_ROWS 10
+#define MAX_COLS 20
 
 
 typedef struct {
@@ -56,9 +56,12 @@ int _tmain(int argc, TCHAR* argv[]) {
 
 	for (int i = 0; i < MAX_ROWS; i++)
 	{
-		for (int j = 0; j < MAX_COLS; i++)
+		for (int j = 0; j < MAX_COLS; j++)
 		{
-			data.map[i][j] = '-';
+			if (i == 3 && j == 5) 
+				data.map[i][j] = 'h';
+			else
+				data.map[i][j] = '-';
 		}
 	}
 
@@ -68,7 +71,6 @@ int _tmain(int argc, TCHAR* argv[]) {
 		_tprintf(TEXT("ERRO CreateFileMapping\n"));
 		return 0;
 	}
-
 
 	GameData* pBuf = (TCHAR*)MapViewOfFile(HMapFile, FILE_MAP_ALL_ACCESS, 0, 0, 0);
 	if (pBuf == NULL)
@@ -94,11 +96,23 @@ int _tmain(int argc, TCHAR* argv[]) {
 	while (1)
 	{
 	
-	_tprintf(TEXT("Enter the number of cars: "));
-	_tscanf_s(TEXT("%d"), &data.num_cars);
-	_tprintf(TEXT("Enter the number of frogs: "));
-	_tscanf_s(TEXT("%d"), &data.num_frogs);
-
+		for (int i = 0; i < MAX_ROWS; i++)
+		{
+			for (int j = 0; j < MAX_COLS; j++)
+			{
+				if (data.map[i][j] == 'h' && j + 1 != MAX_COLS) {
+					data.map[i][j] = '-';
+					data.map[i][j + 1] = 'h';
+					break;
+				}
+				else if (data.map[i][j] == 'h' && j + 1 == MAX_COLS)
+				{
+					data.map[i][j] = '-';
+					data.map[i][0] = 'h';
+					break;
+				}
+			}
+		}
 	WaitForSingleObject(data.Serv_HMutex, INFINITE);
 
 	ZeroMemory(pBuf, sizeof(GameData));

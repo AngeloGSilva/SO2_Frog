@@ -36,8 +36,8 @@
 
 #define MAX_CARS 10
 #define MAX_FROGS 10
-#define MAX_ROWS 20
-#define MAX_COLS 40
+#define MAX_ROWS 10
+#define MAX_COLS 20
 
 
 typedef struct {
@@ -73,12 +73,16 @@ int _tmain(int argc, TCHAR* argv[]) {
 			WaitForSingleObject(data.Serv_HEvent, INFINITE);
 
 			WaitForSingleObject(data.Serv_HMutex, INFINITE);
+			_tprintf("\n");
+			_tprintf("\n");
+			_tprintf("\n");
+
 			//_tprintf(TEXT("Mensagem Recebida: %d %d\n"), pBuf->num_cars,pBuf->num_frogs);
 			for (int i = 0; i < MAX_ROWS; i++)
 			{
-				for (int j = 0; j < MAX_COLS; i++)
+				for (int j = 0; j < MAX_COLS; j++)
 				{
-					_tprintf(_T("%s"), pBuf->map[i][j]);
+					_tprintf(TEXT("%c"), pBuf->map[i][j]);
 				}
 				_tprintf("\n");
 			}
