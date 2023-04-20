@@ -21,8 +21,8 @@
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
-    <ProjectGuid>{733bc1ab-7bb2-4b5a-b3b7-f0c79bba9850}</ProjectGuid>
-    <RootNamespace>Frog</RootNamespace>
+    <ProjectGuid>{2e1fb0da-b6d6-4116-ad67-0f6401cf5c33}</ProjectGuid>
+    <RootNamespace>Operador</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
@@ -127,7 +127,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="Servidor.c" />
+    <ClCompile Include="..\Frog\Operador.c" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
