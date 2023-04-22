@@ -4,11 +4,20 @@
 #include <stdio.h>
 #include <fcntl.h> 
 #include <io.h>
+#include "Utils.h"
 
 int RegistryRoads() {
 	HKEY key;
 	DWORD result; //o que aconteceu com a chave
-	TCHAR par_valor[100] = TEXT("10");
+	TCHAR valueRoad[TAM];
+	TCHAR valueSpeed[TAM];
+
+	_tprintf(TEXT("Numero de Estradas:"));
+	_tscanf_s(TEXT("%s"), valueRoad, TAM);
+
+	_tprintf(TEXT("Velocidade dos veiculos:"));
+	_tscanf_s(TEXT("%s"), valueSpeed, TAM);
+
 	/*Criar ou abrir a chave dir no Registry*/
 	if (RegCreateKeyEx(
 		HKEY_CURRENT_USER,
@@ -30,14 +39,14 @@ int RegistryRoads() {
 	else
 		_tprintf(TEXT("A chave foi aberta: %s\n"), _T("SO2_Project"));
 
-	DWORD tamanho = sizeof(par_valor);
+	DWORD sizeRoad = sizeof(valueRoad);
 	if (RegQueryValueEx(
 		key,
 		_T("Roads"),
-		0,							//DWORD      Reserved,
+		0,							//DWORD  Reserved,
 		NULL,
-		(LPBYTE)&par_valor,
-		&tamanho
+		(LPBYTE)&valueRoad,
+		&sizeRoad
 	) != ERROR_SUCCESS) {
 		_tprintf(TEXT("Roads nao definido no registry vai ser defenido a defenir com valores fornecidos!\n"));
 		if (RegSetValueEx(
@@ -45,13 +54,38 @@ int RegistryRoads() {
 			_T("Roads"),					//LPCSTR     lpValueName,
 			0,							//DWORD      Reserved,
 			REG_SZ,						//DWORD      dwType -> tipo do atributo,
-			(LPBYTE)&par_valor,					//const BYTE * lpData -> que valor queremos lá por
-			sizeof(TCHAR) * (_tcslen(par_valor) + 1)			//DWORD      cbData -> tamanho do valor + 1 para terminar a string
+			(LPBYTE)&valueRoad,					//const BYTE * lpData -> que valor queremos lá por
+			sizeof(TCHAR) * (_tcslen(valueRoad) + 1)			//DWORD      cbData -> tamanho do valor + 1 para terminar a string
 		) != ERROR_SUCCESS)
-			_tprintf(stderr, TEXT("[ERRO] Não foi possível adicionar o atributo %s!\n"), par_valor);
+			_tprintf(stderr, TEXT("[ERRO] Não foi possível adicionar o atributo %s!\n"), valueRoad);
 		else
-			_tprintf(stderr, TEXT("Foi adicionado o atributo %s!\n"), par_valor);
+			_tprintf(stderr, TEXT("Foi adicionado o atributo %s!\n"), valueRoad);
 	}
 	else
 		_tprintf(TEXT("Roads esta definido no registry!\n"));
+
+	DWORD sizeSpeed = sizeof(sizeSpeed);
+	if (RegQueryValueEx(
+		key,
+		_T("Speed"),
+		0,							//DWORD  Reserved,
+		NULL,
+		(LPBYTE)&sizeSpeed,
+		&sizeSpeed
+	) != ERROR_SUCCESS) {
+		_tprintf(TEXT("Speed nao definido no registry vai ser defenido a defenir com valores fornecidos!\n"));
+		if (RegSetValueEx(
+			key,						//HKEY   hKey
+			_T("Speed"),					//LPCSTR     lpValueName,
+			0,							//DWORD      Reserved,
+			REG_SZ,						//DWORD      dwType -> tipo do atributo,
+			(LPBYTE)&valueSpeed,					//const BYTE * lpData -> que valor queremos lá por
+			sizeof(TCHAR) * (_tcslen(valueSpeed) + 1)			//DWORD      cbData -> tamanho do valor + 1 para terminar a string
+		) != ERROR_SUCCESS)
+			_tprintf(stderr, TEXT("[ERRO] Não foi possível adicionar o atributo %s!\n"), valueSpeed);
+		else
+			_tprintf(stderr, TEXT("Foi adicionado o atributo %s!\n"), valueSpeed);
+	}
+	else
+		_tprintf(TEXT("Speed esta definido no registry!\n"));
 }

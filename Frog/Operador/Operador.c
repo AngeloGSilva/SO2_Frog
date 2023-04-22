@@ -8,34 +8,13 @@
 #include "Struct.h"
 #include "SharedMemory.h"
 
-#define TAM_BUFFER 10
-
-//buffer circular
-typedef struct {
-	int id;
-	int val;
-}CelulaBuffer;
-
-//Memoria Partilhada para o Bffer circular
-typedef struct {
-	int nProdutores;
-	int nConsumidores;
-	int posEscrita;
-	int posLeitura;
-	CelulaBuffer buffer[TAM_BUFFER]; //Buffer circular em si
-}BufferCircular;
-
-//estrura para guardar mutex/sem
-
-
-
 int _tmain(int argc, TCHAR* argv[]) {
 
 #ifdef UNICODE
 	_setmode(_fileno(stdin), _O_WTEXT);
 	_setmode(_fileno(stdout), _O_WTEXT);
 #endif 
-	
+
 	GameData data;
 
 	HANDLE HMapFile = CreateFileMapping(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, sizeof(GameData), TEXT("TP_GameData"));

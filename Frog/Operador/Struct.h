@@ -11,3 +11,18 @@ typedef struct {
 	int frog_pos[MAX_FROGS][2]; //2 seria para representar o x e o y
 	TCHAR map[MAX_ROWS][MAX_COLS];
 }GameData;
+
+//buffer circular
+typedef struct {
+	int id;
+	int val;
+}CelulaBuffer;
+
+//Memoria Partilhada para o Bffer circular
+typedef struct {
+	int nProdutores;
+	int nConsumidores;
+	int posEscrita;
+	int posLeitura;
+	CelulaBuffer buffer[TAM_BUFFER]; //Buffer circular em si
+}BufferCircular;
