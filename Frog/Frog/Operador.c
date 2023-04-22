@@ -4,6 +4,8 @@
 #include <stdio.h>
 #include <fcntl.h> 
 #include <io.h>
+#include "Utils.h"
+#include "Struct.h"
 
 #define MAX_CARS 10
 #define MAX_FROGS 10
