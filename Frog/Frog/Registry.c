@@ -4,11 +4,12 @@
 #include <stdio.h>
 #include <fcntl.h> 
 #include <io.h>
+#include "Registry.h"
 #include "Utils.h"
 
 int RegistryRoads() {
-	HKEY key;
-	DWORD result; //o que aconteceu com a chave
+	HKEY registryKey;
+	DWORD keyResult; //o que aconteceu com a chave
 	TCHAR valueRoad[TAM];
 	TCHAR valueSpeed[TAM];
 
@@ -21,28 +22,28 @@ int RegistryRoads() {
 	/*Criar ou abrir a chave dir no Registry*/
 	if (RegCreateKeyEx(
 		HKEY_CURRENT_USER,
-		_T("SO2_Project"),
+		KEY_PATH,
 		0,
 		NULL,
 		REG_OPTION_NON_VOLATILE,
 		KEY_ALL_ACCESS,
 		NULL,
-		&key,
-		&result
+		&registryKey,
+		&keyResult
 	) != ERROR_SUCCESS) {
-		_tprintf(TEXT("Chave nao foi nem criada nem aberta! ERRO!\n"));
+		_tprintf(TEXT("[ERRO] Chave nao foi nem criada nem aberta!\n"));
 		return -1;
 	}
 
-	if (result == REG_CREATED_NEW_KEY)
-		_tprintf(TEXT("A chave foi criada: %s\n"), _T("SO2_Project"));
+	if (keyResult == REG_CREATED_NEW_KEY)
+		_tprintf(TEXT("A chave foi criada: %s\n"), KEY_PATH);
 	else
-		_tprintf(TEXT("A chave foi aberta: %s\n"), _T("SO2_Project"));
+		_tprintf(TEXT("A chave foi aberta: %s\n"), KEY_PATH);
 
 	DWORD sizeRoad = sizeof(valueRoad);
 	if (RegQueryValueEx(
-		key,
-		_T("Roads"),
+		registryKey,
+		KEY_ROADS_VALUE,
 		0,							//DWORD  Reserved,
 		NULL,
 		(LPBYTE)&valueRoad,
@@ -50,8 +51,8 @@ int RegistryRoads() {
 	) != ERROR_SUCCESS) {
 		_tprintf(TEXT("Roads nao definido no registry vai ser defenido a defenir com valores fornecidos!\n"));
 		if (RegSetValueEx(
-			key,						//HKEY   hKey
-			_T("Roads"),					//LPCSTR     lpValueName,
+			registryKey,						//HKEY   hKey
+			KEY_ROADS_VALUE,					//LPCSTR     lpValueName,
 			0,							//DWORD      Reserved,
 			REG_SZ,						//DWORD      dwType -> tipo do atributo,
 			(LPBYTE)&valueRoad,					//const BYTE * lpData -> que valor queremos lá por
@@ -66,8 +67,8 @@ int RegistryRoads() {
 
 	DWORD sizeSpeed = sizeof(sizeSpeed);
 	if (RegQueryValueEx(
-		key,
-		_T("Speed"),
+		registryKey,
+		KEY_SPEED_VALUE,
 		0,							//DWORD  Reserved,
 		NULL,
 		(LPBYTE)&sizeSpeed,
@@ -75,8 +76,8 @@ int RegistryRoads() {
 	) != ERROR_SUCCESS) {
 		_tprintf(TEXT("Speed nao definido no registry vai ser defenido a defenir com valores fornecidos!\n"));
 		if (RegSetValueEx(
-			key,						//HKEY   hKey
-			_T("Speed"),					//LPCSTR     lpValueName,
+			registryKey,						//HKEY   hKey
+			KEY_SPEED_VALUE,			//LPCSTR     lpValueName,
 			0,							//DWORD      Reserved,
 			REG_SZ,						//DWORD      dwType -> tipo do atributo,
 			(LPBYTE)&valueSpeed,					//const BYTE * lpData -> que valor queremos lá por
