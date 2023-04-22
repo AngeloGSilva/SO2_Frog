@@ -11,10 +11,7 @@ int _tmain(int argc, TCHAR* argv[]) {
 #ifdef UNICODE
 	_setmode(_fileno(stdin), _O_WTEXT);
 	_setmode(_fileno(stdout), _O_WTEXT);
-#endif
-	TCHAR BlockElement = 95;
-	TCHAR CarElement = 72;
-
+#endif 
 	HANDLE hSem = CreateSemaphore(NULL, 1, 1, TEXT("TP_SEM"));
 	if (hSem == NULL)
 	{
@@ -36,9 +33,9 @@ int _tmain(int argc, TCHAR* argv[]) {
 		for (int j = 0; j < MAX_COLS; j++)
 		{
 			if (i == 3 && j == 5)
-				data.map[i][j] = CarElement;
+				data.map[i][j] = 'H';
 			else
-				data.map[i][j] = BlockElement;
+				data.map[i][j] = '_';
 		}
 	}
 
@@ -72,20 +69,24 @@ int _tmain(int argc, TCHAR* argv[]) {
 	}
 	while (1)
 	{
+
 		for (int i = 0; i < MAX_ROWS; i++)
 		{
-			int next_col = 0;
 			for (int j = 0; j < MAX_COLS; j++)
 			{
-				if (data.map[i][j] == CarElement) {
-					data.map[i][j] = BlockElement;
-					next_col = (j + 1) % MAX_COLS;
-					data.map[i][next_col] = CarElement;
+				if (data.map[i][j] == 'H' && j + 1 != MAX_COLS) {
+					data.map[i][j] = '_';
+					data.map[i][j + 1] = 'H';
+					break;
+				}
+				else if (data.map[i][j] == 'H' && j + 1 == MAX_COLS)
+				{
+					data.map[i][j] = '_';
+					data.map[i][0] = 'H';
 					break;
 				}
 			}
 		}
-		Sleep(1000);
 		WaitForSingleObject(data.Serv_HMutex, INFINITE);
 
 		ZeroMemory(pBuf, sizeof(GameData));
