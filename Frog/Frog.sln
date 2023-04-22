@@ -7,6 +7,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Frog", "Frog\Frog.vcxproj",
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Operador", "Operador\Operador.vcxproj", "{2E1FB0DA-B6D6-4116-AD67-0F6401CF5C33}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SharedMemory", "SharedMemory\SharedMemory.vcxproj", "{1709B93D-983F-462B-87DC-9766E76EA650}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -31,6 +33,14 @@ Global
 		{2E1FB0DA-B6D6-4116-AD67-0F6401CF5C33}.Release|x64.Build.0 = Release|x64
 		{2E1FB0DA-B6D6-4116-AD67-0F6401CF5C33}.Release|x86.ActiveCfg = Release|Win32
 		{2E1FB0DA-B6D6-4116-AD67-0F6401CF5C33}.Release|x86.Build.0 = Release|Win32
+		{1709B93D-983F-462B-87DC-9766E76EA650}.Debug|x64.ActiveCfg = Debug|x64
+		{1709B93D-983F-462B-87DC-9766E76EA650}.Debug|x64.Build.0 = Debug|x64
+		{1709B93D-983F-462B-87DC-9766E76EA650}.Debug|x86.ActiveCfg = Debug|Win32
+		{1709B93D-983F-462B-87DC-9766E76EA650}.Debug|x86.Build.0 = Debug|Win32
+		{1709B93D-983F-462B-87DC-9766E76EA650}.Release|x64.ActiveCfg = Release|x64
+		{1709B93D-983F-462B-87DC-9766E76EA650}.Release|x64.Build.0 = Release|x64
+		{1709B93D-983F-462B-87DC-9766E76EA650}.Release|x86.ActiveCfg = Release|Win32
+		{1709B93D-983F-462B-87DC-9766E76EA650}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
