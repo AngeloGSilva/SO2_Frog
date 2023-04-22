@@ -21,10 +21,10 @@ int _tmain(int argc, TCHAR* argv[]) {
 	TCHAR CarElement = 72;
 
 	//criar Semaf
-	HANDLE hSem = CreateSemaphore(NULL, 1, 1, TEXT("TP_SEM"));
+	HANDLE hSem = CreateSemaphore(NULL, 1, 1, SEMAPHORE_UNIQUE_SERVER);
 	if (hSem == NULL)
 	{
-		printf("CreateSemaphore error: %d\n", GetLastError());
+		printf("[ERRO]CreateSemaphore: %d\n", GetLastError());
 		return 1;
 	}
 	// matriz de handles das threads
@@ -48,33 +48,33 @@ int _tmain(int argc, TCHAR* argv[]) {
 		}
 	}
 
-	HANDLE HMapFile = CreateFileMapping(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, sizeof(GameData), TEXT("TP_GameData"));
+	HANDLE HMapFile = CreateFileMapping(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, sizeof(GameData), FILE_MAPPING_GAME_DATA);
 	if (HMapFile == NULL)
 	{
-		_tprintf(TEXT("ERRO CreateFileMapping\n"));
+		_tprintf(TEXT("[ERRO]CreateFileMapping\n"));
 		return 0;
 	}
 
-	GameData* pBuf = (TCHAR*)MapViewOfFile(HMapFile, FILE_MAP_ALL_ACCESS, 0, 0, 0);
+	pGameData pBuf = (TCHAR*)MapViewOfFile(HMapFile, FILE_MAP_ALL_ACCESS, 0, 0, 0);
 	if (pBuf == NULL)
 	{
-		_tprintf(TEXT("ERRO MapViewOfFile\n"));
+		_tprintf(TEXT("[ERRO]MapViewOfFile\n"));
 		return 0;
 	}
 
 	//criar Event
-	data.Serv_HEvent = CreateEvent(NULL, TRUE, FALSE, TEXT("TP_Evento"));
+	data.Serv_HEvent = CreateEvent(NULL, TRUE, FALSE, SHARED_MEMORIE_EVENT);
 	if (data.Serv_HEvent == NULL)
 	{
-		_tprintf(TEXT("ERRO CreateEvent\n"));
+		_tprintf(TEXT("[ERRO]CreateEvent\n"));
 		return 0;
 	}
 
 	//criar mutex
-	data.Serv_HMutex = CreateMutex(NULL, FALSE, TEXT("TP_Mutex"));
+	data.Serv_HMutex = CreateMutex(NULL, FALSE, SHARED_MEMORIE_MUTEX);
 	if (data.Serv_HMutex == NULL)
 	{
-		_tprintf(TEXT("ERRO CreateMutex\n"));
+		_tprintf(TEXT("[ERRO]CreateMutex\n"));
 		return 0;
 	}
 	while (1)
