@@ -34,6 +34,8 @@ int _tmain(int argc, TCHAR* argv[]) {
 		_tprintf("\n");
 		_tprintf("\n");
 
+		system("cls");//nao sei ate q ponto é bom usar isto
+
 		//_tprintf(TEXT("Mensagem Recebida: %d %d\n"), pBuf->num_cars,pBuf->num_frogs);
 		for (int i = 0; i < MAX_ROWS; i++)
 		{
