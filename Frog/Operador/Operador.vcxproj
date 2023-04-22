@@ -21,6 +21,10 @@
   <ItemGroup>
     <ClCompile Include="Operador.c" />
   </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Struct.h" />
+    <ClInclude Include="Utils.h" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>

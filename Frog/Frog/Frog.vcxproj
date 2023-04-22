@@ -24,6 +24,7 @@
     <ProjectGuid>{733bc1ab-7bb2-4b5a-b3b7-f0c79bba9850}</ProjectGuid>
     <RootNamespace>Frog</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+    <ProjectName>Servidor</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">

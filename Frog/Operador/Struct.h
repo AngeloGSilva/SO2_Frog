@@ -24,5 +24,5 @@ typedef struct {
 	int nConsumidores;
 	int posEscrita;
 	int posLeitura;
-	CelulaBuffer buffer[TAM_BUFFER]; //Buffer circular em si
+	CelulaBuffer buffer[TAM_BUFFER_CIRCULAR]; //Buffer circular em si
 }BufferCircular;
