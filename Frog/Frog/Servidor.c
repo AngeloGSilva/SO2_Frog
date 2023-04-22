@@ -20,6 +20,7 @@ int _tmain(int argc, TCHAR* argv[]) {
 	TCHAR BlockElement = 95;
 	TCHAR CarElement = 72;
 
+	//criar Semaf
 	HANDLE hSem = CreateSemaphore(NULL, 1, 1, TEXT("TP_SEM"));
 	if (hSem == NULL)
 	{
@@ -61,6 +62,7 @@ int _tmain(int argc, TCHAR* argv[]) {
 		return 0;
 	}
 
+	//criar Event
 	data.Serv_HEvent = CreateEvent(NULL, TRUE, FALSE, TEXT("TP_Evento"));
 	if (data.Serv_HEvent == NULL)
 	{
@@ -107,7 +109,6 @@ int _tmain(int argc, TCHAR* argv[]) {
 
 
 	}
-
 
 	//ReleaseSemaphore(hSem, 1, NULL);
 	//UnmapViewOfFile(pBuf);
