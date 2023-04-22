@@ -6,6 +6,7 @@
 #include <io.h>
 #include "Utils.h"
 #include "Struct.h"
+#include "SharedMemory.h"
 
 
 int _tmain(int argc, TCHAR* argv[]) {
@@ -14,6 +15,7 @@ int _tmain(int argc, TCHAR* argv[]) {
 	_setmode(_fileno(stdin), _O_WTEXT);
 	_setmode(_fileno(stdout), _O_WTEXT);
 #endif
+	
 	TCHAR BlockElement = 95;
 	TCHAR CarElement = 72;
 

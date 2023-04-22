@@ -6,9 +6,9 @@
 #include <io.h>
 #include "Utils.h"
 #include "Struct.h"
+#include "SharedMemory.h"
 
 #define TAM_BUFFER 10
-
 
 //buffer circular
 typedef struct {
@@ -35,6 +35,7 @@ int _tmain(int argc, TCHAR* argv[]) {
 	_setmode(_fileno(stdin), _O_WTEXT);
 	_setmode(_fileno(stdout), _O_WTEXT);
 #endif 
+	
 	GameData data;
 
 	HANDLE HMapFile = CreateFileMapping(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, sizeof(GameData), TEXT("TP_GameData"));
