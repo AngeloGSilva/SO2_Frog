@@ -9,6 +9,7 @@
 #define MAX_FROGS 10
 #define MAX_ROWS 10
 #define MAX_COLS 20
+#define TAM_BUFFER 10
 
 
 typedef struct {
@@ -19,6 +20,24 @@ typedef struct {
 	int frog_pos[MAX_FROGS][2]; //2 seria para representar o x e o y
 	TCHAR map[MAX_ROWS][MAX_COLS];
 }GameData;
+
+//buffer circular
+typedef struct {
+	int id;
+	int val;
+}CelulaBuffer;
+
+//Memoria Partilhada para o Bffer circular
+typedef struct {
+	int nProdutores;
+	int nConsumidores;
+	int posEscrita;
+	int posLeitura;
+	CelulaBuffer buffer[TAM_BUFFER]; //Buffer circular em si
+}BufferCircular;
+
+//estrura para guardar mutex/sem
+
 
 
 int _tmain(int argc, TCHAR* argv[]) {

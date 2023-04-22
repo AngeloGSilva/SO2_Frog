@@ -91,13 +91,13 @@ int _tmain(int argc, TCHAR* argv[]) {
 			for (int j = 0; j < MAX_COLS; j++)
 			{
 				if (data.map[i][j] == 'H' && j + 1 != MAX_COLS) {
-					data.map[i][j] = '-';
+					data.map[i][j] = '_';
 					data.map[i][j + 1] = 'H';
 					break;
 				}
 				else if (data.map[i][j] == 'H' && j + 1 == MAX_COLS)
 				{
-					data.map[i][j] = '-';
+					data.map[i][j] = '_';
 					data.map[i][0] = 'H';
 					break;
 				}
