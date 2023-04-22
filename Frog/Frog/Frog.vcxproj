@@ -128,9 +128,11 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Registry.c" />
     <ClCompile Include="Servidor.c" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Registry.h" />
     <ClInclude Include="Struct.h" />
     <ClInclude Include="Utils.h" />
   </ItemGroup>
