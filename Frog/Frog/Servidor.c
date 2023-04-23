@@ -16,7 +16,10 @@ int _tmain(int argc, TCHAR* argv[]) {
 	_setmode(_fileno(stdin), _O_WTEXT);
 	_setmode(_fileno(stdout), _O_WTEXT);
 #endif
-	RegistryKeyValue();
+	GameData data;
+
+	RegistryKeyValue(&data);
+	printf("car: %d,speed: %d\n", data.num_cars, data.carSpeed);
 	//TCHAR BlockElement = 95;
 	//TCHAR CarElement = 72;
 
@@ -35,7 +38,6 @@ int _tmain(int argc, TCHAR* argv[]) {
 	WaitForSingleObject(hSem, INFINITE);
 	_tprintf(TEXT("Got in!\n"));
 
-	GameData data;
 
 	for (int i = 0; i < MAX_ROWS; i++)
 	{
@@ -107,7 +109,7 @@ int _tmain(int argc, TCHAR* argv[]) {
 				}
 			}
 		}
-		Sleep(1000);
+		Sleep(100);
 		WaitForSingleObject(data.Serv_HMutex, INFINITE);
 
 		ZeroMemory(pBuf, sizeof(GameData));
@@ -122,7 +124,7 @@ int _tmain(int argc, TCHAR* argv[]) {
 		Sleep(500);
 		ResetEvent(data.Serv_HEvent);
 
-
+		
 	}
 
 	//ReleaseSemaphore(hSem, 1, NULL);

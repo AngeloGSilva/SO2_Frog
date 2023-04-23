@@ -2,12 +2,14 @@
 #include <tchar.h>
 #include <math.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <fcntl.h> 
 #include <io.h>
 #include "Registry.h"
 #include "Utils.h"
+#include "Struct.h"
 
-int RegistryKeyValue() {
+void RegistryKeyValue(GameData *temp) {
 	HKEY registryKey;
 	DWORD keyResult; //o que aconteceu com a chave
 	TCHAR valueRoad[TAM];
@@ -32,7 +34,7 @@ int RegistryKeyValue() {
 		&keyResult
 	) != ERROR_SUCCESS) {
 		_tprintf(TEXT("[ERRO] Chave nao foi nem criada nem aberta!\n"));
-		return -1;
+		return;
 	}
 
 	if (keyResult == REG_CREATED_NEW_KEY)
@@ -59,8 +61,10 @@ int RegistryKeyValue() {
 			sizeof(TCHAR) * (_tcslen(valueRoad) + 1)			//DWORD      cbData -> tamanho do valor + 1 para terminar a string
 		) != ERROR_SUCCESS)
 			_tprintf(stderr, TEXT("[ERRO] Não foi possível adicionar o atributo %s!\n"), valueRoad);
-		else
+		else {
 			_tprintf(stderr, TEXT("Foi adicionado o atributo %s!\n"), valueRoad);
+			temp->num_cars = atoi(valueRoad);
+		}
 	}
 	else
 		_tprintf(TEXT("Roads esta definido no registry!\n"));
@@ -84,8 +88,10 @@ int RegistryKeyValue() {
 			sizeof(TCHAR) * (_tcslen(valueSpeed) + 1)			//DWORD      cbData -> tamanho do valor + 1 para terminar a string
 		) != ERROR_SUCCESS)
 			_tprintf(stderr, TEXT("[ERRO] Não foi possível adicionar o atributo %s!\n"), valueSpeed);
-		else
+		else {
 			_tprintf(stderr, TEXT("Foi adicionado o atributo %s!\n"), valueSpeed);
+			temp->carSpeed = atoi(valueSpeed);
+		}
 	}
 	else
 		_tprintf(TEXT("Speed esta definido no registry!\n"));

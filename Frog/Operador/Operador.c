@@ -10,7 +10,7 @@
 
 
 //ideias para tratar do mapa.... 
-// fazer uma thread separada do main que trate so do desenho do mapa
+//fazer uma thread separada do main que trate so do desenho do mapa
 //movimentos do sapo sera algo semelhante
 
 
@@ -37,9 +37,6 @@ int _tmain(int argc, TCHAR* argv[]) {
 		WaitForSingleObject(data.Serv_HEvent, INFINITE);
 
 		WaitForSingleObject(data.Serv_HMutex, INFINITE);
-		_tprintf("\n");
-		_tprintf("\n");
-		_tprintf("\n");
 
 		system("cls");//nao sei ate q ponto é bom usar isto
 
@@ -56,7 +53,7 @@ int _tmain(int argc, TCHAR* argv[]) {
 		//libertat o mutex
 		ReleaseMutex(data.Serv_HMutex);
 
-		Sleep(1000);
+		Sleep(100);
 	}
 
 

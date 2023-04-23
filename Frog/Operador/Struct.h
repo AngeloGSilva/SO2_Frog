@@ -5,6 +5,7 @@
 
 typedef struct {
 	HANDLE Serv_HMutex, Serv_HEvent;
+	int carSpeed;
 	int num_cars;
 	int num_frogs;
 	int car_pos[MAX_CARS][2]; //2 seria para representar o x e o y
