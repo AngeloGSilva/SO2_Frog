@@ -8,6 +8,13 @@
 #include "Struct.h"
 #include "SharedMemory.h"
 
+
+//ideias para tratar do mapa.... 
+// fazer uma thread separada do main que trate so do desenho do mapa
+//movimentos do sapo sera algo semelhante
+
+
+
 int _tmain(int argc, TCHAR* argv[]) {
 
 #ifdef UNICODE
