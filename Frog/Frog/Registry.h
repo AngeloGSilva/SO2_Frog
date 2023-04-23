@@ -5,4 +5,4 @@
 
 #define KEY_SPEED_VALUE TEXT("Speed")
 
-int RegistryRoads();
+int RegistryKeyValue();

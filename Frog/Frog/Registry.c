@@ -7,7 +7,7 @@
 #include "Registry.h"
 #include "Utils.h"
 
-int RegistryRoads() {
+int RegistryKeyValue() {
 	HKEY registryKey;
 	DWORD keyResult; //o que aconteceu com a chave
 	TCHAR valueRoad[TAM];
