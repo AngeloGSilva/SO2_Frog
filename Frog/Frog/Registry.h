@@ -7,4 +7,4 @@
 
 #define KEY_SPEED_VALUE TEXT("Speed")
 
-void RegistryKeyValue(GameData *temp);
+GameData RegistryKeyValue();

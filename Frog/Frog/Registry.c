@@ -9,7 +9,8 @@
 #include "Utils.h"
 #include "Struct.h"
 
-void RegistryKeyValue(GameData *temp) {
+GameData RegistryKeyValue() {
+	GameData temp;
 	HKEY registryKey;
 	DWORD keyResult; //o que aconteceu com a chave
 	TCHAR valueRoad[TAM];
@@ -20,6 +21,7 @@ void RegistryKeyValue(GameData *temp) {
 
 	_tprintf(TEXT("Velocidade dos veiculos:"));
 	_tscanf_s(TEXT("%s"), valueSpeed, TAM);
+	_tprintf(TEXT("Velocidade dos veiculos:%s"), valueSpeed);
 
 	/*Criar ou abrir a chave dir no Registry*/
 	if (RegCreateKeyEx(
@@ -63,11 +65,11 @@ void RegistryKeyValue(GameData *temp) {
 			_tprintf(stderr, TEXT("[ERRO] Não foi possível adicionar o atributo %s!\n"), valueRoad);
 		else {
 			_tprintf(stderr, TEXT("Foi adicionado o atributo %s!\n"), valueRoad);
-			temp->num_cars = atoi(valueRoad);
 		}
-	}
-	else
+	}else
 		_tprintf(TEXT("Roads esta definido no registry!\n"));
+
+	temp.num_cars = atoi(valueRoad);
 
 	DWORD sizeSpeed = sizeof(sizeSpeed);
 	if (RegQueryValueEx(
@@ -75,7 +77,7 @@ void RegistryKeyValue(GameData *temp) {
 		KEY_SPEED_VALUE,
 		0,							//DWORD  Reserved,
 		NULL,
-		(LPBYTE)&sizeSpeed,
+		(LPBYTE)&valueSpeed,
 		&sizeSpeed
 	) != ERROR_SUCCESS) {
 		_tprintf(TEXT("Speed nao definido no registry vai ser defenido a defenir com valores fornecidos!\n"));
@@ -86,13 +88,17 @@ void RegistryKeyValue(GameData *temp) {
 			REG_SZ,						//DWORD      dwType -> tipo do atributo,
 			(LPBYTE)&valueSpeed,					//const BYTE * lpData -> que valor queremos lá por
 			sizeof(TCHAR) * (_tcslen(valueSpeed) + 1)			//DWORD      cbData -> tamanho do valor + 1 para terminar a string
-		) != ERROR_SUCCESS)
+		) != ERROR_SUCCESS) {
 			_tprintf(stderr, TEXT("[ERRO] Não foi possível adicionar o atributo %s!\n"), valueSpeed);
+		}
 		else {
 			_tprintf(stderr, TEXT("Foi adicionado o atributo %s!\n"), valueSpeed);
-			temp->carSpeed = atoi(valueSpeed);
 		}
-	}
-	else
+	}else
 		_tprintf(TEXT("Speed esta definido no registry!\n"));
+
+	_tprintf(TEXT("Speed: %s!\n"), valueSpeed);
+	temp.carSpeed = atoi(valueSpeed);
+	_tprintf(TEXT("Speed: %d!\n"), temp.carSpeed);
+	return temp;
 }

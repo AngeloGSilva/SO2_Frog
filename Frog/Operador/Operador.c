@@ -24,6 +24,8 @@ int _tmain(int argc, TCHAR* argv[]) {
 
 	GameData data;
 
+	//data tem de sair e so ficar pbuf penso eu
+
 	HANDLE HMapFile = CreateFileMapping(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, sizeof(GameData), FILE_MAPPING_GAME_DATA);
 	//TCHAR* pbuf = OpenFileMapping(FILE_MAP_ALL_ACCESS, TRUE, TEXT("TP_GameData"));
 	pGameData pBuf = (TCHAR*)MapViewOfFile(HMapFile, FILE_MAP_ALL_ACCESS, 0, 0, 0);
@@ -53,7 +55,7 @@ int _tmain(int argc, TCHAR* argv[]) {
 		//libertat o mutex
 		ReleaseMutex(data.Serv_HMutex);
 
-		Sleep(100);
+		Sleep(pBuf->carSpeed);
 	}
 
 

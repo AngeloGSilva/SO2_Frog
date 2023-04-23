@@ -16,10 +16,9 @@ int _tmain(int argc, TCHAR* argv[]) {
 	_setmode(_fileno(stdin), _O_WTEXT);
 	_setmode(_fileno(stdout), _O_WTEXT);
 #endif
-	GameData data;
+	GameData data = RegistryKeyValue();
 
-	RegistryKeyValue(&data);
-	printf("car: %d,speed: %d\n", data.num_cars, data.carSpeed);
+	_tprintf(TEXT("car: %d,speed: %d\n"), data.num_cars, data.carSpeed);
 	//TCHAR BlockElement = 95;
 	//TCHAR CarElement = 72;
 
@@ -27,7 +26,7 @@ int _tmain(int argc, TCHAR* argv[]) {
 	HANDLE hSem = CreateSemaphore(NULL, 1, 1, SEMAPHORE_UNIQUE_SERVER);
 	if (hSem == NULL)
 	{
-		printf("[ERRO]CreateSemaphore: %d\n", GetLastError());
+		_tprintf("[ERRO]CreateSemaphore: %d\n", GetLastError());
 		return 1;
 	}
 	// matriz de handles das threads
@@ -109,7 +108,7 @@ int _tmain(int argc, TCHAR* argv[]) {
 				}
 			}
 		}
-		Sleep(100);
+		Sleep(data.carSpeed);
 		WaitForSingleObject(data.Serv_HMutex, INFINITE);
 
 		ZeroMemory(pBuf, sizeof(GameData));
