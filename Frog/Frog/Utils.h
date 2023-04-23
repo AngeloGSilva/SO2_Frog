@@ -1,9 +1,9 @@
-#pragma once
+﻿#pragma once
 #define TAM 100
 #define MAX_CARS 10
 #define MAX_FROGS 10
-#define MAX_ROWS 10
-#define MAX_COLS 15
+#define MAX_ROWS 8
+#define MAX_COLS 20
 
 #define SEMAPHORE_UNIQUE_SERVER TEXT("SEM_UNIQUE_SERVE")
 
@@ -14,4 +14,6 @@
 #define SHARED_MEMORIE_MUTEX TEXT("SHARED_MEMORIE_MUTEX")
 
 #define BLOCK_ELEMENT 35
+#define ROAD_ELEMENT 61
 #define CAR_ELEMENT 72
+#define BEGIN_END_ELEMENT 42

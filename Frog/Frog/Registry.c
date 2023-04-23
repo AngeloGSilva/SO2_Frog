@@ -13,15 +13,17 @@ GameData RegistryKeyValue() {
 	GameData temp;
 	HKEY registryKey;
 	DWORD keyResult; //o que aconteceu com a chave
-	TCHAR valueRoad[TAM];
-	TCHAR valueSpeed[TAM];
+	DWORD valueRoad;
+	DWORD valueSpeed;
 
 	_tprintf(TEXT("Numero de Estradas:"));
-	_tscanf_s(TEXT("%s"), valueRoad, TAM);
+	_tscanf_s(TEXT("%lu"), &valueRoad);
 
 	_tprintf(TEXT("Velocidade dos veiculos:"));
-	_tscanf_s(TEXT("%s"), valueSpeed, TAM);
-	_tprintf(TEXT("Velocidade dos veiculos:%s"), valueSpeed);
+	_tscanf_s(TEXT("%lu"), &valueSpeed);
+
+	_tprintf(TEXT("Valores angariados Estradas %lu e speed %lu:\n"), valueRoad, valueSpeed);
+
 
 	/*Criar ou abrir a chave dir no Registry*/
 	if (RegCreateKeyEx(
@@ -58,9 +60,9 @@ GameData RegistryKeyValue() {
 			registryKey,						//HKEY   hKey
 			KEY_ROADS_VALUE,					//LPCSTR     lpValueName,
 			0,							//DWORD      Reserved,
-			REG_SZ,						//DWORD      dwType -> tipo do atributo,
+			REG_DWORD,						//DWORD      dwType -> tipo do atributo,
 			(LPBYTE)&valueRoad,					//const BYTE * lpData -> que valor queremos lá por
-			sizeof(TCHAR) * (_tcslen(valueRoad) + 1)			//DWORD      cbData -> tamanho do valor + 1 para terminar a string
+			sizeof(valueRoad)			//DWORD      cbData -> tamanho do valor + 1 para terminar a string
 		) != ERROR_SUCCESS)
 			_tprintf(stderr, TEXT("[ERRO] Não foi possível adicionar o atributo %s!\n"), valueRoad);
 		else {
@@ -69,7 +71,7 @@ GameData RegistryKeyValue() {
 	}else
 		_tprintf(TEXT("Roads esta definido no registry!\n"));
 
-	temp.num_cars = atoi(valueRoad);
+	temp.num_cars = valueRoad;
 
 	DWORD sizeSpeed = sizeof(sizeSpeed);
 	if (RegQueryValueEx(
@@ -85,9 +87,9 @@ GameData RegistryKeyValue() {
 			registryKey,						//HKEY   hKey
 			KEY_SPEED_VALUE,			//LPCSTR     lpValueName,
 			0,							//DWORD      Reserved,
-			REG_SZ,						//DWORD      dwType -> tipo do atributo,
+			REG_DWORD,						//DWORD      dwType -> tipo do atributo,
 			(LPBYTE)&valueSpeed,					//const BYTE * lpData -> que valor queremos lá por
-			sizeof(TCHAR) * (_tcslen(valueSpeed) + 1)			//DWORD      cbData -> tamanho do valor + 1 para terminar a string
+			sizeof(valueSpeed)			//DWORD      cbData -> tamanho do valor + 1 para terminar a string
 		) != ERROR_SUCCESS) {
 			_tprintf(stderr, TEXT("[ERRO] Não foi possível adicionar o atributo %s!\n"), valueSpeed);
 		}
@@ -97,8 +99,10 @@ GameData RegistryKeyValue() {
 	}else
 		_tprintf(TEXT("Speed esta definido no registry!\n"));
 
-	_tprintf(TEXT("Speed: %s!\n"), valueSpeed);
-	temp.carSpeed = atoi(valueSpeed);
+	temp.carSpeed = valueSpeed;
 	_tprintf(TEXT("Speed: %d!\n"), temp.carSpeed);
+	temp.num_cars = valueRoad;
+	_tprintf(TEXT("roads: %d!\n"), temp.num_cars);
+	RegCloseKey(registryKey);
 	return temp;
 }

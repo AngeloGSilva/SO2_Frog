@@ -2,8 +2,8 @@
 #define TAM 100
 #define MAX_CARS 10
 #define MAX_FROGS 10
-#define MAX_ROWS 10
-#define MAX_COLS 15
+#define MAX_ROWS 8
+#define MAX_COLS 20
 
 #define TAM_BUFFER_CIRCULAR 10
 

@@ -8,6 +8,8 @@
 #include "Struct.h"
 #include "Registry.h"
 #include "SharedMemory.h"
+#include <time.h>
+#include <stdlib.h>
 
 
 int _tmain(int argc, TCHAR* argv[]) {
@@ -16,11 +18,12 @@ int _tmain(int argc, TCHAR* argv[]) {
 	_setmode(_fileno(stdin), _O_WTEXT);
 	_setmode(_fileno(stdout), _O_WTEXT);
 #endif
+	//rand
+	srand((unsigned)time(NULL));
+
 	GameData data = RegistryKeyValue();
 
 	_tprintf(TEXT("car: %d,speed: %d\n"), data.num_cars, data.carSpeed);
-	//TCHAR BlockElement = 95;
-	//TCHAR CarElement = 72;
 
 	//criar Semaf
 	HANDLE hSem = CreateSemaphore(NULL, 1, 1, SEMAPHORE_UNIQUE_SERVER);
@@ -37,26 +40,30 @@ int _tmain(int argc, TCHAR* argv[]) {
 	WaitForSingleObject(hSem, INFINITE);
 	_tprintf(TEXT("Got in!\n"));
 
-
-	for (int i = 0; i < MAX_ROWS; i++)
+	//desenho do mapa
+	for (int i = 0; i < MAX_ROWS + 4; i++)
 	{
 		for (int j = 0; j < MAX_COLS; j++)
 		{
-			if (i == 0 || j == 0 || i == MAX_ROWS - 1 || j == MAX_COLS - 1)
+			if (i == 0 || j == 0 || i == MAX_ROWS + 3 || j == MAX_COLS - 1)
 				data.map[i][j] = BLOCK_ELEMENT;
-			else if (i == 3 && j == 8 ||
-				i == 2 && j == 2 ||
-				i == 4 && j == 4 ||
-				i == 5 && j == 6 ||
-				i == 6 && j == 7 || 
-				i == 7 && j == 8 || 
-				i == 8 && j == 9)
-				data.map[i][j] = CAR_ELEMENT;
-			else
-				data.map[i][j] = ' ';
+			else if (i == 1 || i == MAX_ROWS + 2) {
+				data.map[i][j] = BEGIN_END_ELEMENT;
+			}else
+				data.map[i][j] = ROAD_ELEMENT;
 		}
 	}
 
+	//Gerar carros
+	for (int i = 2; i < MAX_ROWS + 2; i++)
+	{
+		for (int cars = (rand() % 8) + 1; cars >= 0; cars--) {
+			int ra = (rand() % (MAX_COLS - 2)) + 1;
+			data.map[i][ra] = CAR_ELEMENT;
+			_tprintf(TEXT("cars:%d\n"),ra);
+		}
+	}
+	
 	HANDLE HMapFile = CreateFileMapping(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, sizeof(GameData), FILE_MAPPING_GAME_DATA);
 	if (HMapFile == NULL)
 	{
@@ -88,7 +95,7 @@ int _tmain(int argc, TCHAR* argv[]) {
 	}
 	while (1)
 	{
-		for (int i = 0; i < MAX_ROWS; i++)
+		for (int i = 0; i < MAX_ROWS + 4; i++)
 		{
 			int next_col = 0;
 			for (int j = 0; j < MAX_COLS; j++)
@@ -97,16 +104,15 @@ int _tmain(int argc, TCHAR* argv[]) {
 					//next_col = (j + 1) % MAX_COLS;
 					if (j + 1 != MAX_COLS - 1) {
 						data.map[i][j + 1] = CAR_ELEMENT;
-						data.map[i][j] = ' ';
-						break;
+						data.map[i][j] = ROAD_ELEMENT;
 					}
 					else if(j + 1 == MAX_COLS - 1){
 						data.map[i][1] = CAR_ELEMENT;
-						data.map[i][j] = ' ';
-						break;
+						data.map[i][j] = ROAD_ELEMENT;
 					}
 				}
 			}
+			//adicionar ao array de posições de carros e gerar as posições no mapa de uma vez
 		}
 		Sleep(data.carSpeed);
 		WaitForSingleObject(data.Serv_HMutex, INFINITE);

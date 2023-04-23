@@ -43,7 +43,7 @@ int _tmain(int argc, TCHAR* argv[]) {
 		system("cls");//nao sei ate q ponto é bom usar isto
 
 		//_tprintf(TEXT("Mensagem Recebida: %d %d\n"), pBuf->num_cars,pBuf->num_frogs);
-		for (int i = 0; i < MAX_ROWS; i++)
+		for (int i = 0; i < MAX_ROWS + 4; i++)
 		{
 			for (int j = 0; j < MAX_COLS; j++)
 			{
