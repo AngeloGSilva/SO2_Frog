@@ -4,8 +4,8 @@
 #include <stdio.h>
 #include <fcntl.h> 
 #include <io.h>
-#include "Utils.h"
-#include "Struct.h"
+#include "../Frog/Utils.h"
+#include "../Frog/Struct.h"
 #include "SharedMemory.h"
 #include <time.h>
 #include <stdlib.h>
