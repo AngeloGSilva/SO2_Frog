@@ -55,7 +55,7 @@ DWORD WINAPI ThreadBufferCircular(LPVOID lpParam)
 	return 0;
 }
 
-int parse_args(TCHAR arg1_str, TCHAR arg2_str, DWORD* arg1, DWORD* arg2) {
+int parse_args(TCHAR* arg1_str, TCHAR* arg2_str, DWORD* arg1, DWORD* arg2) {
 	_tprintf(TEXT("%s %s \n"), arg1_str, arg2_str);
 
 	*arg1 = atoi(arg1_str);
@@ -89,6 +89,9 @@ int _tmain(int argc, TCHAR* argv[]) {
 		_tprintf(TEXT("Failed to parse arguments\n"));
 		return 1;
 	}
+
+	_tprintf(TEXT("Good parse!\n arg1 :%d \narg2 :%d \n"),arg1,arg2);
+
 
 
 	srand((unsigned)time(NULL));
