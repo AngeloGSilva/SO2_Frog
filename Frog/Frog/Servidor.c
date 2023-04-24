@@ -11,6 +11,48 @@
 #include <time.h>
 #include <stdlib.h>
 
+typedef struct {
+	int val;
+	int id;
+}EspacoBuffer;
+
+typedef struct {
+	EspacoBuffer espacosDeBuffer[10];
+	int posLeitura;
+	int posEscrita;
+	int nConsumidores;
+	int nProdutores;
+}Buffer, * pBuffer;
+
+typedef struct {
+	pBuffer BufferCircular;
+	HANDLE hSemEscrita, hSemLeitura, hMutex;
+	int id;
+} TDados, * pTDados;
+
+DWORD WINAPI ThreadBufferCircular(LPVOID lpParam)
+{
+	pTDados dados = (pTDados)lpParam;
+	EspacoBuffer space;
+	space.id = 0;
+	space.val = 0;
+	while (1)
+	{
+		WaitForSingleObject(dados->hSemLeitura, INFINITE);
+		WaitForSingleObject(dados->hMutex, INFINITE);
+		//copiar o conteudo para a memoria partilhada
+		CopyMemory(&space, &dados->BufferCircular->espacosDeBuffer[dados->BufferCircular->posLeitura], sizeof(EspacoBuffer));
+		dados->BufferCircular->posLeitura++;
+		if (dados->BufferCircular->posLeitura == 10)
+		{
+			dados->BufferCircular->posLeitura = 0;
+		}
+		_tprintf(TEXT("Consumidor: id do Produtor: %d comeu %d\n"), space.id, space.val);
+		ReleaseMutex(dados->hMutex);
+		ReleaseSemaphore(dados->hSemEscrita, 1, NULL);
+	}
+	return 0;
+}
 
 int _tmain(int argc, TCHAR* argv[]) {
 
@@ -22,6 +64,49 @@ int _tmain(int argc, TCHAR* argv[]) {
 	srand((unsigned)time(NULL));
 
 	GameData data = RegistryKeyValue();
+
+	TDados dataThread;
+
+	dataThread.hMutex = CreateMutex(NULL, FALSE, TEXT("SO2_Mutex_CONSUMIDOR"));
+	dataThread.hSemEscrita = CreateSemaphore(NULL, 10, 10, TEXT("SO2_SEM_ESCRITA"));
+	dataThread.hSemLeitura = CreateSemaphore(NULL, 0, 10, TEXT("SO2_SEM_LEITURA"));
+
+	HANDLE HMapFileBuffer = OpenFileMapping(FILE_MAP_ALL_ACCESS, FALSE, TEXT("SO2_BUFFERCIRCULAR"));
+	if (HMapFileBuffer == NULL)
+	{
+		_tprintf(TEXT("CreateFileMapping\n"));
+		HMapFileBuffer = CreateFileMapping(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, sizeof(Buffer), TEXT("SO2_BUFFERCIRCULAR"));
+		dataThread.BufferCircular = (pBuffer)MapViewOfFile(HMapFileBuffer, FILE_MAP_ALL_ACCESS, 0, 0, 0);
+		dataThread.BufferCircular->nConsumidores = 0;
+		dataThread.BufferCircular->nProdutores = 0;
+		dataThread.BufferCircular->posEscrita = 0;
+		dataThread.BufferCircular->posLeitura = 0;
+
+		if (HMapFileBuffer == NULL)
+		{
+			_tprintf(TEXT("ERRO CreateFileMapping\n"));
+			return 0;
+		}
+	}
+	else
+	{
+		dataThread.BufferCircular = (Buffer*)MapViewOfFile(HMapFileBuffer, FILE_MAP_ALL_ACCESS, 0, 0, 0);
+		if (HMapFileBuffer == NULL)
+		{
+			_tprintf(TEXT("ERRO CreateFileMapping\n"));
+			return 0;
+		}
+	}
+	dataThread.id = dataThread.BufferCircular->nConsumidores++;
+
+	HANDLE hThreads = CreateThread(
+		NULL,    // Thread attributes
+		0,       // Stack size (0 = use default)
+		ThreadBufferCircular, // Thread start address
+		&dataThread,    // Parameter to pass to the thread
+		0,       // Creation flags
+		NULL);   // Thread id   // returns the thread identifier 
+
 
 	_tprintf(TEXT("car: %d,speed: %d\n"), data.num_cars, data.carSpeed);
 
@@ -128,10 +213,8 @@ int _tmain(int argc, TCHAR* argv[]) {
 
 		Sleep(500);
 		ResetEvent(data.Serv_HEvent);
-
-		
 	}
-
+	CloseHandle(hThreads);
 	//ReleaseSemaphore(hSem, 1, NULL);
 	//UnmapViewOfFile(pBuf);
 	return 0;
