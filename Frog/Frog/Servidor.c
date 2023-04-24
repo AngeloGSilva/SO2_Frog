@@ -10,6 +10,7 @@
 #include "SharedMemory.h"
 #include <time.h>
 #include <stdlib.h>
+#include <string.h>
 
 typedef struct {
 	int val;
@@ -54,13 +55,42 @@ DWORD WINAPI ThreadBufferCircular(LPVOID lpParam)
 	return 0;
 }
 
+int parse_args(TCHAR arg1_str, TCHAR arg2_str, DWORD* arg1, DWORD* arg2) {
+	_tprintf(TEXT("%s %s \n"), arg1_str, arg2_str);
+
+	*arg1 = atoi(arg1_str);
+	*arg2 = atoi(arg2_str);
+
+	if (!arg1 || !arg2) {
+		_tprintf(TEXT("Invalid argument format\n"));
+		return 1;
+	}
+
+	_tprintf(TEXT("arg1 = %d\n"), *arg1);
+	_tprintf(TEXT("arg2 = %d\n"), *arg2);
+
+	return 0;
+}
+
 int _tmain(int argc, TCHAR* argv[]) {
 
 #ifdef UNICODE
 	_setmode(_fileno(stdin), _O_WTEXT);
 	_setmode(_fileno(stdout), _O_WTEXT);
 #endif
-	//rand
+	if (argc != 3) { 
+		_tprintf(TEXT("Bad usage of parameters \n"));
+		return 1;
+	}
+
+	DWORD arg1, arg2, parse_result;
+	parse_result = parse_args(argv[1], argv[2], &arg1, &arg2);
+	if (parse_result != 0) {
+		_tprintf(TEXT("Failed to parse arguments\n"));
+		return 1;
+	}
+
+
 	srand((unsigned)time(NULL));
 
 	GameData data = RegistryKeyValue();
