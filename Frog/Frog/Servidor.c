@@ -94,8 +94,6 @@ int _tmain(int argc, TCHAR* argv[]) {
 
 	//_tprintf(TEXT("Good parse!\n arg1 :%d \narg2 :%d \n"),arg1,arg2);
 
-
-
 	srand((unsigned)time(NULL));
 
 	GameData data = RegistryKeyValue();
@@ -177,7 +175,7 @@ int _tmain(int argc, TCHAR* argv[]) {
 
 	//Colocar tudo a zero... numRoads fix size for debug
 	//apagar prints after testes
-	data.numRoads = 2;
+	data.numRoads = 3;
 	data.numCars = 0;
 	_tprintf(TEXT("NumRoads %d\n"), data.numRoads);
 
@@ -189,19 +187,20 @@ int _tmain(int argc, TCHAR* argv[]) {
 		//data.numCars = data.numCars + carsInRoad;
 		for (;carsInRoad >= 0; carsInRoad--) {
 			_tprintf(TEXT("numCars antes %d\n"), data.numCars);
-			data.numCars++;
+			
 			_tprintf(TEXT("numCars depois %d\n"), data.numCars);
-			data.car_pos[data.numCars][0] = i; //X -> linha
+			data.car_pos[data.numCars][0] = i + 2; //X -> linha
 			_tprintf(TEXT("car na linha %d\n"), data.car_pos[data.numCars][0]);
-			int posInRoad = (rand() % (MAX_COLS - 2)) + 1;
-			while (data.map[i][posInRoad] == CAR_ELEMENT)
-			{
+			int posInRoad = 0;
+			do {
 				posInRoad = (rand() % (MAX_COLS - 2)) + 1;
-			}
+			} while (data.map[i][posInRoad] == CAR_ELEMENT);
+
 			data.car_pos[data.numCars][1] = posInRoad; //y -> coluna
 			_tprintf(TEXT("car na coluna %d\n"), data.car_pos[data.numCars][1]);
 			data.map[i][posInRoad] == CAR_ELEMENT;
-			_tprintf(TEXT("car creado nesta pos:%d , %d\n"), data.car_pos[data.numCars][0], data.car_pos[data.numCars][1]);
+			_tprintf(TEXT("car criado nesta pos:%d , %d\n"), data.car_pos[data.numCars][0], data.car_pos[data.numCars][1]);
+			data.numCars++;
 		}
 	}
 
@@ -248,18 +247,37 @@ int _tmain(int argc, TCHAR* argv[]) {
 
 	while (1)
 	{
+		//movimento carros esquerda direita
+		/*for (int i = 0; i < data.numCars; i++)
+		{
+			int x = data.car_pos[i][0];
+			int y = data.car_pos[i][1];
+			data.map[x][y] = ROAD_ELEMENT;
+			if (data.car_pos[i][1] + 2 == MAX_COLS)
+				data.car_pos[i][1] = 1;
+			else  
+				data.car_pos[i][1]++;
+		}*/
 
-
+		//movimento carros direita esquerda
 		for (int i = 0; i < data.numCars; i++)
 		{
-			if (data.car_pos[i][1]++ == MAX_COLS) data.car_pos[i][1] = 0;
-			else  data.car_pos[i][1]++;
+			int x = data.car_pos[i][0];
+			int y = data.car_pos[i][1];
+			data.map[x][y] = ROAD_ELEMENT;
+			if (data.car_pos[i][1] - 1 == 0)
+				data.car_pos[i][1] = MAX_COLS - 2;
+			else
+				data.car_pos[i][1]--;
 		}
-
-
+		//atualizar mapa
 		for (int i = 0; i < data.numCars; i++)
 		{
-			data.map[data.car_pos[i][0]][data.car_pos[i][0]] = CAR_ELEMENT;
+			int x = data.car_pos[i][0];
+			int y = data.car_pos[i][1];
+			_tprintf(TEXT("x:%d\n"),x);
+			_tprintf(TEXT("y:%d\n"),y);
+			data.map[x][y] = CAR_ELEMENT;
 		}
 
 		//for (int i = 0; i < MAX_ROWS + 4; i++)
@@ -281,6 +299,7 @@ int _tmain(int argc, TCHAR* argv[]) {
 		//	}
 		//	//adicionar ao array de posições de carros e gerar as posições no mapa de uma vez
 		//}
+
 		Sleep(data.carSpeed);
 		WaitForSingleObject(data.Serv_HMutex, INFINITE);
 

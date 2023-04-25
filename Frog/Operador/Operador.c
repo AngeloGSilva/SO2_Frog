@@ -48,6 +48,7 @@ DWORD WINAPI ThreadBufferCircular(LPVOID lpParam)
 		{
 			dados->BufferCircular->posEscrita = 0;
 		}
+
 		_tprintf(TEXT("Produtor %d fez %d\n"), dados->id, space.val);
 		ReleaseMutex(dados->hMutex);
 		ReleaseSemaphore(dados->hSemLeitura, 1, NULL);
