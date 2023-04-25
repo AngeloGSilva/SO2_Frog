@@ -78,19 +78,21 @@ int _tmain(int argc, TCHAR* argv[]) {
 	_setmode(_fileno(stdin), _O_WTEXT);
 	_setmode(_fileno(stdout), _O_WTEXT);
 #endif
-	if (argc != 3) { 
-		_tprintf(TEXT("Bad usage of parameters \n"));
-		return 1;
-	}
 
-	DWORD arg1, arg2, parse_result;
-	parse_result = parse_args(argv[1], argv[2], &arg1, &arg2);
-	if (parse_result != 0) {
-		_tprintf(TEXT("Failed to parse arguments\n"));
-		return 1;
-	}
+	//NAO APAGAR, IMPORTANTE 
+	//if (argc != 3) { 
+	//	_tprintf(TEXT("Bad usage of parameters \n"));
+	//	return 1;
+	//}
 
-	_tprintf(TEXT("Good parse!\n arg1 :%d \narg2 :%d \n"),arg1,arg2);
+	//DWORD arg1, arg2, parse_result;
+	//parse_result = parse_args(argv[1], argv[2], &arg1, &arg2);
+	//if (parse_result != 0) {
+	//	_tprintf(TEXT("Failed to parse arguments\n"));
+	//	return 1;
+	//}
+
+	//_tprintf(TEXT("Good parse!\n arg1 :%d \narg2 :%d \n"),arg1,arg2);
 
 
 
@@ -141,7 +143,7 @@ int _tmain(int argc, TCHAR* argv[]) {
 		NULL);   // Thread id   // returns the thread identifier 
 
 
-	_tprintf(TEXT("car: %d,speed: %d\n"), data.num_cars, data.carSpeed);
+	_tprintf(TEXT("car: %d,speed: %d\n"), data.numCars, data.carSpeed);
 
 	//criar Semaf
 	HANDLE hSem = CreateSemaphore(NULL, 1, 1, SEMAPHORE_UNIQUE_SERVER);
@@ -172,15 +174,47 @@ int _tmain(int argc, TCHAR* argv[]) {
 		}
 	}
 
+
+	//Colocar tudo a zero... numRoads fix size for debug
+	//apagar prints after testes
+	data.numRoads = 2;
+	data.numCars = 0;
+	_tprintf(TEXT("NumRoads %d\n"), data.numRoads);
+
 	//Gerar carros
-	for (int i = 2; i < MAX_ROWS + 2; i++)
+	for (int i = 0; i < data.numRoads; i++) 
 	{
-		for (int cars = (rand() % 8) + 1; cars >= 0; cars--) {
-			int ra = (rand() % (MAX_COLS - 2)) + 1;
-			data.map[i][ra] = CAR_ELEMENT;
-			_tprintf(TEXT("cars:%d\n"),ra);
+		int carsInRoad = (rand() % 8) + 1;
+		_tprintf(TEXT("CarInRoad %d\n"), carsInRoad);
+		//data.numCars = data.numCars + carsInRoad;
+		for (;carsInRoad >= 0; carsInRoad--) {
+			_tprintf(TEXT("numCars antes %d\n"), data.numCars);
+			data.numCars++;
+			_tprintf(TEXT("numCars depois %d\n"), data.numCars);
+			data.car_pos[data.numCars][0] = i; //X -> linha
+			_tprintf(TEXT("car na linha %d\n"), data.car_pos[data.numCars][0]);
+			int posInRoad = (rand() % (MAX_COLS - 2)) + 1;
+			while (data.map[i][posInRoad] == CAR_ELEMENT)
+			{
+				posInRoad = (rand() % (MAX_COLS - 2)) + 1;
+			}
+			data.car_pos[data.numCars][1] = posInRoad; //y -> coluna
+			_tprintf(TEXT("car na coluna %d\n"), data.car_pos[data.numCars][1]);
+			data.map[i][posInRoad] == CAR_ELEMENT;
+			_tprintf(TEXT("car creado nesta pos:%d , %d\n"), data.car_pos[data.numCars][0], data.car_pos[data.numCars][1]);
 		}
 	}
+
+
+	////Gerar carros
+	//for (int i = 2; i < MAX_ROWS + 2; i++)
+	//{
+	//	for (int cars = (rand() % 8) + 1; cars >= 0; cars--) {
+	//		int ra = (rand() % (MAX_COLS - 2)) + 1;
+	//		data.map[i][ra] = CAR_ELEMENT;
+	//		_tprintf(TEXT("cars:%d\n"),ra);
+	//	}
+	//}
 	
 	HANDLE HMapFile = CreateFileMapping(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, sizeof(GameData), FILE_MAPPING_GAME_DATA);
 	if (HMapFile == NULL)
@@ -211,27 +245,42 @@ int _tmain(int argc, TCHAR* argv[]) {
 		_tprintf(TEXT("[ERRO]CreateMutex\n"));
 		return 0;
 	}
+
 	while (1)
 	{
-		for (int i = 0; i < MAX_ROWS + 4; i++)
+
+
+		for (int i = 0; i < data.numCars; i++)
 		{
-			int next_col = 0;
-			for (int j = 0; j < MAX_COLS; j++)
-			{
-				if (data.map[i][j] == CAR_ELEMENT) {
-					//next_col = (j + 1) % MAX_COLS;
-					if (j + 1 != MAX_COLS - 1) {
-						data.map[i][j + 1] = CAR_ELEMENT;
-						data.map[i][j] = ROAD_ELEMENT;
-					}
-					else if(j + 1 == MAX_COLS - 1){
-						data.map[i][1] = CAR_ELEMENT;
-						data.map[i][j] = ROAD_ELEMENT;
-					}
-				}
-			}
-			//adicionar ao array de posições de carros e gerar as posições no mapa de uma vez
+			if (data.car_pos[i][1]++ == MAX_COLS) data.car_pos[i][1] = 0;
+			else  data.car_pos[i][1]++;
 		}
+
+
+		for (int i = 0; i < data.numCars; i++)
+		{
+			data.map[data.car_pos[i][0]][data.car_pos[i][0]] = CAR_ELEMENT;
+		}
+
+		//for (int i = 0; i < MAX_ROWS + 4; i++)
+		//{
+		//	int next_col = 0;
+		//	for (int j = 0; j < MAX_COLS; j++)
+		//	{
+		//		if (data.map[i][j] == CAR_ELEMENT) {
+		//			//next_col = (j + 1) % MAX_COLS;
+		//			if (j + 1 != MAX_COLS - 1) {
+		//				data.map[i][j + 1] = CAR_ELEMENT;
+		//				data.map[i][j] = ROAD_ELEMENT;
+		//			}
+		//			else if(j + 1 == MAX_COLS - 1){
+		//				data.map[i][1] = CAR_ELEMENT;
+		//				data.map[i][j] = ROAD_ELEMENT;
+		//			}
+		//		}
+		//	}
+		//	//adicionar ao array de posições de carros e gerar as posições no mapa de uma vez
+		//}
 		Sleep(data.carSpeed);
 		WaitForSingleObject(data.Serv_HMutex, INFINITE);
 

@@ -71,7 +71,7 @@ GameData RegistryKeyValue() {
 	}else
 		_tprintf(TEXT("Roads esta definido no registry!\n"));
 
-	temp.num_cars = valueRoad;
+	temp.numCars = valueRoad;
 
 	DWORD sizeSpeed = sizeof(sizeSpeed);
 	if (RegQueryValueEx(
@@ -101,8 +101,8 @@ GameData RegistryKeyValue() {
 
 	temp.carSpeed = valueSpeed;
 	_tprintf(TEXT("Speed: %d!\n"), temp.carSpeed);
-	temp.num_cars = valueRoad;
-	_tprintf(TEXT("roads: %d!\n"), temp.num_cars);
+	temp.numCars = valueRoad;
+	_tprintf(TEXT("roads: %d!\n"), temp.numCars);
 	RegCloseKey(registryKey);
 	return temp;
 }

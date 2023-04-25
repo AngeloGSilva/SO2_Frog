@@ -62,6 +62,7 @@ DWORD WINAPI ThreadBufferCircular(LPVOID lpParam)
 
 
 
+
 int _tmain(int argc, TCHAR* argv[]) {
 
 #ifdef UNICODE
