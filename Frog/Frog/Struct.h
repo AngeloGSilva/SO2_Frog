@@ -13,3 +13,22 @@ typedef struct {
 	int frog_pos[MAX_FROGS][2]; //2 seria para representar o x e o y
 	TCHAR map[MAX_ROWS + 4][MAX_COLS];
 }GameData, *pGameData;
+
+typedef struct {
+	int val;
+	int id;
+}EspacoBuffer;
+
+typedef struct {
+	EspacoBuffer espacosDeBuffer[10];
+	int posLeitura;
+	int posEscrita;
+	int nConsumidores;
+	int nProdutores;
+}Buffer, * pBuffer;
+
+typedef struct {
+	pBuffer BufferCircular;
+	HANDLE hSemEscrita, hSemLeitura, hMutex;
+	int id;
+} TDados, * pTDados;

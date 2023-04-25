@@ -11,25 +11,6 @@
 #include <stdlib.h>
 
 
-typedef struct {
-	int val;
-	int id;
-}EspacoBuffer;
-
-typedef struct {
-	EspacoBuffer espacosDeBuffer[10];
-	int posLeitura;
-	int posEscrita;
-	int nConsumidores;
-	int nProdutores;
-}Buffer, * pBuffer;
-
-typedef struct {
-	pBuffer BufferCircular;
-	HANDLE hSemEscrita, hSemLeitura, hMutex;
-	int id;
-} TDados, *pTDados;
-
 DWORD WINAPI ThreadBufferCircular(LPVOID lpParam)
 {
 	pTDados dados = (pTDados) lpParam;
@@ -80,11 +61,11 @@ int _tmain(int argc, TCHAR* argv[]) {
 
 	TDados dataThread;
 
-	dataThread.hMutex = CreateMutex(NULL, FALSE, TEXT("SO2_Mutex_PRODUTOR"));
-	dataThread.hSemEscrita = CreateSemaphore(NULL, 10, 10, TEXT("SO2_SEM_ESCRITA"));
-	dataThread.hSemLeitura = CreateSemaphore(NULL, 0, 10, TEXT("SO2_SEM_LEITURA"));
+	dataThread.hMutex = CreateMutex(NULL, FALSE, BUFFER_CIRCULAR_MUTEX_ESCRITOR);
+	dataThread.hSemEscrita = CreateSemaphore(NULL, 10, 10, BUFFER_CIRCULAR_SEMAPHORE_ESCRITOR);
+	dataThread.hSemLeitura = CreateSemaphore(NULL, 0, 10, BUFFER_CIRCULAR_SEMAPHORE_LEITORE);
 
-	HANDLE HMapFileBuffer = OpenFileMapping(FILE_MAP_ALL_ACCESS, FALSE, TEXT("SO2_BUFFERCIRCULAR"));
+	HANDLE HMapFileBuffer = OpenFileMapping(FILE_MAP_ALL_ACCESS, FALSE, FILE_MAPPING_BUFFER_CIRCULAR);
 	if (HMapFileBuffer == NULL)
 	{
 		_tprintf(TEXT("CreateFileMapping\n"));
