@@ -18,7 +18,7 @@ typedef struct {
 	int speed;
 	BOOLEAN direction;
 	pGameData Game;
-	HANDLE hSemRoads, hMutex;
+	HANDLE hEventRoads, hMutex;
 	int id;
 } TRoads, * pTRoads;
 
@@ -26,7 +26,21 @@ typedef struct {
 DWORD WINAPI ThreadRoads(LPVOID lpParam)
 {
 	pTRoads data = (pTRoads)lpParam;
+	pGameData temp;
 	_tprintf(TEXT("n de carros%d\n"), data->Game->numCars);
+	HANDLE HMapFile = CreateFileMapping(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0,sizeof(GameData), TEXT("SO2_MAP") + data->id);
+	if (HMapFile == NULL)
+	{
+		_tprintf(TEXT("ERRO CreateFileMapping\n"));
+		return 0;
+	}
+
+	temp = (GameData*)MapViewOfFile(HMapFile, FILE_MAP_ALL_ACCESS, 0, 0, 0);
+	if (HMapFile == NULL)
+	{
+		_tprintf(TEXT("ERRO MapViewOfFile\n"));
+		return 0;
+	}
 	while (1)
 	{
 		WaitForSingleObject(data->hMutex, INFINITE);
@@ -48,11 +62,17 @@ DWORD WINAPI ThreadRoads(LPVOID lpParam)
 				_tprintf(TEXT("Thread da estrada %d: fez o carro andar\n"), data->id);
 			}
 		}
+		//copiar o conteudo para a memoria partilhada
+		CopyMemory(temp, data->Game,sizeof(GameData));
 
 		ReleaseMutex(data->hMutex);
 		_tprintf(TEXT("thread %d acabou\n"), data->id);
-		Sleep(((rand() % 8) + 1)*2000);
+		//Criamos evento para que as threads ja consiga ler
+		SetEvent(data->hEventRoads);
 
+		Sleep(500);
+		ResetEvent(data->hEventRoads);
+		Sleep(((rand() % 8) + 1)*1000);
 	}
 	
 	////atualizar mapa
@@ -257,7 +277,8 @@ int _tmain(int argc, TCHAR* argv[]) {
 	for (int i = 0; i < data.numRoads; i++) 
 	{
 		_tprintf(TEXT("[~DEBUG] Thread estrada %d criada\n"),i);
-		RoadsData[i].hMutex = CreateMutex(NULL, FALSE, TEXT("MUTEX_ROADS"));
+		RoadsData[i].hMutex = CreateMutex(NULL, FALSE, TEXT("MUTEX_ROADS") + i);
+		RoadsData[i].hEventRoads = CreateEvent(NULL, TRUE, FALSE, TEXT("EVENT_ROADS")+i);
 		RoadsData[i].Game = &data;
 		RoadsData[i].id = i + 2; //o numero do id é a estrada q elas estao encarregues
 		RoadsData[i].speed = 0;
@@ -271,15 +292,7 @@ int _tmain(int argc, TCHAR* argv[]) {
 			NULL);   // Thread id   // returns the thread identifier 
 	}
 
-	for (int i = 0; i < data.numRoads; i++)
-	{
-		_tprintf(TEXT("[~DEBUG] Thread estrada %d iniciada\n"), i);
-		ResumeThread(RoadThreads[i]);
-	}
 
-	// FAZER aguarda / controla as threads 
-	//       manda as threads parar
-	WaitForMultipleObjects(data.numRoads, RoadThreads, TRUE, INFINITE);
 
 	////Gerar carros
 	//for (int i = 2; i < MAX_ROWS + 2; i++)
@@ -376,20 +389,33 @@ int _tmain(int argc, TCHAR* argv[]) {
 	//	//	//adicionar ao array de posições de carros e gerar as posições no mapa de uma vez
 	//	//}
 
-	//	Sleep(data.carSpeed);
-	//	WaitForSingleObject(data.Serv_HMutex, INFINITE);
+		//Sleep(data.carSpeed);
+		WaitForSingleObject(data.Serv_HMutex, INFINITE);
 
-	//	ZeroMemory(pBuf, sizeof(GameData));
-	//	CopyMemory(pBuf, &data, sizeof(GameData));
+		ZeroMemory(pBuf, sizeof(GameData));
+		CopyMemory(pBuf, &data, sizeof(GameData));
 
-	//	//libertat o mutex
-	//	ReleaseMutex(data.Serv_HMutex);
+		//libertat o mutex
+		ReleaseMutex(data.Serv_HMutex);
 
-	//	//Criamos evento para que as threads ja consiga ler
-	//	SetEvent(data.Serv_HEvent);
+		//Criamos evento para que as threads ja consiga ler
+		SetEvent(data.Serv_HEvent);
 
-	//	Sleep(500);
-	//	ResetEvent(data.Serv_HEvent);
+		//Sleep(500);
+		ResetEvent(data.Serv_HEvent);
+
+
+		for (int i = 0; i < data.numRoads; i++)
+		{
+			_tprintf(TEXT("[DEBUG] Thread estrada %d iniciada\n"), i);
+			ResumeThread(RoadThreads[i]);
+		}
+
+		// FAZER aguarda / controla as threads 
+		//       manda as threads parar
+		WaitForMultipleObjects(data.numRoads, RoadThreads, TRUE, INFINITE);
+
+		
 	//}
 	CloseHandle(hThreads);
 	//ReleaseSemaphore(hSem, 1, NULL);

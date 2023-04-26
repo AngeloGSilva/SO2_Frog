@@ -10,6 +10,63 @@
 #include <time.h>
 #include <stdlib.h>
 
+#define MAX_ROADS_THREADS 50
+typedef struct {
+	int speed;
+	BOOLEAN direction;
+	pGameData Game;
+	HANDLE hEventRoads, hMutex;
+	int id;
+} TRoads, * pTRoads;
+
+
+
+DWORD WINAPI ThreadRoads(LPVOID lpParam)
+{
+	pTRoads data = (pTRoads)lpParam;
+	pGameData temp;
+	_tprintf(TEXT("n de carros%d\n"), data->Game->numCars);
+	HANDLE HMapFile = CreateFileMapping(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, sizeof(GameData), TEXT("SO2_MAP") + data->id);
+	if (HMapFile == NULL)
+	{
+		_tprintf(TEXT("ERRO CreateFileMapping\n"));
+		return 0;
+	}
+
+	temp = (GameData*)MapViewOfFile(HMapFile, FILE_MAP_ALL_ACCESS, 0, 0, 0);
+	if (HMapFile == NULL)
+	{
+		_tprintf(TEXT("ERRO MapViewOfFile\n"));
+		return 0;
+	}
+	while (1)
+	{
+		WaitForSingleObject(data->hEventRoads, INFINITE);
+		WaitForSingleObject(data->hMutex, INFINITE);
+		_tprintf(TEXT("thread %d comecou\n"), data->id);
+		//movimento carros direita esquerda
+		for (int i = 0; i < MAX_COLS; i++)
+		{
+			_tprintf(TEXT("%c"), temp->map[data->id][i]);
+		}
+
+		ReleaseMutex(data->hMutex);
+		_tprintf(TEXT("thread %d acabou\n"), data->id);
+		Sleep(((rand() % 8) + 1) * 1000);
+	}
+
+	////atualizar mapa
+	//for (int i = 0; i < data->Game.numCars; i++)
+	//{
+	//	int x = data->Game.car_pos[i][0];
+	//	int y = data->Game.car_pos[i][1];
+	//	_tprintf(TEXT("x:%d\n"), x);
+	//	_tprintf(TEXT("y:%d\n"), y);
+	//	data->Game.map[x][y] = CAR_ELEMENT;
+	//}
+
+	return 0;
+}
 
 DWORD WINAPI ThreadBufferCircular(LPVOID lpParam)
 {
@@ -104,8 +161,7 @@ int _tmain(int argc, TCHAR* argv[]) {
 
 	//data tem de sair e so ficar pbuf penso eu
 	HANDLE HMapFile = CreateFileMapping(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, sizeof(GameData), FILE_MAPPING_GAME_DATA);
-	//TCHAR* pbuf = OpenFileMapping(FILE_MAP_ALL_ACCESS, TRUE, TEXT("TP_GameData"));
-	pGameData pBuf = (TCHAR*)MapViewOfFile(HMapFile, FILE_MAP_ALL_ACCESS, 0, 0, 0);
+	pGameData pBuf = (GameData*)MapViewOfFile(HMapFile, FILE_MAP_ALL_ACCESS, 0, 0, 0);
 	//data.event = OpenEvent(READ_CONTROL,TRUE, TEXT("TP_Evento"));
 	data.Serv_HEvent = CreateEvent(NULL, TRUE, FALSE, SHARED_MEMORIE_EVENT);
 	//data.mutex = OpenMutex(READ_CONTROL, TRUE, TEXT("TP_Mutex"));
@@ -114,8 +170,8 @@ int _tmain(int argc, TCHAR* argv[]) {
 
 
 
-	while (1)
-	{
+	//while (1)
+	//{
 		WaitForSingleObject(data.Serv_HEvent, INFINITE);
 
 		WaitForSingleObject(data.Serv_HMutex, INFINITE);
@@ -123,20 +179,57 @@ int _tmain(int argc, TCHAR* argv[]) {
 		system("cls");//nao sei ate q ponto é bom usar isto
 
 		//_tprintf(TEXT("Mensagem Recebida: %d %d\n"), pBuf->num_cars,pBuf->num_frogs);
-		for (int i = 0; i < MAX_ROWS + 4; i++)
-		{
-			for (int j = 0; j < MAX_COLS; j++)
-			{
-				_tprintf(TEXT("%c"), pBuf->map[i][j]);
-			}
-			_tprintf("\n");
-		}
+		//for (int i = 0; i < MAX_ROWS + 4; i++)
+		//{
+		//	for (int j = 0; j < MAX_COLS; j++)
+		//	{
+		//		_tprintf(TEXT("%c"), pBuf->map[i][j]);
+		//	}
+		//	_tprintf("\n");
+		//}
+
+
 
 		//libertat o mutex
 		ReleaseMutex(data.Serv_HMutex);
 
-		Sleep(pBuf->carSpeed);
-	}
+		HANDLE mutex_ROADS;
+
+		// matriz de handles das threads
+		HANDLE RoadThreads[MAX_ROADS_THREADS];
+
+		TRoads RoadsData[MAX_ROADS_THREADS];
+
+		_tprintf(TEXT("[DEBUG] Thread estrada %d criada\n"), pBuf->numCars);
+		for (int i = 0; i < pBuf->numRoads; i++)
+		{
+			_tprintf(TEXT("[DEBUG] Thread estrada %d criada\n"), i);
+			RoadsData[i].hMutex = CreateMutex(NULL, FALSE, TEXT("MUTEX_ROADS") + i);
+			RoadsData[i].hEventRoads = CreateEvent(NULL, TRUE, FALSE, TEXT("EVENT_ROADS") + i);
+			_tprintf(TEXT("EVENT_ROADS") + i);
+			RoadsData[i].Game = pBuf;
+			RoadsData[i].id = i + 2; //o numero do id é a estrada q elas estao encarregues
+			RoadsData[i].speed = 0;
+			RoadsData[i].direction = 1;
+			RoadThreads[i] = CreateThread(
+				NULL,    // Thread attributes
+				0,       // Stack size (0 = use default)
+				ThreadRoads, // Thread start address
+				&RoadsData[i],    // Parameter to pass to the thread
+				CREATE_SUSPENDED,       // Creation flags
+				NULL);   // Thread id   // returns the thread identifier 
+		}
+
+
+		for (int i = 0; i < pBuf->numRoads; i++)
+		{
+			_tprintf(TEXT("[DEBUG] Thread estrada %d iniciada\n"), i);
+			ResumeThread(RoadThreads[i]);
+		}
+
+
+		//Sleep(pBuf->carSpeed);
+	/*}*/
 
 	CloseHandle(hThreads);
 	return 0;
