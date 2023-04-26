@@ -26,7 +26,7 @@ DWORD WINAPI ThreadRoads(LPVOID lpParam)
 {
 	_tprintf(TEXT("ESTOU A ESPERA\n"));
 	pTRoads data = (pTRoads)lpParam;
-	GameData display;
+	pGameData display;
 	_tprintf(TEXT("ESTOU A ESPERA\n"));
 	while (1)
 	{
@@ -38,9 +38,11 @@ DWORD WINAPI ThreadRoads(LPVOID lpParam)
 		_tprintf(TEXT("temp %d comecou\n"), data->GameSharedMemorie->numCars);
 		CopyMemory(&display, &data->GameSharedMemorie, sizeof(GameData));
 		//movimento carros direita esquerda
+		_tprintf(TEXT("thread %c comecou\n"), display->map[data->id][0]);
+		//Sleep(10000);
 		for (int i = 0; i < MAX_COLS; i++)
 		{
-			_tprintf(TEXT("%c"), display.map[data->id][i]);
+			_tprintf(TEXT("%c"), display->map[data->id][i]);
 		}
 
 		ReleaseMutex(data->hMutex);

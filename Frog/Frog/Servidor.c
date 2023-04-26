@@ -41,14 +41,22 @@ DWORD WINAPI ThreadRoads(LPVOID lpParam)
 				_tprintf(TEXT("carro: %d da thread %d\n"), x, data->id);
 				int y = data->Game->car_pos[i][1];
 				data->Game->map[x][y] = ROAD_ELEMENT;
-				if (data->Game->car_pos[i][1] - 1 == 0)
+				if (data->Game->car_pos[i][1] - 1 == 0) {
 					data->Game->car_pos[i][1] = MAX_COLS - 2;
+				}
 				else
 					data->Game->car_pos[i][1]--;
-				data->Game->map[x][y] = CAR_ELEMENT;
 				_tprintf(TEXT("Thread da estrada %d: fez o carro andar\n"), data->id);
 			}
 		}
+		for (int i = 0; i < data->Game->numCars; i++)
+				{
+					int x = data->Game->car_pos[i][0];
+					int y = data->Game->car_pos[i][1];
+					_tprintf(TEXT("x:%d\n"),x);
+					_tprintf(TEXT("y:%d\n"),y);
+					data->Game->map[x][y] = CAR_ELEMENT;
+				}
 		//copiar o conteudo para a memoria partilhada
 		CopyMemory(data->GameSharedMemorie, data->Game,sizeof(GameData));
 		_tprintf(TEXT("temppppp %d\n"),data->GameSharedMemorie->numCars);
@@ -58,9 +66,9 @@ DWORD WINAPI ThreadRoads(LPVOID lpParam)
 		//Criamos evento para que as threads ja consiga ler
 		SetEvent(data->hEventRoads);
 
-		Sleep(500);
+		//Sleep(500);
 		ResetEvent(data->hEventRoads);
-		Sleep(((rand() % 8) + 1)*1000);
+		Sleep(((rand() % 8) + 1)*2000);
 	}
 	
 	////atualizar mapa
