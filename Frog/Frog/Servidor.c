@@ -28,7 +28,7 @@ DWORD WINAPI ThreadRoads(LPVOID lpParam)
 	pTRoads data = (pTRoads)lpParam;
 	pGameData temp;
 	_tprintf(TEXT("n de carros%d\n"), data->Game->numCars);
-	HANDLE HMapFile = CreateFileMapping(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0,sizeof(GameData), TEXT("SO2_MAP") + data->id);
+	HANDLE HMapFile = CreateFileMapping(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0,sizeof(GameData), TEXT("SO2_MAP"));
 	if (HMapFile == NULL)
 	{
 		_tprintf(TEXT("ERRO CreateFileMapping\n"));
@@ -277,8 +277,8 @@ int _tmain(int argc, TCHAR* argv[]) {
 	for (int i = 0; i < data.numRoads; i++) 
 	{
 		_tprintf(TEXT("[~DEBUG] Thread estrada %d criada\n"),i);
-		RoadsData[i].hMutex = CreateMutex(NULL, FALSE, TEXT("MUTEX_ROADS") + i);
-		RoadsData[i].hEventRoads = CreateEvent(NULL, TRUE, FALSE, TEXT("EVENT_ROADS")+i);
+		RoadsData[i].hMutex = CreateMutex(NULL, FALSE, TEXT("MUTEX_ROADS"));
+		RoadsData[i].hEventRoads = CreateEvent(NULL, TRUE, FALSE, TEXT("EVENT_ROADS"));
 		RoadsData[i].Game = &data;
 		RoadsData[i].id = i + 2; //o numero do id é a estrada q elas estao encarregues
 		RoadsData[i].speed = 0;

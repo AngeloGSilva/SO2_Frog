@@ -26,7 +26,7 @@ DWORD WINAPI ThreadRoads(LPVOID lpParam)
 	pTRoads data = (pTRoads)lpParam;
 	pGameData temp;
 	_tprintf(TEXT("n de carros%d\n"), data->Game->numCars);
-	HANDLE HMapFile = CreateFileMapping(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, sizeof(GameData), TEXT("SO2_MAP") + data->id);
+	HANDLE HMapFile = CreateFileMapping(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, sizeof(GameData), TEXT("SO2_MAP"));
 	if (HMapFile == NULL)
 	{
 		_tprintf(TEXT("ERRO CreateFileMapping\n"));
@@ -44,6 +44,7 @@ DWORD WINAPI ThreadRoads(LPVOID lpParam)
 		WaitForSingleObject(data->hEventRoads, INFINITE);
 		WaitForSingleObject(data->hMutex, INFINITE);
 		_tprintf(TEXT("thread %d comecou\n"), data->id);
+		CopyMemory(&data->Game, &temp, sizeof(GameData));
 		//movimento carros direita esquerda
 		for (int i = 0; i < MAX_COLS; i++)
 		{
@@ -204,8 +205,8 @@ int _tmain(int argc, TCHAR* argv[]) {
 		for (int i = 0; i < pBuf->numRoads; i++)
 		{
 			_tprintf(TEXT("[DEBUG] Thread estrada %d criada\n"), i);
-			RoadsData[i].hMutex = CreateMutex(NULL, FALSE, TEXT("MUTEX_ROADS") + i);
-			RoadsData[i].hEventRoads = CreateEvent(NULL, TRUE, FALSE, TEXT("EVENT_ROADS") + i);
+			RoadsData[i].hMutex = CreateMutex(NULL, FALSE, TEXT("MUTEX_ROADS"));
+			RoadsData[i].hEventRoads = CreateEvent(NULL, TRUE, FALSE, TEXT("EVENT_ROADS"));
 			_tprintf(TEXT("EVENT_ROADS") + i);
 			RoadsData[i].Game = pBuf;
 			RoadsData[i].id = i + 2; //o numero do id é a estrada q elas estao encarregues
