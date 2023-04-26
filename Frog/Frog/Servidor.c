@@ -18,6 +18,7 @@ typedef struct {
 	int speed;
 	BOOLEAN direction;
 	pGameData Game;
+	pGameData GameSharedMemorie;
 	HANDLE hEventRoads, hMutex;
 	int id;
 } TRoads, * pTRoads;
@@ -26,21 +27,7 @@ typedef struct {
 DWORD WINAPI ThreadRoads(LPVOID lpParam)
 {
 	pTRoads data = (pTRoads)lpParam;
-	pGameData temp;
-	_tprintf(TEXT("n de carros%d\n"), data->Game->numCars);
-	HANDLE HMapFile = CreateFileMapping(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0,sizeof(GameData), TEXT("SO2_MAP"));
-	if (HMapFile == NULL)
-	{
-		_tprintf(TEXT("ERRO CreateFileMapping\n"));
-		return 0;
-	}
-
-	temp = (GameData*)MapViewOfFile(HMapFile, FILE_MAP_ALL_ACCESS, 0, 0, 0);
-	if (HMapFile == NULL)
-	{
-		_tprintf(TEXT("ERRO MapViewOfFile\n"));
-		return 0;
-	}
+	
 	while (1)
 	{
 		WaitForSingleObject(data->hMutex, INFINITE);
@@ -63,7 +50,8 @@ DWORD WINAPI ThreadRoads(LPVOID lpParam)
 			}
 		}
 		//copiar o conteudo para a memoria partilhada
-		CopyMemory(temp, data->Game,sizeof(GameData));
+		CopyMemory(data->GameSharedMemorie, data->Game,sizeof(GameData));
+		_tprintf(TEXT("temppppp %d\n"),data->GameSharedMemorie->numCars);
 
 		ReleaseMutex(data->hMutex);
 		_tprintf(TEXT("thread %d acabou\n"), data->id);
@@ -233,7 +221,7 @@ int _tmain(int argc, TCHAR* argv[]) {
 
 	//Colocar tudo a zero... numRoads fix size for debug
 	//apagar prints after testes
-	data.numRoads = 3;
+	data.numRoads = 1;
 	data.numCars = 0;
 	_tprintf(TEXT("NumRoads %d\n"), data.numRoads);
 
@@ -262,34 +250,6 @@ int _tmain(int argc, TCHAR* argv[]) {
 			_tprintf(TEXT("car criado nesta pos:%d , %d\n"), data.car_pos[data.numCars][0], data.car_pos[data.numCars][1]);
 			data.numCars++;
 		}
-	}
-
-
-	HANDLE mutex_ROADS;
-
-	// matriz de handles das threads
-	HANDLE RoadThreads[MAX_ROADS_THREADS];
-
-	TRoads RoadsData[MAX_ROADS_THREADS];
-
-
-
-	for (int i = 0; i < data.numRoads; i++) 
-	{
-		_tprintf(TEXT("[~DEBUG] Thread estrada %d criada\n"),i);
-		RoadsData[i].hMutex = CreateMutex(NULL, FALSE, TEXT("MUTEX_ROADS"));
-		RoadsData[i].hEventRoads = CreateEvent(NULL, TRUE, FALSE, TEXT("EVENT_ROADS"));
-		RoadsData[i].Game = &data;
-		RoadsData[i].id = i + 2; //o numero do id é a estrada q elas estao encarregues
-		RoadsData[i].speed = 0;
-		RoadsData[i].direction = 1;
-		RoadThreads[i] = CreateThread(
-			NULL,    // Thread attributes
-			0,       // Stack size (0 = use default)
-			ThreadRoads, // Thread start address
-			&RoadsData[i],    // Parameter to pass to the thread
-			CREATE_SUSPENDED,       // Creation flags
-			NULL);   // Thread id   // returns the thread identifier 
 	}
 
 
@@ -405,15 +365,58 @@ int _tmain(int argc, TCHAR* argv[]) {
 		ResetEvent(data.Serv_HEvent);
 
 
+
+		HANDLE mutex_ROADS;
+
+		// matriz de handles das threads
+		HANDLE RoadThreads[MAX_ROADS_THREADS];
+
+		TRoads RoadsData[MAX_ROADS_THREADS];
+
+
+		_tprintf(TEXT("[DEBUG] NUM ROADS %d criada\n"), data.numRoads);
 		for (int i = 0; i < data.numRoads; i++)
 		{
-			_tprintf(TEXT("[DEBUG] Thread estrada %d iniciada\n"), i);
-			ResumeThread(RoadThreads[i]);
+			HANDLE HMapFile = CreateFileMapping(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, sizeof(GameData), TEXT("SO2_MAP_OLA"));
+			if (HMapFile == NULL)
+			{
+				_tprintf(TEXT("ERRO CreateFileMapping\n"));
+				return 0;
+			}
+			_tprintf(TEXT("Criado CreateFileMapping\n"));
+			RoadsData[i].GameSharedMemorie = (GameData*)MapViewOfFile(HMapFile, FILE_MAP_ALL_ACCESS, 0, 0, 0);
+			if (HMapFile == NULL)
+			{
+				_tprintf(TEXT("ERRO MapViewOfFile\n"));
+				return 0;
+			}
+
+
+			RoadsData[i].hMutex = CreateMutex(NULL, FALSE, TEXT("MUTEX_ROADS"));
+			RoadsData[i].hEventRoads = CreateEvent(NULL, TRUE, FALSE, TEXT("EVENT_ROADS"));
+			RoadsData[i].Game = &data;
+			RoadsData[i].id = i + 2; //o numero do id é a estrada q elas estao encarregues
+			RoadsData[i].speed = 0;
+			RoadsData[i].direction = 1;
+			RoadThreads[i] = CreateThread(
+				NULL,    // Thread attributes
+				0,       // Stack size (0 = use default)
+				ThreadRoads, // Thread start address
+				&RoadsData[i],    // Parameter to pass to the thread
+				0,       // Creation flags
+				NULL);   // Thread id   // returns the thread identifier 
+			_tprintf(TEXT("[~DEBUG] Thread estrada %d criada\n"), i);
+
+		}
+
+		while (1)
+		{
+
 		}
 
 		// FAZER aguarda / controla as threads 
 		//       manda as threads parar
-		WaitForMultipleObjects(data.numRoads, RoadThreads, TRUE, INFINITE);
+		//WaitForMultipleObjects(data.numRoads, RoadThreads, TRUE, INFINITE);
 
 		
 	//}
