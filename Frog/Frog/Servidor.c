@@ -27,7 +27,7 @@ typedef struct {
 DWORD WINAPI ThreadRoads(LPVOID lpParam)
 {
 	pTRoads data = (pTRoads)lpParam;
-	
+	Sleep(1000);
 	while (1)
 	{
 		WaitForSingleObject(data->hMutex, INFINITE);
@@ -229,10 +229,9 @@ int _tmain(int argc, TCHAR* argv[]) {
 
 	//Colocar tudo a zero... numRoads fix size for debug
 	//apagar prints after testes
-	data.numRoads = 4;
+	data.numRoads = 8;
 	data.numCars = 0;
 	_tprintf(TEXT("NumRoads %d\n"), data.numRoads);
-
 
 
 	//Gerar carros
@@ -386,6 +385,7 @@ int _tmain(int argc, TCHAR* argv[]) {
 		for (int i = 0; i < data.numRoads; i++)
 		{
 			HANDLE HMapFile = CreateFileMapping(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, sizeof(GameData), TEXT("SO2_MAP_OLA"));
+			_tprintf(TEXT("SO2_MAP_OLA") + i);
 			if (HMapFile == NULL)
 			{
 				_tprintf(TEXT("ERRO CreateFileMapping\n"));
@@ -413,9 +413,14 @@ int _tmain(int argc, TCHAR* argv[]) {
 				ThreadRoads, // Thread start address
 				&RoadsData[i],    // Parameter to pass to the thread
 				0,       // Creation flags
-				NULL);   // Thread id   // returns the thread identifier 
+				CREATE_SUSPENDED);   // Thread id   // returns the thread identifier 
 			_tprintf(TEXT("[~DEBUG] Thread estrada %d criada\n"), i);
 
+		}
+
+		for (int i = 0; i < data.numRoads; i++)
+		{
+			ResumeThread(RoadThreads[i]);
 		}
 
 		while (1)
