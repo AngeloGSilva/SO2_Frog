@@ -68,7 +68,7 @@ DWORD WINAPI ThreadRoads(LPVOID lpParam)
 
 		//Sleep(500);
 		ResetEvent(data->hEventRoads);
-		Sleep(((rand() % 8) + 1)*2000);
+		Sleep(data->speed);
 	}
 	
 	////atualizar mapa
@@ -229,7 +229,7 @@ int _tmain(int argc, TCHAR* argv[]) {
 
 	//Colocar tudo a zero... numRoads fix size for debug
 	//apagar prints after testes
-	data.numRoads = 1;
+	data.numRoads = 4;
 	data.numCars = 0;
 	_tprintf(TEXT("NumRoads %d\n"), data.numRoads);
 
@@ -404,7 +404,8 @@ int _tmain(int argc, TCHAR* argv[]) {
 			RoadsData[i].hEventRoads = CreateEvent(NULL, TRUE, FALSE, TEXT("EVENT_ROADS"));
 			RoadsData[i].Game = &data;
 			RoadsData[i].id = i + 2; //o numero do id é a estrada q elas estao encarregues
-			RoadsData[i].speed = 0;
+			RoadsData[i].speed = ((rand() % 8) + 1) * 1000;
+			_tprintf(TEXT("SPEEEEDDDDD:::::::: %d\n"), RoadsData[i].speed);
 			RoadsData[i].direction = 1;
 			RoadThreads[i] = CreateThread(
 				NULL,    // Thread attributes

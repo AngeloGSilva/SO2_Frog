@@ -30,23 +30,30 @@ DWORD WINAPI ThreadRoads(LPVOID lpParam)
 	_tprintf(TEXT("ESTOU A ESPERA\n"));
 	while (1)
 	{
-		_tprintf(TEXT("ESTOU A ESPERA\n"));
+		//_tprintf(TEXT("ESTOU A ESPERA\n"));
 		WaitForSingleObject(data->hEventRoads, INFINITE);
-		_tprintf(TEXT("ESTOU A ESPERA\n"));
+		//_tprintf(TEXT("ESTOU A ESPERA\n"));
 		WaitForSingleObject(data->hMutex, INFINITE);
-		_tprintf(TEXT("thread %d comecou\n"), data->id);
-		_tprintf(TEXT("temp %d comecou\n"), data->GameSharedMemorie->numCars);
+		//_tprintf(TEXT("thread %d comecou\n"), data->id);
+		//_tprintf(TEXT("temp %d comecou\n"), data->GameSharedMemorie->numCars);
 		CopyMemory(&display, &data->GameSharedMemorie, sizeof(GameData));
 		//movimento carros direita esquerda
-		_tprintf(TEXT("thread %c comecou\n"), display->map[data->id][0]);
+		//_tprintf(TEXT("thread %c comecou\n"), display->map[data->id][0]);
 		//Sleep(10000);
+		HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+		COORD cursorPos;
 		for (int i = 0; i < MAX_COLS; i++)
 		{
-			_tprintf(TEXT("%c"), display->map[data->id][i]);
+			DWORD numWritten; // Number of characters actually written
+			cursorPos.X = i;
+			cursorPos.Y = data->id;
+			SetConsoleCursorPosition(hConsole, cursorPos);
+			WriteConsole(hConsole, &display->map[data->id][i], 1, &numWritten, NULL);
+			//_tprintf(TEXT("%c"), display->map[data->id][i]);
 		}
 
 		ReleaseMutex(data->hMutex);
-		_tprintf(TEXT("thread %d acabou\n"), data->id);
+		//_tprintf(TEXT("thread %d acabou\n"), data->id);
 	}
 
 	////atualizar mapa
@@ -81,7 +88,7 @@ DWORD WINAPI ThreadBufferCircular(LPVOID lpParam)
 			dados->BufferCircular->posEscrita = 0;
 		}
 
-		_tprintf(TEXT("Produtor %d fez %d\n"), dados->id, space.val);
+		//_tprintf(TEXT("Produtor %d fez %d\n"), dados->id, space.val);
 		ReleaseMutex(dados->hMutex);
 		ReleaseSemaphore(dados->hSemLeitura, 1, NULL);
 		Sleep(((rand() % 4) + 1) * 1000);
