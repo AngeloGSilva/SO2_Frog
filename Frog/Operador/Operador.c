@@ -229,14 +229,14 @@ int _tmain(int argc, TCHAR* argv[]) {
 				ThreadRoads, // Thread start address
 				&RoadsData[i],    // Parameter to pass to the thread
 				0,       // Creation flags
-				NULL);   // Thread id   // returns the thread identifier 
+				CREATE_SUSPENDED);   // Thread id   // returns the thread identifier 
 			_tprintf(TEXT("[DEBUG] Thread estrada %d criada\n"), i);
 		}
 
-		//for (int i = 0; i < pBuf->numRoads; i++)
-		//{
-		//	ResumeThread(RoadThreads[i]);
-		//}
+		for (int i = 0; i < pBuf->numRoads; i++)
+		{
+			ResumeThread(RoadThreads[i]);
+		}
 
 		//Sleep(pBuf->carSpeed);
 	/*}*/
