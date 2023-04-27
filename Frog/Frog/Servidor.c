@@ -229,7 +229,7 @@ int _tmain(int argc, TCHAR* argv[]) {
 
 	//Colocar tudo a zero... numRoads fix size for debug
 	//apagar prints after testes
-	data.numRoads = 4;
+	data.numRoads = 6;
 	data.numCars = 0;
 	_tprintf(TEXT("NumRoads %d\n"), data.numRoads);
 
@@ -251,15 +251,16 @@ int _tmain(int argc, TCHAR* argv[]) {
 			do {
 				posInRoad = (rand() % (MAX_COLS - 2)) + 1;
 			} while (data.map[i][posInRoad] == CAR_ELEMENT);
-
+				_tprintf(TEXT("RANDOM DEU CRLH %d\n"), posInRoad);
 			data.car_pos[data.numCars][1] = posInRoad; //y -> coluna
 			_tprintf(TEXT("car na coluna %d\n"), data.car_pos[data.numCars][1]);
 			data.map[i][posInRoad] == CAR_ELEMENT;
 			_tprintf(TEXT("car criado nesta pos:%d , %d\n"), data.car_pos[data.numCars][0], data.car_pos[data.numCars][1]);
+			_tprintf(TEXT("NUMERO AGORA ESTA EM  CARS %d Y DO CARRO É %d\n"), data.numCars, data.car_pos[data.numCars][1]);
 			data.numCars++;
 		}
 	}
-
+	_tprintf(TEXT("NUMERO TOTAL DE CARS %d\n"),data.numCars);
 
 
 	////Gerar carros
