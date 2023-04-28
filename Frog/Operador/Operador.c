@@ -20,8 +20,11 @@
 typedef struct {
 	int speed;
 	int numCars;
+	pCarPos car_pos;
+	TCHAR* Map;
 	BOOLEAN direction;
 	pCarPos sharedCarPos;
+	TCHAR* sharedMap;
 	HANDLE hEventRoads, hMutex;
 	int id;
 } TRoads, * pTRoads;
@@ -31,38 +34,40 @@ typedef struct {
 DWORD WINAPI ThreadRoads(LPVOID lpParam)
 {
 	pTRoads data = (pTRoads)lpParam;
-	CarPos temp[MAX_CARS];
+	TCHAR* temp;
 	while (1)
 	{
 		WaitForSingleObject(data->hEventRoads, INFINITE);
 		WaitForSingleObject(data->hMutex, INFINITE);
-		CopyMemory(&temp, &data->sharedCarPos, MAX_CARS * sizeof(CarPos));
+		CopyMemory(&temp, &data->sharedMap, sizeof(TCHAR) * MAX_ROWS * (MAX_COLS + 4));
+		//_tprintf(TEXT("temppppp2 %c\n"), temp[1]);
 		HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
 		COORD cursorPos;
 		//_tprintf(TEXT("numero de carros: %d\n"), data->numCars);
 		//_tprintf(TEXT("id da thread: %d\n"), data->id);
 		//_tprintf(TEXT("linha do primeiro carro: %d\n"), data->sharedCarPos[0].row);
-		for (int i = 0; i < data->numCars; i++)
-		{
-			if (data->sharedCarPos[i].row == data->id) {
-				DWORD numWritten; // Number of characters actually written
-				cursorPos.X = data->sharedCarPos[i].col;
-				cursorPos.Y = data->id;
-				//_tprintf(TEXT("coluna do carro %d :%d\n"), i,temp[i].col);
-				TCHAR buffer = 'H';
-				SetConsoleCursorPosition(hConsole, cursorPos);
-				WriteConsole(hConsole, &buffer, 1, &numWritten, NULL);
-			}
-		}
-		//for (int i = 0; i < MAX_COLS; i++)
+		//for (int i = 0; i < data->numCars; i++)
 		//{
-		//	DWORD numWritten; // Number of characters actually written
-		//	cursorPos.X = &temp[i].col;
-		//	cursorPos.Y = data->id;
-		//	_tprintf(TEXT("temppppp1 %d\n"), temp[i].col);
-		//	SetConsoleCursorPosition(hConsole, cursorPos);
-		//	WriteConsole(hConsole, 'h', 1, &numWritten, NULL);
+		//	if (data->sharedCarPos[i].row == data->id) {
+		//		DWORD numWritten; // Number of characters actually written
+		//		cursorPos.X = data->sharedCarPos[i].col;
+		//		cursorPos.Y = data->id;
+		//		//_tprintf(TEXT("coluna do carro %d :%d\n"), i,temp[i].col);
+		//		TCHAR buffer = 'H';
+		//		SetConsoleCursorPosition(hConsole, cursorPos);
+		//		WriteConsole(hConsole, &buffer, 1, &numWritten, NULL);
+		//	}
 		//}
+		for (int i = 0; i < MAX_COLS; i++)
+		{
+			DWORD numWritten; // Number of characters actually written
+			cursorPos.X = i;
+			cursorPos.Y = data->id;
+			//_tprintf(TEXT("coluna do carro %d :%d\n"), i,temp[i].col);
+			TCHAR buffer = 'H';
+			SetConsoleCursorPosition(hConsole, cursorPos);
+			WriteConsole(hConsole, &temp[data->id * MAX_COLS + i], 1, & numWritten, NULL);
+		}
 
 		ReleaseMutex(data->hMutex);
 	}
@@ -203,7 +208,7 @@ int _tmain(int argc, TCHAR* argv[]) {
 		_tprintf(TEXT("[DEBUG] NUM ROADS %d criada\n"), pBuf->numRoads);
 		for (int i = 0; i < pBuf->numRoads; i++)
 		{
-			HANDLE HMapFile = CreateFileMapping(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, MAX_CARS * sizeof(CarPos), TEXT("SO2_MAP_OLA"));
+			HANDLE HMapFile = CreateFileMapping(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, sizeof(TCHAR) * MAX_ROWS * (MAX_COLS + 4), TEXT("SO2_MAP_OLA"));
 			//_tprintf(TEXT("SO2_MAP_OLA") + (i + 2));
 			if (HMapFile == NULL)
 			{
@@ -211,8 +216,8 @@ int _tmain(int argc, TCHAR* argv[]) {
 				return 0;
 			}
 
-			RoadsData[i].sharedCarPos = (CarPos*)MapViewOfFile(HMapFile, FILE_MAP_ALL_ACCESS, 0, 0, 0);
-			if (RoadsData[i].sharedCarPos == NULL)
+			RoadsData[i].sharedMap = (TCHAR*)MapViewOfFile(HMapFile, FILE_MAP_ALL_ACCESS, 0, 0, 0);
+			if (RoadsData[i].sharedMap == NULL)
 			{
 				_tprintf(TEXT("ERRO MapViewOfFile\n"));
 				return 0;

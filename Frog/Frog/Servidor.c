@@ -23,8 +23,10 @@ typedef struct {
 	int speed;
 	int numCars;
 	pCarPos car_pos;
+	TCHAR* Map;
 	BOOLEAN direction;
 	pCarPos sharedCarPos;
+	TCHAR* sharedMap;
 	HANDLE hEventRoads, hMutex;
 	int id;
 } TRoads, *pTRoads;
@@ -34,10 +36,13 @@ DWORD WINAPI ThreadRoads(LPVOID lpParam)
 {
 	pTRoads data = (pTRoads)lpParam;
 	pCarPos temp;
-	temp = data->car_pos;
+	_tprintf(TEXT("INICIO DA THREAD %d\n"), data->id);
+
 	while (1)
 	{
 		WaitForSingleObject(data->hMutex, INFINITE);
+		temp = data->car_pos;
+
 		_tprintf(TEXT("thread %d comecou\n"),data->id);
 		//movimento carros direita esquerda
 		for (int i = 0; i < data->numCars; i++)
@@ -46,6 +51,8 @@ DWORD WINAPI ThreadRoads(LPVOID lpParam)
 			if (x == data->id)
 			{
 				int y = temp[i].col;
+				data->Map[x * MAX_COLS + y] = ' ';
+
 				if (y - 1 == 0) {
 					temp[i].col = MAX_COLS - 2;
 				}
@@ -53,25 +60,25 @@ DWORD WINAPI ThreadRoads(LPVOID lpParam)
 					temp[i].col--;
 			}
 		}
-		/*for (int i = 0; i < data->Game->numCars; i++)
+		for (int i = 0; i < data->numCars; i++)
 				{
-					int x = data->Game->car_pos[i][0];
-					int y = data->Game->car_pos[i][1];
+					int x = data->car_pos[i].col;
+					int y = data->car_pos[i].row;
 					_tprintf(TEXT("x:%d\n"),x);
 					_tprintf(TEXT("y:%d\n"),y);
-					data->Game->map[x][y] = CAR_ELEMENT;
-				}*/
+					data->Map[y * MAX_COLS + x] = CAR_ELEMENT;
+				}
 		//copiar o conteudo para a memoria partilhada
-		_tprintf(TEXT("temppppp1 %d\n"), temp[0].row);
-		CopyMemory(data->sharedCarPos, temp, MAX_CARS * sizeof(CarPos));
-		_tprintf(TEXT("temppppp2 %d\n"), data->sharedCarPos[0].row);
+		_tprintf(TEXT("temppppp1 %c\n"), data->Map[2]);
+		CopyMemory(data->sharedMap, data->Map, sizeof(TCHAR) * MAX_ROWS * (MAX_COLS + 4));
+		_tprintf(TEXT("temppppp2 %c\n"), data->sharedMap[2]);
 
 		ReleaseMutex(data->hMutex);
 		_tprintf(TEXT("thread %d acabou\n"), data->id);
 		//Criamos evento para que as threads ja consiga ler
 		SetEvent(data->hEventRoads);
 
-		//Sleep(500);
+		Sleep(500);
 		ResetEvent(data->hEventRoads);
 		Sleep(data->speed);
 	}
@@ -227,7 +234,7 @@ int _tmain(int argc, TCHAR* argv[]) {
 			else if (i == 1 || i == MAX_ROWS + 2) {
 				data.map[i][j] = BEGIN_END_ELEMENT;
 			}else
-				data.map[i][j] = ROAD_ELEMENT;
+				data.map[i][j] = ' ';
 		}
 	}
 
@@ -314,20 +321,21 @@ int _tmain(int argc, TCHAR* argv[]) {
 		_tprintf(TEXT("[DEBUG] NUM ROADS %d criada\n"), data.numRoads);
 		for (int i = 0; i < data.numRoads; i++)
 		{
-			HANDLE HMapFile = CreateFileMapping(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, MAX_CARS * sizeof(CarPos) , TEXT("SO2_MAP_OLA"));
+			HANDLE HMapFile = CreateFileMapping(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, sizeof(TCHAR) * MAX_ROWS * (MAX_COLS + 4), TEXT("SO2_MAP_OLA"));
 			if (HMapFile == NULL)
 			{
 				_tprintf(TEXT("ERRO CreateFileMapping\n"));
 				return 0;
 			}
 			_tprintf(TEXT("Criado CreateFileMapping\n"));
-			RoadsData[i].sharedCarPos = (CarPos*)MapViewOfFile(HMapFile, FILE_MAP_ALL_ACCESS, 0, 0, 0);
-			if (RoadsData[i].sharedCarPos == NULL)
+			RoadsData[i].sharedMap = (TCHAR*)MapViewOfFile(HMapFile, FILE_MAP_ALL_ACCESS, 0, 0, 0);
+			if (RoadsData[i].sharedMap == NULL)
 			{
 				_tprintf(TEXT("ERRO MapViewOfFile\n"));
 				return 0;
 			}
 
+			RoadsData[i].Map = &data.map;
 			RoadsData[i].car_pos = &data.car_pos;
 			RoadsData[i].numCars = data.numCars;
 			RoadsData[i].hMutex = CreateMutex(NULL, FALSE, TEXT("MUTEX_ROADS"));

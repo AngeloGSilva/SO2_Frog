@@ -2,7 +2,7 @@
 #define TAM 100
 #define MAX_CARS 64
 #define MAX_FROGS 10
-#define MAX_ROWS 8
+#define MAX_ROWS 9
 #define MAX_COLS 20
 
 #define SEMAPHORE_UNIQUE_SERVER TEXT("SEM_UNIQUE_SERVE")
