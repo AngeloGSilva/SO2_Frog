@@ -20,8 +20,6 @@ typedef struct {
 	int id;
 } TRoads, * pTRoads;
 
-
-
 DWORD WINAPI ThreadRoads(LPVOID lpParam)
 {
 	_tprintf(TEXT("ESTOU A ESPERA\n"));
@@ -30,6 +28,7 @@ DWORD WINAPI ThreadRoads(LPVOID lpParam)
 	_tprintf(TEXT("ESTOU A ESPERA\n"));
 	while (1)
 	{
+		
 		//_tprintf(TEXT("ESTOU A ESPERA\n"));
 		WaitForSingleObject(data->hEventRoads, INFINITE);
 		//_tprintf(TEXT("ESTOU A ESPERA\n"));
@@ -39,7 +38,6 @@ DWORD WINAPI ThreadRoads(LPVOID lpParam)
 		CopyMemory(&display, &data->GameSharedMemorie, sizeof(GameData));
 		//movimento carros direita esquerda
 		//_tprintf(TEXT("thread %c comecou\n"), display->map[data->id][0]);
-		//Sleep(10000);
 		HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
 		COORD cursorPos;
 		for (int i = 0; i < MAX_COLS; i++)
@@ -47,25 +45,20 @@ DWORD WINAPI ThreadRoads(LPVOID lpParam)
 			DWORD numWritten; // Number of characters actually written
 			cursorPos.X = i;
 			cursorPos.Y = data->id;
+
 			SetConsoleCursorPosition(hConsole, cursorPos);
-			WriteConsole(hConsole, &display->map[data->id][i], 1, &numWritten, NULL);
+			WriteConsole(hConsole, &data->GameSharedMemorie->map[data->id][i], 1, &numWritten, NULL);
+
 			//_tprintf(TEXT("%c"), display->map[data->id][i]);
 		}
+
+		Sleep(1500);
 
 		ReleaseMutex(data->hMutex);
 		//_tprintf(TEXT("thread %d acabou\n"), data->id);
 	}
 
-	////atualizar mapa
-	//for (int i = 0; i < data->Game.numCars; i++)
-	//{
-	//	int x = data->Game.car_pos[i][0];
-	//	int y = data->Game.car_pos[i][1];
-	//	_tprintf(TEXT("x:%d\n"), x);
-	//	_tprintf(TEXT("y:%d\n"), y);
-	//	data->Game.map[x][y] = CAR_ELEMENT;
-	//}
-
+	
 	return 0;
 }
 
@@ -113,10 +106,9 @@ int _tmain(int argc, TCHAR* argv[]) {
 	//rand
 	srand((unsigned)time(NULL));
 
-
 	GameData data;
 
-
+	/*
 	TDados dataThread;
 
 	dataThread.hMutex = CreateMutex(NULL, FALSE, BUFFER_CIRCULAR_MUTEX_ESCRITOR);
@@ -159,17 +151,35 @@ int _tmain(int argc, TCHAR* argv[]) {
 		0,       // Creation flags
 		NULL);   // Thread id   // returns the thread identifier 
 
+	*/
 
 	//data tem de sair e so ficar pbuf penso eu
 	HANDLE HMapFile = CreateFileMapping(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, sizeof(GameData), FILE_MAPPING_GAME_DATA);
+	if (HMapFile == NULL)
+	{
+		_tprintf(TEXT("[ERRO] CreateFileMapping\n"));
+		return 0;
+	}
 	pGameData pBuf = (GameData*)MapViewOfFile(HMapFile, FILE_MAP_ALL_ACCESS, 0, 0, 0);
+	if (pBuf == NULL)
+	{
+		_tprintf(TEXT("[ERRO] MapViewOfFile\n"));
+		return 0;
+	}
 	//data.event = OpenEvent(READ_CONTROL,TRUE, TEXT("TP_Evento"));
 	data.Serv_HEvent = CreateEvent(NULL, TRUE, FALSE, SHARED_MEMORIE_EVENT);
+	if (data.Serv_HEvent == NULL)
+	{
+		_tprintf(TEXT("[ERRO]CreateEvent\n"));
+		return 0;
+	}
 	//data.mutex = OpenMutex(READ_CONTROL, TRUE, TEXT("TP_Mutex"));
 	data.Serv_HMutex = CreateMutex(NULL, FALSE, SHARED_MEMORIE_MUTEX);
-
-
-
+	if (data.Serv_HMutex == NULL)
+	{
+		_tprintf(TEXT("[ERRO]CreateMutex\n"));
+		return 0;
+	}
 
 	//while (1)
 	//{
@@ -188,8 +198,6 @@ int _tmain(int argc, TCHAR* argv[]) {
 		//	}
 		//	_tprintf("\n");
 		//}
-
-
 
 		//libertat o mutex
 		ReleaseMutex(data.Serv_HMutex);
@@ -228,10 +236,14 @@ int _tmain(int argc, TCHAR* argv[]) {
 				0,       // Stack size (0 = use default)
 				ThreadRoads, // Thread start address
 				&RoadsData[i],    // Parameter to pass to the thread
-				0,       // Creation flags
+				CREATE_SUSPENDED,       // Creation flags
 				NULL);   // Thread id   // returns the thread identifier 
 			_tprintf(TEXT("[DEBUG] Thread estrada %d criada\n"), i);
 
+		}
+
+		for (int i = 0; i < pBuf->numRoads; i++) {
+			ResumeThread(RoadThreads[i]);
 		}
 
 
@@ -242,6 +254,6 @@ int _tmain(int argc, TCHAR* argv[]) {
 
 		}
 
-	CloseHandle(hThreads);
+	//CloseHandle(hThreads);
 	return 0;
 }

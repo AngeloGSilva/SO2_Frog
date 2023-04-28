@@ -30,7 +30,6 @@ DWORD WINAPI ThreadRoads(LPVOID lpParam)
 	
 	while (1)
 	{
-		WaitForSingleObject(data->hMutex, INFINITE);
 		_tprintf(TEXT("thread %d comecou\n"),data->id);
 		//movimento carros direita esquerda
 		for (int i = 0; i < data->Game->numCars; i++)
@@ -58,6 +57,8 @@ DWORD WINAPI ThreadRoads(LPVOID lpParam)
 					data->Game->map[x][y] = CAR_ELEMENT;
 				}
 		//copiar o conteudo para a memoria partilhada
+		WaitForSingleObject(data->hMutex, INFINITE);
+
 		CopyMemory(data->GameSharedMemorie, data->Game,sizeof(GameData));
 		_tprintf(TEXT("temppppp %d\n"),data->GameSharedMemorie->numCars);
 
@@ -68,7 +69,7 @@ DWORD WINAPI ThreadRoads(LPVOID lpParam)
 
 		//Sleep(500);
 		ResetEvent(data->hEventRoads);
-		Sleep(data->speed);
+		Sleep(data->id * 1000);
 	}
 	
 	////atualizar mapa
@@ -153,7 +154,7 @@ int _tmain(int argc, TCHAR* argv[]) {
 	GameData data = RegistryKeyValue();
 
 	TDados dataThread;
-
+	/*
 	dataThread.hMutex = CreateMutex(NULL, FALSE, BUFFER_CIRCULAR_MUTEX_LEITORE);
 	dataThread.hSemEscrita = CreateSemaphore(NULL, 10, 10, BUFFER_CIRCULAR_SEMAPHORE_ESCRITOR);
 	dataThread.hSemLeitura = CreateSemaphore(NULL, 0, 10, BUFFER_CIRCULAR_SEMAPHORE_LEITORE);
@@ -194,9 +195,9 @@ int _tmain(int argc, TCHAR* argv[]) {
 		0,       // Creation flags
 		NULL);   // Thread id   // returns the thread identifier 
 
+		*/
 
-	_tprintf(TEXT("car: %d,speed: %d\n"), data.numCars, data.carSpeed);
-
+	_tprintf(TEXT("V[VALORES REGISTRY]Numero carros: %d,Velocidade: %d\n"), data.numCars, data.carSpeed);
 	//criar Semaf
 	HANDLE hSem = CreateSemaphore(NULL, 1, 1, SEMAPHORE_UNIQUE_SERVER);
 	if (hSem == NULL)
@@ -210,10 +211,10 @@ int _tmain(int argc, TCHAR* argv[]) {
 	_tprintf(TEXT("Waiting for slot...\n"));
 
 	WaitForSingleObject(hSem, INFINITE);
-	_tprintf(TEXT("Got in!\n"));
+	_tprintf(TEXT("Entrei Servidor Logic!\n"));
 
 	//desenho do mapa
-	for (int i = 0; i < MAX_ROWS + 4; i++)
+	for (int i = 0; i < MAX_ROWS + INITIAL_ROWS; i++)
 	{
 		for (int j = 0; j < MAX_COLS; j++)
 		{
@@ -229,11 +230,9 @@ int _tmain(int argc, TCHAR* argv[]) {
 
 	//Colocar tudo a zero... numRoads fix size for debug
 	//apagar prints after testes
-	data.numRoads = 6;
+	data.numRoads = 8;
 	data.numCars = 0;
 	_tprintf(TEXT("NumRoads %d\n"), data.numRoads);
-
-
 
 	//Gerar carros
 	for (int i = 0; i < data.numRoads; i++) 
@@ -241,37 +240,20 @@ int _tmain(int argc, TCHAR* argv[]) {
 		int carsInRoad = (rand() % 8) + 1;
 		_tprintf(TEXT("CarInRoad %d\n"), carsInRoad);
 		//data.numCars = data.numCars + carsInRoad;
-		for (;carsInRoad >= 0; carsInRoad--) {
-			_tprintf(TEXT("numCars antes %d\n"), data.numCars);
-			
-			_tprintf(TEXT("numCars depois %d\n"), data.numCars);
-			data.car_pos[data.numCars][0] = i + 2; //X -> linha
+		for (;carsInRoad > 0; carsInRoad--) {
+			data.car_pos[data.numCars][0] = i + SKIP_INITIAL_ROWS; //X -> linha
 			_tprintf(TEXT("car na linha %d\n"), data.car_pos[data.numCars][0]);
 			int posInRoad = 0;
 			do {
 				posInRoad = (rand() % (MAX_COLS - 2)) + 1;
 			} while (data.map[i][posInRoad] == CAR_ELEMENT);
-				_tprintf(TEXT("RANDOM DEU CRLH %d\n"), posInRoad);
 			data.car_pos[data.numCars][1] = posInRoad; //y -> coluna
-			_tprintf(TEXT("car na coluna %d\n"), data.car_pos[data.numCars][1]);
-			data.map[i][posInRoad] == CAR_ELEMENT;
-			_tprintf(TEXT("car criado nesta pos:%d , %d\n"), data.car_pos[data.numCars][0], data.car_pos[data.numCars][1]);
-			_tprintf(TEXT("NUMERO AGORA ESTA EM  CARS %d Y DO CARRO É %d\n"), data.numCars, data.car_pos[data.numCars][1]);
+			data.map[i][posInRoad] = CAR_ELEMENT;
 			data.numCars++;
 		}
 	}
 	_tprintf(TEXT("NUMERO TOTAL DE CARS %d\n"),data.numCars);
 
-
-	////Gerar carros
-	//for (int i = 2; i < MAX_ROWS + 2; i++)
-	//{
-	//	for (int cars = (rand() % 8) + 1; cars >= 0; cars--) {
-	//		int ra = (rand() % (MAX_COLS - 2)) + 1;
-	//		data.map[i][ra] = CAR_ELEMENT;
-	//		_tprintf(TEXT("cars:%d\n"),ra);
-	//	}
-	//}
 	
 	HANDLE HMapFile = CreateFileMapping(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, sizeof(GameData), FILE_MAPPING_GAME_DATA);
 	if (HMapFile == NULL)
@@ -373,8 +355,6 @@ int _tmain(int argc, TCHAR* argv[]) {
 		//Sleep(500);
 		ResetEvent(data.Serv_HEvent);
 
-
-
 		HANDLE mutex_ROADS;
 
 		// matriz de handles das threads
@@ -383,7 +363,6 @@ int _tmain(int argc, TCHAR* argv[]) {
 		TRoads RoadsData[MAX_ROADS_THREADS];
 
 
-		_tprintf(TEXT("[DEBUG] NUM ROADS %d criada\n"), data.numRoads);
 		for (int i = 0; i < data.numRoads; i++)
 		{
 			HANDLE HMapFile = CreateFileMapping(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, sizeof(GameData), TEXT("SO2_MAP_OLA"));
@@ -400,13 +379,11 @@ int _tmain(int argc, TCHAR* argv[]) {
 				return 0;
 			}
 
-
 			RoadsData[i].hMutex = CreateMutex(NULL, FALSE, TEXT("MUTEX_ROADS"));
-			RoadsData[i].hEventRoads = CreateEvent(NULL, TRUE, FALSE, TEXT("EVENT_ROADS"));
+			RoadsData[i].hEventRoads = CreateEvent(NULL, TRUE, FALSE, TEXT("EVENT_ROADS"));//(TEXT("EVENT_ROADS%d"), i)
 			RoadsData[i].Game = &data;
-			RoadsData[i].id = i + 2; //o numero do id é a estrada q elas estao encarregues
-			RoadsData[i].speed = ((rand() % 8) + 1) * 1000;
-			_tprintf(TEXT("SPEEEEDDDDD:::::::: %d\n"), RoadsData[i].speed);
+			RoadsData[i].id = i + SKIP_INITIAL_ROWS; //o numero do id é a estrada q elas estao encarregues
+			RoadsData[i].speed = 1000;
 			RoadsData[i].direction = 1;
 			RoadThreads[i] = CreateThread(
 				NULL,    // Thread attributes
@@ -415,8 +392,6 @@ int _tmain(int argc, TCHAR* argv[]) {
 				&RoadsData[i],    // Parameter to pass to the thread
 				0,       // Creation flags
 				NULL);   // Thread id   // returns the thread identifier 
-			_tprintf(TEXT("[~DEBUG] Thread estrada %d criada\n"), i);
-
 		}
 
 		while (1)
@@ -430,7 +405,7 @@ int _tmain(int argc, TCHAR* argv[]) {
 
 		
 	//}
-	CloseHandle(hThreads);
+	//CloseHandle(hThreads);
 	//ReleaseSemaphore(hSem, 1, NULL);
 	//UnmapViewOfFile(pBuf);
 	return 0;
