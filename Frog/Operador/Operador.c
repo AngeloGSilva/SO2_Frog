@@ -112,6 +112,41 @@ DWORD WINAPI ThreadBufferCircular(LPVOID lpParam)
 	return 0;
 }
 
+
+
+//DWORD WINAPI ThreadGameInfo(LPVOID lpParam)
+//{
+//	int numRoads = (int)lpParam;
+//	_tprintf(TEXT("Thread info %d\n"),numRoads);
+//	while (1)
+//	{
+//		for (int i = 0; i < numRoads; i++)
+//		{
+//			for (int j = 0; j < MAX_COLS; j++)
+//			{
+//				if (i == 0 || i==1|| i == numRoads+3 || i == numRoads+4)
+//				{
+//					_tprintf(TEXT("Thread info\n"));
+//					HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+//					COORD cursorPos;
+//					DWORD numWritten; // Number of characters actually written
+//					cursorPos.X = j;
+//					cursorPos.Y = i;
+//					TCHAR buffer = 'X';
+//					SetConsoleCursorPosition(hConsole, cursorPos);
+//					WriteConsole(hConsole, &buffer, 1, &numWritten, NULL);
+//				}
+//			}
+//		}
+//		
+//	}
+//	return 0;
+//}
+
+
+
+
+
 //ideias para tratar do mapa.... 
 //fazer uma thread separada do main que trate so do desenho do mapa
 //movimentos do sapo sera algo semelhante
@@ -176,6 +211,8 @@ int _tmain(int argc, TCHAR* argv[]) {
 		NULL);   // Thread id   // returns the thread identifier 
 
 
+
+
 	//data tem de sair e so ficar pbuf penso eu
 	HANDLE HMapFile = CreateFileMapping(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, sizeof(GameData), FILE_MAPPING_GAME_DATA);
 	pGameData pBuf = (GameData*)MapViewOfFile(HMapFile, FILE_MAP_ALL_ACCESS, 0, 0, 0);
@@ -192,6 +229,22 @@ int _tmain(int argc, TCHAR* argv[]) {
 
 		//libertat o mutex
 		ReleaseMutex(data.Serv_HMutex);
+
+
+
+		////Thread para inicio e fim do Mapa + pontuacao/ restante info necessaria 
+		//HANDLE hThreadsINFO = CreateThread(
+		//	NULL,    // Thread attributes
+		//	0,       // Stack size (0 = use default)
+		//	ThreadGameInfo, // Thread start address
+		//	&pBuf->numRoads,    // Parameter to pass to the thread
+		//	0,       // Creation flags
+		//	NULL);   // Thread id   // returns the thread identifier 
+
+
+
+
+
 
 		//Gerar Threads Roads
 		HANDLE mutex_ROADS;
@@ -231,7 +284,7 @@ int _tmain(int argc, TCHAR* argv[]) {
 				&RoadsData[i],    // Parameter to pass to the thread
 				0,       // Creation flags
 				NULL);   // Thread id   // returns the thread identifier 
-			_tprintf(TEXT("[DEBUG] Thread estrada %d criada\n"), i);
+			//_tprintf(TEXT("[DEBUG] Thread estrada %d criada\n"), i);
 		}
 
 
