@@ -2,7 +2,7 @@
 #define TAM 100
 #define MAX_CARS 64
 #define MAX_FROGS 10
-#define MAX_ROWS 9
+#define MAX_ROWS 8
 #define MAX_COLS 20
 
 #define SEMAPHORE_UNIQUE_SERVER TEXT("SEM_UNIQUE_SERVE")
@@ -27,3 +27,5 @@
 #define ROAD_ELEMENT 61
 #define CAR_ELEMENT 72
 #define BEGIN_END_ELEMENT 42
+#define SKIP_BEGINING_END 4
+#define SKIP_BEGINING 2

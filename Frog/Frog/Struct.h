@@ -9,6 +9,11 @@ typedef struct {
 }CarPos, * pCarPos;
 
 typedef struct {
+	int col;
+	int row;
+}FrogPos, * pFrogPos;
+
+typedef struct {
 	HANDLE Serv_HMutex, Serv_HEvent;
 	DWORD carSpeed;
 	DWORD numCars;

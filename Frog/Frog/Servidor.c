@@ -51,26 +51,30 @@ DWORD WINAPI ThreadRoads(LPVOID lpParam)
 			if (x == data->id)
 			{
 				int y = temp[i].col;
-				data->Map[x * MAX_COLS + y] = ' ';
+				data->Map[x * MAX_COLS + y] = ROAD_ELEMENT;
 
 				if (y - 1 == 0) {
 					temp[i].col = MAX_COLS - 2;
 				}
 				else
 					temp[i].col--;
+				//Atualizar a posição doc arro
+				int newx = data->car_pos[i].col;
+				int newy = data->car_pos[i].row;
+				_tprintf(TEXT("x:%d\n"), newx);
+				_tprintf(TEXT("y:%d\n"), newy);
+				data->Map[newy * MAX_COLS + newx] = CAR_ELEMENT;
+
 			}
 		}
-		for (int i = 0; i < data->numCars; i++)
-				{
-					int x = data->car_pos[i].col;
-					int y = data->car_pos[i].row;
-					_tprintf(TEXT("x:%d\n"),x);
-					_tprintf(TEXT("y:%d\n"),y);
-					data->Map[y * MAX_COLS + x] = CAR_ELEMENT;
-				}
+					/*if(data->direction == 1)
+						data->Map[y * MAX_COLS + x - 1] = ROAD_ELEMENT;
+					else
+						data->Map[y * MAX_COLS + x + 1] = ROAD_ELEMENT;*/
+
 		//copiar o conteudo para a memoria partilhada
 		_tprintf(TEXT("temppppp1 %c\n"), data->Map[2]);
-		CopyMemory(data->sharedMap, data->Map, sizeof(TCHAR) * MAX_ROWS * (MAX_COLS + 4));
+		CopyMemory(data->sharedMap, data->Map, sizeof(TCHAR) * (MAX_ROWS + SKIP_BEGINING_END) * MAX_COLS);
 		_tprintf(TEXT("temppppp2 %c\n"), data->sharedMap[2]);
 
 		ReleaseMutex(data->hMutex);
@@ -223,26 +227,26 @@ int _tmain(int argc, TCHAR* argv[]) {
 
 	WaitForSingleObject(hSem, INFINITE);
 	_tprintf(TEXT("Got in!\n"));
-
+	data.numRoads = 8;
+	data.numCars = 0;
 	//desenho do mapa
-	for (int i = 0; i < MAX_ROWS + 4; i++)
+	for (int i = 0; i < data.numRoads + SKIP_BEGINING_END; i++)
 	{
 		for (int j = 0; j < MAX_COLS; j++)
 		{
-			if (i == 0 || j == 0 || i == MAX_ROWS + 3 || j == MAX_COLS - 1)
+			if (i == 0 || j == 0 || i == data.numRoads + 3 || j == MAX_COLS - 1)
 				data.map[i][j] = BLOCK_ELEMENT;
-			else if (i == 1 || i == MAX_ROWS + 2) {
+			else if (i == 1 || i == data.numRoads + SKIP_BEGINING) {
 				data.map[i][j] = BEGIN_END_ELEMENT;
 			}else
-				data.map[i][j] = ' ';
+				data.map[i][j] = ROAD_ELEMENT;
 		}
 	}
 
-
+	data.map;
 	//Colocar tudo a zero... numRoads fix size for debug
 	//apagar prints after testes
-	data.numRoads = 8;
-	data.numCars = 0;
+	
 	_tprintf(TEXT("NumRoads %d\n"), data.numRoads);
 
 	//Gerar carros
@@ -250,7 +254,7 @@ int _tmain(int argc, TCHAR* argv[]) {
 	{
 		int carsInRoad = (rand() % 8) + 1;
 		for (;carsInRoad >= 0; carsInRoad--) {
-			data.car_pos[data.numCars].row = i + 2; //X -> linha
+			data.car_pos[data.numCars].row = i + SKIP_BEGINING; //X -> linha
 			int posInRoad = 0;
 			do {
 				posInRoad = (rand() % (MAX_COLS - 2)) + 1;
@@ -262,6 +266,7 @@ int _tmain(int argc, TCHAR* argv[]) {
 	}
 	_tprintf(TEXT("NUMERO TOTAL DE CARS %d\n"),data.numCars);
 
+	data.map;
 	
 	HANDLE HMapFile = CreateFileMapping(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, sizeof(GameData), FILE_MAPPING_GAME_DATA);
 	if (HMapFile == NULL)
@@ -307,8 +312,6 @@ int _tmain(int argc, TCHAR* argv[]) {
 		//Sleep(500);
 		ResetEvent(data.Serv_HEvent);
 
-
-
 		//Gerar Threads das Roads
 		HANDLE mutex_ROADS;
 
@@ -321,7 +324,7 @@ int _tmain(int argc, TCHAR* argv[]) {
 		_tprintf(TEXT("[DEBUG] NUM ROADS %d criada\n"), data.numRoads);
 		for (int i = 0; i < data.numRoads; i++)
 		{
-			HANDLE HMapFile = CreateFileMapping(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, sizeof(TCHAR) * MAX_ROWS * (MAX_COLS + 4), TEXT("SO2_MAP_OLA"));
+			HANDLE HMapFile = CreateFileMapping(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, sizeof(TCHAR) * (MAX_ROWS + SKIP_BEGINING_END) * MAX_COLS, TEXT("SO2_MAP_OLA"));
 			if (HMapFile == NULL)
 			{
 				_tprintf(TEXT("ERRO CreateFileMapping\n"));
@@ -340,7 +343,7 @@ int _tmain(int argc, TCHAR* argv[]) {
 			RoadsData[i].numCars = data.numCars;
 			RoadsData[i].hMutex = CreateMutex(NULL, FALSE, TEXT("MUTEX_ROADS"));
 			RoadsData[i].hEventRoads = CreateEvent(NULL, TRUE, FALSE, TEXT("EVENT_ROADS") + i);
-			RoadsData[i].id = i + 2; //o numero do id é a estrada q elas estao encarregues
+			RoadsData[i].id = i + SKIP_BEGINING; //o numero do id é a estrada q elas estao encarregues
 			RoadsData[i].speed = ((rand() % 8) + 1) * 1000;
 			RoadsData[i].direction = 1;
 			RoadThreads[i] = CreateThread(
