@@ -11,11 +11,17 @@
 #include <stdlib.h>
 
 #define MAX_ROADS_THREADS 50
+
+//typedef struct {
+//	int col;
+//	int row;
+//}CarPos, * pCarPos;
+
 typedef struct {
 	int speed;
+	int numCars;
 	BOOLEAN direction;
-	pGameData Game;
-	pGameData GameSharedMemorie;
+	pCarPos sharedCarPos;
 	HANDLE hEventRoads, hMutex;
 	int id;
 } TRoads, * pTRoads;
@@ -24,36 +30,41 @@ typedef struct {
 
 DWORD WINAPI ThreadRoads(LPVOID lpParam)
 {
-	_tprintf(TEXT("ESTOU A ESPERA\n"));
 	pTRoads data = (pTRoads)lpParam;
-	pGameData display;
-	_tprintf(TEXT("ESTOU A ESPERA\n"));
+	CarPos temp[MAX_CARS];
 	while (1)
 	{
-		//_tprintf(TEXT("ESTOU A ESPERA\n"));
 		WaitForSingleObject(data->hEventRoads, INFINITE);
-		//_tprintf(TEXT("ESTOU A ESPERA\n"));
 		WaitForSingleObject(data->hMutex, INFINITE);
-		//_tprintf(TEXT("thread %d comecou\n"), data->id);
-		//_tprintf(TEXT("temp %d comecou\n"), data->GameSharedMemorie->numCars);
-		CopyMemory(&display, &data->GameSharedMemorie, sizeof(GameData));
-		//movimento carros direita esquerda
-		//_tprintf(TEXT("thread %c comecou\n"), display->map[data->id][0]);
-		//Sleep(10000);
+		CopyMemory(&temp, &data->sharedCarPos, MAX_CARS * sizeof(CarPos));
 		HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
 		COORD cursorPos;
-		for (int i = 0; i < MAX_COLS; i++)
+		//_tprintf(TEXT("numero de carros: %d\n"), data->numCars);
+		//_tprintf(TEXT("id da thread: %d\n"), data->id);
+		//_tprintf(TEXT("linha do primeiro carro: %d\n"), data->sharedCarPos[0].row);
+		for (int i = 0; i < data->numCars; i++)
 		{
-			DWORD numWritten; // Number of characters actually written
-			cursorPos.X = i;
-			cursorPos.Y = data->id;
-			SetConsoleCursorPosition(hConsole, cursorPos);
-			WriteConsole(hConsole, &display->map[data->id][i], 1, &numWritten, NULL);
-			//_tprintf(TEXT("%c"), display->map[data->id][i]);
+			if (data->sharedCarPos[i].row == data->id) {
+				DWORD numWritten; // Number of characters actually written
+				cursorPos.X = data->sharedCarPos[i].col;
+				cursorPos.Y = data->id;
+				//_tprintf(TEXT("coluna do carro %d :%d\n"), i,temp[i].col);
+				TCHAR buffer = 'H';
+				SetConsoleCursorPosition(hConsole, cursorPos);
+				WriteConsole(hConsole, &buffer, 1, &numWritten, NULL);
+			}
 		}
+		//for (int i = 0; i < MAX_COLS; i++)
+		//{
+		//	DWORD numWritten; // Number of characters actually written
+		//	cursorPos.X = &temp[i].col;
+		//	cursorPos.Y = data->id;
+		//	_tprintf(TEXT("temppppp1 %d\n"), temp[i].col);
+		//	SetConsoleCursorPosition(hConsole, cursorPos);
+		//	WriteConsole(hConsole, 'h', 1, &numWritten, NULL);
+		//}
 
 		ReleaseMutex(data->hMutex);
-		//_tprintf(TEXT("thread %d acabou\n"), data->id);
 	}
 
 	////atualizar mapa
@@ -170,30 +181,18 @@ int _tmain(int argc, TCHAR* argv[]) {
 
 
 
-
-	//while (1)
-	//{
 		WaitForSingleObject(data.Serv_HEvent, INFINITE);
 
 		WaitForSingleObject(data.Serv_HMutex, INFINITE);
 
 		//system("cls");//nao sei ate q ponto é bom usar isto
 
-		//_tprintf(TEXT("Mensagem Recebida: %d %d\n"), pBuf->num_cars,pBuf->num_frogs);
-		//for (int i = 0; i < MAX_ROWS + 4; i++)
-		//{
-		//	for (int j = 0; j < MAX_COLS; j++)
-		//	{
-		//		_tprintf(TEXT("%c"), pBuf->map[i][j]);
-		//	}
-		//	_tprintf("\n");
-		//}
-
-
-
 		//libertat o mutex
 		ReleaseMutex(data.Serv_HMutex);
 
+		
+
+		//Gerar Threads Roads
 		HANDLE mutex_ROADS;
 
 		// matriz de handles das threads
@@ -204,7 +203,7 @@ int _tmain(int argc, TCHAR* argv[]) {
 		_tprintf(TEXT("[DEBUG] NUM ROADS %d criada\n"), pBuf->numRoads);
 		for (int i = 0; i < pBuf->numRoads; i++)
 		{
-			HANDLE HMapFile = CreateFileMapping(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, sizeof(GameData), TEXT("SO2_MAP_OLA"));
+			HANDLE HMapFile = CreateFileMapping(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, MAX_CARS * sizeof(CarPos), TEXT("SO2_MAP_OLA"));
 			//_tprintf(TEXT("SO2_MAP_OLA") + (i + 2));
 			if (HMapFile == NULL)
 			{
@@ -212,12 +211,13 @@ int _tmain(int argc, TCHAR* argv[]) {
 				return 0;
 			}
 
-			RoadsData[i].GameSharedMemorie = (pGameData)MapViewOfFile(HMapFile, FILE_MAP_ALL_ACCESS, 0, 0, 0);
-			if (RoadsData[i].GameSharedMemorie == NULL)
+			RoadsData[i].sharedCarPos = (CarPos*)MapViewOfFile(HMapFile, FILE_MAP_ALL_ACCESS, 0, 0, 0);
+			if (RoadsData[i].sharedCarPos == NULL)
 			{
 				_tprintf(TEXT("ERRO MapViewOfFile\n"));
 				return 0;
 			}
+			RoadsData[i].numCars = pBuf->numCars;
 			RoadsData[i].hMutex = CreateMutex(NULL, FALSE, TEXT("MUTEX_ROADS"));
 			RoadsData[i].hEventRoads = CreateEvent(NULL, TRUE, FALSE, TEXT("EVENT_ROADS"));
 			RoadsData[i].id = i + 2; //o numero do id é a estrada q elas estao encarregues
@@ -231,12 +231,9 @@ int _tmain(int argc, TCHAR* argv[]) {
 				0,       // Creation flags
 				NULL);   // Thread id   // returns the thread identifier 
 			_tprintf(TEXT("[DEBUG] Thread estrada %d criada\n"), i);
-
 		}
 
 
-		//Sleep(pBuf->carSpeed);
-	/*}*/
 		while (1)
 		{
 

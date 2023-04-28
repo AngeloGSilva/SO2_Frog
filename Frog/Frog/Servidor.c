@@ -14,52 +14,57 @@
 
 #define MAX_ROADS_THREADS 50
 
+//typedef struct {
+//	int col;
+//	int row;
+//}CarPos, *pCarPos;
+
 typedef struct {
 	int speed;
+	int numCars;
+	pCarPos car_pos;
 	BOOLEAN direction;
-	pGameData Game;
-	pGameData GameSharedMemorie;
+	pCarPos sharedCarPos;
 	HANDLE hEventRoads, hMutex;
 	int id;
-} TRoads, * pTRoads;
+} TRoads, *pTRoads;
 
 
 DWORD WINAPI ThreadRoads(LPVOID lpParam)
 {
 	pTRoads data = (pTRoads)lpParam;
-	
+	pCarPos temp;
+	temp = data->car_pos;
 	while (1)
 	{
 		WaitForSingleObject(data->hMutex, INFINITE);
 		_tprintf(TEXT("thread %d comecou\n"),data->id);
 		//movimento carros direita esquerda
-		for (int i = 0; i < data->Game->numCars; i++)
+		for (int i = 0; i < data->numCars; i++)
 		{
-			int x = data->Game->car_pos[i][0];
+			int x = temp[i].row;
 			if (x == data->id)
 			{
-				_tprintf(TEXT("carro: %d da thread %d\n"), x, data->id);
-				int y = data->Game->car_pos[i][1];
-				data->Game->map[x][y] = ROAD_ELEMENT;
-				if (data->Game->car_pos[i][1] - 1 == 0) {
-					data->Game->car_pos[i][1] = MAX_COLS - 2;
+				int y = temp[i].col;
+				if (y - 1 == 0) {
+					temp[i].col = MAX_COLS - 2;
 				}
 				else
-					data->Game->car_pos[i][1]--;
-				_tprintf(TEXT("Thread da estrada %d: fez o carro andar\n"), data->id);
+					temp[i].col--;
 			}
 		}
-		for (int i = 0; i < data->Game->numCars; i++)
+		/*for (int i = 0; i < data->Game->numCars; i++)
 				{
 					int x = data->Game->car_pos[i][0];
 					int y = data->Game->car_pos[i][1];
 					_tprintf(TEXT("x:%d\n"),x);
 					_tprintf(TEXT("y:%d\n"),y);
 					data->Game->map[x][y] = CAR_ELEMENT;
-				}
+				}*/
 		//copiar o conteudo para a memoria partilhada
-		CopyMemory(data->GameSharedMemorie, data->Game,sizeof(GameData));
-		_tprintf(TEXT("temppppp %d\n"),data->GameSharedMemorie->numCars);
+		_tprintf(TEXT("temppppp1 %d\n"), temp[0].row);
+		CopyMemory(data->sharedCarPos, temp, MAX_CARS * sizeof(CarPos));
+		_tprintf(TEXT("temppppp2 %d\n"), data->sharedCarPos[0].row);
 
 		ReleaseMutex(data->hMutex);
 		_tprintf(TEXT("thread %d acabou\n"), data->id);
@@ -102,7 +107,7 @@ DWORD WINAPI ThreadBufferCircular(LPVOID lpParam)
 		{
 			dados->BufferCircular->posLeitura = 0;
 		}
-		_tprintf(TEXT("Consumidor: id do Produtor: %d comeu %d\n"), space.id, space.val);
+		//_tprintf(TEXT("Consumidor: id do Produtor: %d comeu %d\n"), space.id, space.val);
 		ReleaseMutex(dados->hMutex);
 		ReleaseSemaphore(dados->hSemEscrita, 1, NULL);
 	}
@@ -229,49 +234,27 @@ int _tmain(int argc, TCHAR* argv[]) {
 
 	//Colocar tudo a zero... numRoads fix size for debug
 	//apagar prints after testes
-	data.numRoads = 6;
+	data.numRoads = 8;
 	data.numCars = 0;
 	_tprintf(TEXT("NumRoads %d\n"), data.numRoads);
-
-
 
 	//Gerar carros
 	for (int i = 0; i < data.numRoads; i++) 
 	{
 		int carsInRoad = (rand() % 8) + 1;
-		_tprintf(TEXT("CarInRoad %d\n"), carsInRoad);
-		//data.numCars = data.numCars + carsInRoad;
 		for (;carsInRoad >= 0; carsInRoad--) {
-			_tprintf(TEXT("numCars antes %d\n"), data.numCars);
-			
-			_tprintf(TEXT("numCars depois %d\n"), data.numCars);
-			data.car_pos[data.numCars][0] = i + 2; //X -> linha
-			_tprintf(TEXT("car na linha %d\n"), data.car_pos[data.numCars][0]);
+			data.car_pos[data.numCars].row = i + 2; //X -> linha
 			int posInRoad = 0;
 			do {
 				posInRoad = (rand() % (MAX_COLS - 2)) + 1;
 			} while (data.map[i][posInRoad] == CAR_ELEMENT);
-				_tprintf(TEXT("RANDOM DEU CRLH %d\n"), posInRoad);
-			data.car_pos[data.numCars][1] = posInRoad; //y -> coluna
-			_tprintf(TEXT("car na coluna %d\n"), data.car_pos[data.numCars][1]);
+			data.car_pos[data.numCars].col = posInRoad; //y -> coluna
 			data.map[i][posInRoad] == CAR_ELEMENT;
-			_tprintf(TEXT("car criado nesta pos:%d , %d\n"), data.car_pos[data.numCars][0], data.car_pos[data.numCars][1]);
-			_tprintf(TEXT("NUMERO AGORA ESTA EM  CARS %d Y DO CARRO É %d\n"), data.numCars, data.car_pos[data.numCars][1]);
 			data.numCars++;
 		}
 	}
 	_tprintf(TEXT("NUMERO TOTAL DE CARS %d\n"),data.numCars);
 
-
-	////Gerar carros
-	//for (int i = 2; i < MAX_ROWS + 2; i++)
-	//{
-	//	for (int cars = (rand() % 8) + 1; cars >= 0; cars--) {
-	//		int ra = (rand() % (MAX_COLS - 2)) + 1;
-	//		data.map[i][ra] = CAR_ELEMENT;
-	//		_tprintf(TEXT("cars:%d\n"),ra);
-	//	}
-	//}
 	
 	HANDLE HMapFile = CreateFileMapping(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, sizeof(GameData), FILE_MAPPING_GAME_DATA);
 	if (HMapFile == NULL)
@@ -303,62 +286,6 @@ int _tmain(int argc, TCHAR* argv[]) {
 		return 0;
 	}
 
-	//while (1)
-	//{
-	//	//movimento carros esquerda direita
-	//	/*for (int i = 0; i < data.numCars; i++)
-	//	{
-	//		int x = data.car_pos[i][0];
-	//		int y = data.car_pos[i][1];
-	//		data.map[x][y] = ROAD_ELEMENT;
-	//		if (data.car_pos[i][1] + 2 == MAX_COLS)
-	//			data.car_pos[i][1] = 1;
-	//		else  
-	//			data.car_pos[i][1]++;
-	//	}*/
-
-	//	//movimento carros direita esquerda
-	//	for (int i = 0; i < data.numCars; i++)
-	//	{
-	//		int x = data.car_pos[i][0];
-	//		int y = data.car_pos[i][1];
-	//		data.map[x][y] = ROAD_ELEMENT;
-	//		if (data.car_pos[i][1] - 1 == 0)
-	//			data.car_pos[i][1] = MAX_COLS - 2;
-	//		else
-	//			data.car_pos[i][1]--;
-	//	}
-	//	//atualizar mapa
-	//	for (int i = 0; i < data.numCars; i++)
-	//	{
-	//		int x = data.car_pos[i][0];
-	//		int y = data.car_pos[i][1];
-	//		_tprintf(TEXT("x:%d\n"),x);
-	//		_tprintf(TEXT("y:%d\n"),y);
-	//		data.map[x][y] = CAR_ELEMENT;
-	//	}
-
-	//	//for (int i = 0; i < MAX_ROWS + 4; i++)
-	//	//{
-	//	//	int next_col = 0;
-	//	//	for (int j = 0; j < MAX_COLS; j++)
-	//	//	{
-	//	//		if (data.map[i][j] == CAR_ELEMENT) {
-	//	//			//next_col = (j + 1) % MAX_COLS;
-	//	//			if (j + 1 != MAX_COLS - 1) {
-	//	//				data.map[i][j + 1] = CAR_ELEMENT;
-	//	//				data.map[i][j] = ROAD_ELEMENT;
-	//	//			}
-	//	//			else if(j + 1 == MAX_COLS - 1){
-	//	//				data.map[i][1] = CAR_ELEMENT;
-	//	//				data.map[i][j] = ROAD_ELEMENT;
-	//	//			}
-	//	//		}
-	//	//	}
-	//	//	//adicionar ao array de posições de carros e gerar as posições no mapa de uma vez
-	//	//}
-
-		//Sleep(data.carSpeed);
 		WaitForSingleObject(data.Serv_HMutex, INFINITE);
 
 		ZeroMemory(pBuf, sizeof(GameData));
@@ -375,6 +302,7 @@ int _tmain(int argc, TCHAR* argv[]) {
 
 
 
+		//Gerar Threads das Roads
 		HANDLE mutex_ROADS;
 
 		// matriz de handles das threads
@@ -386,27 +314,26 @@ int _tmain(int argc, TCHAR* argv[]) {
 		_tprintf(TEXT("[DEBUG] NUM ROADS %d criada\n"), data.numRoads);
 		for (int i = 0; i < data.numRoads; i++)
 		{
-			HANDLE HMapFile = CreateFileMapping(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, sizeof(GameData), TEXT("SO2_MAP_OLA"));
+			HANDLE HMapFile = CreateFileMapping(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, MAX_CARS * sizeof(CarPos) , TEXT("SO2_MAP_OLA"));
 			if (HMapFile == NULL)
 			{
 				_tprintf(TEXT("ERRO CreateFileMapping\n"));
 				return 0;
 			}
 			_tprintf(TEXT("Criado CreateFileMapping\n"));
-			RoadsData[i].GameSharedMemorie = (GameData*)MapViewOfFile(HMapFile, FILE_MAP_ALL_ACCESS, 0, 0, 0);
-			if (HMapFile == NULL)
+			RoadsData[i].sharedCarPos = (CarPos*)MapViewOfFile(HMapFile, FILE_MAP_ALL_ACCESS, 0, 0, 0);
+			if (RoadsData[i].sharedCarPos == NULL)
 			{
 				_tprintf(TEXT("ERRO MapViewOfFile\n"));
 				return 0;
 			}
 
-
+			RoadsData[i].car_pos = &data.car_pos;
+			RoadsData[i].numCars = data.numCars;
 			RoadsData[i].hMutex = CreateMutex(NULL, FALSE, TEXT("MUTEX_ROADS"));
 			RoadsData[i].hEventRoads = CreateEvent(NULL, TRUE, FALSE, TEXT("EVENT_ROADS"));
-			RoadsData[i].Game = &data;
 			RoadsData[i].id = i + 2; //o numero do id é a estrada q elas estao encarregues
 			RoadsData[i].speed = ((rand() % 8) + 1) * 1000;
-			_tprintf(TEXT("SPEEEEDDDDD:::::::: %d\n"), RoadsData[i].speed);
 			RoadsData[i].direction = 1;
 			RoadThreads[i] = CreateThread(
 				NULL,    // Thread attributes
@@ -415,7 +342,7 @@ int _tmain(int argc, TCHAR* argv[]) {
 				&RoadsData[i],    // Parameter to pass to the thread
 				0,       // Creation flags
 				NULL);   // Thread id   // returns the thread identifier 
-			_tprintf(TEXT("[~DEBUG] Thread estrada %d criada\n"), i);
+			_tprintf(TEXT("[DEBUG] Thread estrada %d criada\n"), i);
 
 		}
 
