@@ -339,7 +339,7 @@ int _tmain(int argc, TCHAR* argv[]) {
 			RoadsData[i].car_pos = &data.car_pos;
 			RoadsData[i].numCars = data.numCars;
 			RoadsData[i].hMutex = CreateMutex(NULL, FALSE, TEXT("MUTEX_ROADS"));
-			RoadsData[i].hEventRoads = CreateEvent(NULL, TRUE, FALSE, TEXT("EVENT_ROADS"));
+			RoadsData[i].hEventRoads = CreateEvent(NULL, TRUE, FALSE, TEXT("EVENT_ROADS") + i);
 			RoadsData[i].id = i + 2; //o numero do id é a estrada q elas estao encarregues
 			RoadsData[i].speed = ((rand() % 8) + 1) * 1000;
 			RoadsData[i].direction = 1;

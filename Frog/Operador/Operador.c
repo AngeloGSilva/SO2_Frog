@@ -184,8 +184,6 @@ int _tmain(int argc, TCHAR* argv[]) {
 	//data.mutex = OpenMutex(READ_CONTROL, TRUE, TEXT("TP_Mutex"));
 	data.Serv_HMutex = CreateMutex(NULL, FALSE, SHARED_MEMORIE_MUTEX);
 
-
-
 		WaitForSingleObject(data.Serv_HEvent, INFINITE);
 
 		WaitForSingleObject(data.Serv_HMutex, INFINITE);
@@ -194,8 +192,6 @@ int _tmain(int argc, TCHAR* argv[]) {
 
 		//libertat o mutex
 		ReleaseMutex(data.Serv_HMutex);
-
-		
 
 		//Gerar Threads Roads
 		HANDLE mutex_ROADS;
@@ -224,7 +220,7 @@ int _tmain(int argc, TCHAR* argv[]) {
 			}
 			RoadsData[i].numCars = pBuf->numCars;
 			RoadsData[i].hMutex = CreateMutex(NULL, FALSE, TEXT("MUTEX_ROADS"));
-			RoadsData[i].hEventRoads = CreateEvent(NULL, TRUE, FALSE, TEXT("EVENT_ROADS"));
+			RoadsData[i].hEventRoads = CreateEvent(NULL, TRUE, FALSE, TEXT("EVENT_ROADS") + i);
 			RoadsData[i].id = i + 2; //o numero do id é a estrada q elas estao encarregues
 			RoadsData[i].speed = 0;
 			RoadsData[i].direction = 1;
