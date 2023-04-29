@@ -352,6 +352,12 @@ int _tmain(int argc, TCHAR* argv[]) {
 			//_tprintf(TEXT("[DEBUG] Thread estrada %d criada\n"), i);
 		}
 
+		HANDLE InitialEvent = CreateEvent(NULL, TRUE, FALSE, TEXT("INITIAL EVENT"));
+
+		SetEvent(InitialEvent);
+		Sleep(1000);
+		ResetEvent(InitialEvent);
+
 		
 
 		while (1)

@@ -100,6 +100,23 @@ DWORD WINAPI ThreadRoads(LPVOID lpParam)
 	return 0;
 }
 
+DWORD WINAPI CheckOperators(LPVOID lpParam)
+{
+	while(1) {
+		//Criamos evento para que as threads ja consiga ler
+
+		HANDLE x = CreateEvent(NULL, TRUE, FALSE, SHARED_MEMORIE_EVENT);
+		if (x == NULL)
+		{
+			_tprintf(TEXT("[ERRO]CreateEvent\n"));
+			return 0;
+		}
+		SetEvent(x);
+		ResetEvent(x);
+
+		Sleep(10000);
+	}
+}
 
 DWORD WINAPI ThreadBufferCircular(LPVOID lpParam)
 {
@@ -283,12 +300,13 @@ int _tmain(int argc, TCHAR* argv[]) {
 	}
 
 	//criar Event
-	data.Serv_HEvent = CreateEvent(NULL, TRUE, FALSE, SHARED_MEMORIE_EVENT);
-	if (data.Serv_HEvent == NULL)
-	{
-		_tprintf(TEXT("[ERRO]CreateEvent\n"));
-		return 0;
-	}
+	CreateThread(
+		NULL,    // Thread attributes
+		0,       // Stack size (0 = use default)
+		CheckOperators, // Thread start address
+		NULL,    // Parameter to pass to the thread
+		0,       // Creation flags
+		NULL);
 
 	//criar mutex
 	data.Serv_HMutex = CreateMutex(NULL, FALSE, SHARED_MEMORIE_MUTEX);
@@ -306,11 +324,7 @@ int _tmain(int argc, TCHAR* argv[]) {
 		//libertat o mutex
 		ReleaseMutex(data.Serv_HMutex);
 
-		//Criamos evento para que as threads ja consiga ler
-		SetEvent(data.Serv_HEvent);
-
-		//Sleep(500);
-		ResetEvent(data.Serv_HEvent);
+		//criar a thread
 
 		//Gerar Threads das Roads
 		HANDLE mutex_ROADS;
@@ -319,7 +333,6 @@ int _tmain(int argc, TCHAR* argv[]) {
 		HANDLE RoadThreads[MAX_ROADS_THREADS];
 
 		TRoads RoadsData[MAX_ROADS_THREADS];
-
 
 		_tprintf(TEXT("[DEBUG] NUM ROADS %d criada\n"), data.numRoads);
 		for (int i = 0; i < data.numRoads; i++)
@@ -351,11 +364,17 @@ int _tmain(int argc, TCHAR* argv[]) {
 				0,       // Stack size (0 = use default)
 				ThreadRoads, // Thread start address
 				&RoadsData[i],    // Parameter to pass to the thread
-				0,       // Creation flags
+				CREATE_SUSPENDED,       // Creation flags
 				NULL);   // Thread id   // returns the thread identifier 
 			_tprintf(TEXT("[DEBUG] Thread estrada %d criada\n"), i);
-
 		}
+
+		HANDLE InitialEvent = CreateEvent(NULL, TRUE, FALSE, TEXT("INITIAL EVENT"));
+
+		WaitForSingleObject(InitialEvent, INFINITE);
+
+		for (int i = 0; i < data.numRoads; i++)
+			ResumeThread(RoadThreads[i]);
 
 		while (1)
 		{
