@@ -33,6 +33,7 @@ DWORD WINAPI ThreadRoads(LPVOID lpParam)
 			if (x == data->id)
 			{
 				int y = temp[i].col;
+				_tprintf(TEXT("DIRECAOO %d comecou\n"), data->direction[data->id]);
 				if (data->direction[data->id] == ROAD_RIGHT) {
 					if (data->Map[x * MAX_COLS + y + 1] != OBSTACLE_ELEMENT ) {
 						//&& data->Map[x * MAX_COLS + y + 1] != CAR_ELEMENT
@@ -154,7 +155,7 @@ DWORD WINAPI ThreadBufferCircular(LPVOID lpParam)
 
 
 		_tprintf(TEXT("VOU para %d"), dados->RoadsDirection[2]);
-		dados->RoadsDirection[2] = ROAD_LEFT;
+		dados->RoadsDirection[2] = ROAD_RIGHT;
 
 
 
@@ -363,7 +364,7 @@ int _tmain(int argc, TCHAR* argv[]) {
 			RoadsData[i].hEventRoads = CreateEvent(NULL, TRUE, FALSE, TEXT("EVENT_ROADS") + i);
 			RoadsData[i].id = i + SKIP_BEGINING; //o numero do id é a estrada q elas estao encarregues
 			RoadsData[i].speed = ((rand() % 8) + 1) * 1000;
-			RoadsData[i].direction[RoadsData[i].id] = ROAD_RIGHT;//(rand() % 1)
+			RoadsData[i].direction[RoadsData[i].id] = ROAD_LEFT;//(rand() % 1)
 			RoadThreads[i] = CreateThread(
 				NULL,    // Thread attributes
 				0,       // Stack size (0 = use default)
