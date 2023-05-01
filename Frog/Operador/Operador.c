@@ -17,17 +17,17 @@
 //	int row;
 //}CarPos, * pCarPos;
 
-typedef struct {
-	int speed;
-	int numCars;
-	pCarPos car_pos;
-	TCHAR* Map;
-	BOOLEAN direction;
-	pCarPos sharedCarPos;
-	TCHAR* sharedMap;
-	HANDLE hEventRoads, hMutex;
-	int id;
-} TRoads, * pTRoads;
+//typedef struct {
+//	int speed;
+//	int numCars;
+//	pCarPos car_pos;
+//	TCHAR* Map;
+//	BOOLEAN direction;
+//	pCarPos sharedCarPos;
+//	TCHAR* sharedMap;
+//	HANDLE hEventRoads, hMutex;
+//	int id;
+//} TRoads, * pTRoads;
 
 typedef struct {
 	int numRoads;
@@ -130,16 +130,17 @@ DWORD WINAPI ThreadBufferCircular(LPVOID lpParam)
 	COORD cursorPos;
 	while (1)
 	{
-		DWORD numWritten; // Number of characters actually written
-		cursorPos.X = 0;
-		cursorPos.Y = 20;
-		//_tprintf(TEXT("coluna do carro %d :%d\n"), i,temp[i].col);
-		SetConsoleCursorPosition(hConsole, cursorPos);
-		WriteConsole(hConsole, TEXT("<-COMANDO->"), 1, &numWritten, NULL);
+		Sleep(10000);
+		//DWORD numWritten; // Number of characters actually written
+		//cursorPos.X = 0;
+		//cursorPos.Y = 20;
+		////_tprintf(TEXT("coluna do carro %d :%d\n"), i,temp[i].col);
+		//SetConsoleCursorPosition(hConsole, cursorPos);
+		//WriteConsole(hConsole, TEXT("<-COMANDO->"), 1, &numWritten, NULL);
 
 		space.id = dados->id;
 		_tprintf(TEXT("COMANDO:"));
-		_tscanf_s(TEXT("%lu"), space.val);
+		//_tscanf_s(TEXT("%lu"), space.val);
 		WaitForSingleObject(dados->hSemEscrita, INFINITE);
 		WaitForSingleObject(dados->hMutex, INFINITE);
 		//copiar o conteudo para a memoria partilhada
@@ -150,7 +151,7 @@ DWORD WINAPI ThreadBufferCircular(LPVOID lpParam)
 			dados->BufferCircular->posEscrita = 0;
 		}
 
-		//_tprintf(TEXT("Produtor %d fez %d\n"), dados->id, space.val);
+		_tprintf(TEXT("Produtor %d fez %d\n"), dados->id, space.val);
 		ReleaseMutex(dados->hMutex);
 		ReleaseSemaphore(dados->hSemLeitura, 1, NULL);
 		Sleep(((rand() % 4) + 1) * 1000);

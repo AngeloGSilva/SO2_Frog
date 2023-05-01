@@ -33,3 +33,5 @@
 
 #define ROAD_RIGHT 0
 #define ROAD_LEFT 1
+
+#define MAX_ROADS_THREADS 50
