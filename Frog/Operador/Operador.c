@@ -39,10 +39,6 @@ typedef struct {
 	int id;
 } TStartEnd, * pTStartEnd;
 
-
-
-
-
 DWORD WINAPI ThreadRoads(LPVOID lpParam)
 {
 	pTRoads data = (pTRoads)lpParam;
@@ -130,11 +126,20 @@ DWORD WINAPI ThreadBufferCircular(LPVOID lpParam)
 {
 	pTDados dados = (pTDados) lpParam;
 	EspacoBuffer space;
+	HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+	COORD cursorPos;
 	while (1)
 	{
-		space.id = dados->id;
-		space.val = (rand() % 9) + 1;
+		DWORD numWritten; // Number of characters actually written
+		cursorPos.X = 0;
+		cursorPos.Y = 20;
+		//_tprintf(TEXT("coluna do carro %d :%d\n"), i,temp[i].col);
+		SetConsoleCursorPosition(hConsole, cursorPos);
+		WriteConsole(hConsole, TEXT("<-COMANDO->"), 1, &numWritten, NULL);
 
+		space.id = dados->id;
+		_tprintf(TEXT("COMANDO:"));
+		_tscanf_s(TEXT("%lu"), space.val);
 		WaitForSingleObject(dados->hSemEscrita, INFINITE);
 		WaitForSingleObject(dados->hMutex, INFINITE);
 		//copiar o conteudo para a memoria partilhada

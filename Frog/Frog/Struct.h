@@ -25,7 +25,7 @@ typedef struct {
 }GameData, *pGameData;
 
 typedef struct {
-	int val;
+	TCHAR val[100];
 	int id;
 }EspacoBuffer;
 
