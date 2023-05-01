@@ -154,8 +154,8 @@ DWORD WINAPI ThreadBufferCircular(LPVOID lpParam)
 		}
 
 
-		_tprintf(TEXT("VOU para %d"), dados->RoadsDirection[2]);
-		dados->RoadsDirection[2] = ROAD_RIGHT;
+		//_tprintf(TEXT("VOU para %d"), dados->RoadsDirection[2]);
+		//dados->RoadsDirection[2] = ROAD_RIGHT;
 
 
 
