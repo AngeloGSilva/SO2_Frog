@@ -33,7 +33,7 @@ DWORD WINAPI ThreadRoads(LPVOID lpParam)
 			if (x == data->id)
 			{
 				int y = temp[i].col;
-				if (data->direction == ROAD_RIGHT) {
+				if (data->direction[data->id] == ROAD_RIGHT) {
 					if (data->Map[x * MAX_COLS + y + 1] != OBSTACLE_ELEMENT ) {
 						//&& data->Map[x * MAX_COLS + y + 1] != CAR_ELEMENT
 						if (y + 1 == 19) {
@@ -151,6 +151,10 @@ DWORD WINAPI ThreadBufferCircular(LPVOID lpParam)
 		{
 			dados->BufferCircular->posLeitura = 0;
 		}
+
+		dados->RoadsDirection[1] = ROAD_LEFT;
+
+
 
 		//acrescentar pedra
 		//dados->Mapv2[4 * MAX_COLS + 14] = OBSTACLE_ELEMENT;
@@ -357,7 +361,7 @@ int _tmain(int argc, TCHAR* argv[]) {
 			RoadsData[i].hEventRoads = CreateEvent(NULL, TRUE, FALSE, TEXT("EVENT_ROADS") + i);
 			RoadsData[i].id = i + SKIP_BEGINING; //o numero do id é a estrada q elas estao encarregues
 			RoadsData[i].speed = ((rand() % 8) + 1) * 1000;
-			RoadsData[i].direction = ROAD_RIGHT;//(rand() % 1)
+			RoadsData[i].direction[i] = ROAD_RIGHT;//(rand() % 1)
 			RoadThreads[i] = CreateThread(
 				NULL,    // Thread attributes
 				0,       // Stack size (0 = use default)
@@ -386,8 +390,8 @@ int _tmain(int argc, TCHAR* argv[]) {
 			dataThread.BufferCircular->nProdutores = 0;
 			dataThread.BufferCircular->posEscrita = 0;
 			dataThread.BufferCircular->posLeitura = 0;
-			//dataThread.RoadsData = &RoadsData;
-			dataThread.Mapv2 = &data.map;
+			dataThread.RoadsDirection = &RoadsData->direction;
+			//dataThread.Mapv2 = &data.map;
 			dataThread.threadsHandles = &RoadThreads;
 			dataThread.numRoads = data.numRoads;
 

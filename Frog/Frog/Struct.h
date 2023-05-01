@@ -38,8 +38,8 @@ typedef struct {
 }Buffer, * pBuffer;
 
 typedef struct {
-	TCHAR* Mapv2;
-	//TRoads *RoadsData;
+	//TCHAR* Mapv2;
+	BOOLEAN *RoadsDirection;
 	int numRoads;
 	HANDLE *threadsHandles;
 	pBuffer BufferCircular;
@@ -52,7 +52,7 @@ typedef struct {
 	int numCars;
 	pCarPos car_pos;
 	TCHAR* Map;
-	BOOLEAN direction;
+	BOOLEAN direction[MAX_ROADS_THREADS];
 	pCarPos sharedCarPos;
 	TCHAR* sharedMap;
 	HANDLE hEventRoads, hMutex;

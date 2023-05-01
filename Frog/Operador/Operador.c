@@ -347,7 +347,7 @@ int _tmain(int argc, TCHAR* argv[]) {
 			RoadsData[i].hEventRoads = CreateEvent(NULL, TRUE, FALSE, TEXT("EVENT_ROADS") + i);
 			RoadsData[i].id = i + SKIP_BEGINING; //o numero do id é a estrada q elas estao encarregues
 			RoadsData[i].speed = 0;
-			RoadsData[i].direction = 1;
+			//RoadsData[i].direction = 1;
 			RoadThreads[i] = CreateThread(
 				NULL,    // Thread attributes
 				0,       // Stack size (0 = use default)
