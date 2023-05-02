@@ -40,8 +40,8 @@ DWORD WINAPI ThreadBeginEnd(LPVOID lpParam)
 {
 	pTStartEnd data = (pTStartEnd)lpParam;
 	TCHAR* temp;
-	while (1)
-	{
+	//while (1)
+	//{
 		WaitForSingleObject(data->hMutex, INFINITE);
 		CopyMemory(&temp, &data->sharedMap, sizeof(TCHAR) * (MAX_ROWS + SKIP_BEGINING_END) * MAX_COLS);
 		HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
@@ -56,14 +56,14 @@ DWORD WINAPI ThreadBeginEnd(LPVOID lpParam)
 				cursorPos.X = i;
 				cursorPos.Y = aux;
 				SetConsoleCursorPosition(hConsole, cursorPos);
-				WriteConsole(hConsole, &temp[aux * MAX_COLS + i], 1, &numWritten, NULL);
+				WriteConsole(hConsole, &data->Map[aux * MAX_COLS + i], 1, &numWritten, NULL);
 			}
 		}
 		ReleaseMutex(data->hMutex);
-		Sleep(20000);
-	}
-	return 0;
-	//ExitThread(7);
+		//Sleep(20000);
+		//}
+	//return 0;
+	ExitThread(7);
 }
 
 DWORD WINAPI ThreadBufferCircular(LPVOID lpParam)
@@ -234,6 +234,7 @@ int _tmain(int argc, TCHAR* argv[]) {
 	}
 	StartEndData[0].hMutex = CreateMutex(NULL, FALSE, TEXT("MUTEX_ROADS"));
 	StartEndData[0].numRoads = pBuf->numRoads;
+	StartEndData[0].Map = pBuf->map;
 	StartEndThreads[0] = CreateThread(
 		NULL,
 		0,
