@@ -43,7 +43,7 @@ DWORD WINAPI ThreadBeginEnd(LPVOID lpParam)
 	//while (1)
 	//{
 		WaitForSingleObject(data->hMutex, INFINITE);
-		CopyMemory(&temp, &data->sharedMap, sizeof(TCHAR) * (MAX_ROWS + SKIP_BEGINING_END) * MAX_COLS);
+		//CopyMemory(&temp, &data->sharedMap, sizeof(TCHAR) * (MAX_ROWS + SKIP_BEGINING_END) * MAX_COLS);
 		HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
 		COORD cursorPos;
 		for (int r = 0; r < 4; r++) {
