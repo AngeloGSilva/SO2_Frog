@@ -133,10 +133,35 @@ DWORD WINAPI ThreadBufferCircular(LPVOID lpParam)
 			dados->BufferCircular->posLeitura = 0;
 		}
 
-		//mudar direcao
-		//_tprintf(text("vou para %d"), dados->roadsdirection[2]);
-		//dados->RoadsDirection[2] = ROAD_RIGHT;
+		if (strcmp(space.val, "Stop")) {
+			//Parar o tempo
+			for (int i = 0; i < dados->numRoads; i++)
+			{
+				SuspendThread(dados->threadsHandles[i]);
+			}
+		}
+		else if (strcmp(space.val, "Start")) {
+			for (int i = 0; i < dados->numRoads; i++)
+			{
+				ResumeThread(dados->threadsHandles[i]);
+			}
+		}
+		else if (strcmp(space.val, "Change")) {
+			int roadId;
+			if (sscanf_s(space.val, "Change %d", &roadId) != 1) {
+				// handle error: unable to extract roadId
+				return;
+			}
+			if (dados->RoadsDirection[roadId] == ROAD_RIGHT)
+			{
+				dados->RoadsDirection[roadId] = ROAD_LEFT;
+			}
+			else
+				dados->RoadsDirection[roadId] = ROAD_RIGHT;
+		}
+		else if (strcmp(space.val, "Rock")) {
 
+		}
 
 
 		//acrescentar pedra
@@ -146,11 +171,7 @@ DWORD WINAPI ThreadBufferCircular(LPVOID lpParam)
 
 		//_tprintf(TEXT("ESTA PARA A %d"),dados->RoadsData[0].direction);
 
-		//Parar o tempo
-		//for (int i = 0; i < dados->numRoads; i++)
-		//{
-		//	SuspendThread(dados->threadsHandles[i]);
-		//}
+
 
 		//Sleep(10000);
 

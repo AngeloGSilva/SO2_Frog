@@ -42,27 +42,27 @@ DWORD WINAPI ThreadBeginEnd(LPVOID lpParam)
 	TCHAR* temp;
 	//while (1)
 	//{
-		WaitForSingleObject(data->hMutex, INFINITE);
-		//CopyMemory(&temp, &data->sharedMap, sizeof(TCHAR) * (MAX_ROWS + SKIP_BEGINING_END) * MAX_COLS);
-		HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
-		COORD cursorPos;
-		for (int r = 0; r < 4; r++) {
-			int aux = r;
-			if (r > 1)
-				aux = r + data->numRoads;
-			for (int i = 0; i < MAX_COLS; i++)
-			{
-				DWORD numWritten; // Number of characters actually written
-				cursorPos.X = i;
-				cursorPos.Y = aux;
-				SetConsoleCursorPosition(hConsole, cursorPos);
-				WriteConsole(hConsole, &data->Map[aux * MAX_COLS + i], 1, &numWritten, NULL);
-			}
+	WaitForSingleObject(data->hMutex, INFINITE);
+	//CopyMemory(&temp, &data->sharedMap, sizeof(TCHAR) * (MAX_ROWS + SKIP_BEGINING_END) * MAX_COLS);
+	HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+	COORD cursorPos;
+	for (int r = 0; r < 4; r++) {
+		int aux = r;
+		if (r > 1)
+			aux = r + data->numRoads;
+		for (int i = 0; i < MAX_COLS; i++)
+		{
+			DWORD numWritten; // Number of characters actually written
+			cursorPos.X = i;
+			cursorPos.Y = aux;
+			SetConsoleCursorPosition(hConsole, cursorPos);
+			WriteConsole(hConsole, &data->Map[aux * MAX_COLS + i], 1, &numWritten, NULL);
 		}
-		ReleaseMutex(data->hMutex);
-		//Sleep(20000);
-		//}
-	//return 0;
+	}
+	ReleaseMutex(data->hMutex);
+	//Sleep(20000);
+	//}
+//return 0;
 	ExitThread(7);
 }
 
@@ -85,6 +85,13 @@ DWORD WINAPI ThreadBufferCircular(LPVOID lpParam)
 		space.id = dados->id;
 		//_tprintf(TEXT("COMANDO:"));
 		//_tscanf_s(TEXT("%lu"), space.val);
+		 // Copy the string "Change" into space_val
+		// talvez fazer teclas ficarem em carregues de enviar comandos
+		//EX: C -> envia "Change" (o numero ainda nao sei)
+		//S -> Stop
+		//B -> Start
+		//R -> Rock (tal como o change ainda nao sei o numero)
+		strncpy_s(space.val, sizeof(space.val), "Change", sizeof("Change"));
 		WaitForSingleObject(dados->hSemEscrita, INFINITE);
 		WaitForSingleObject(dados->hMutex, INFINITE);
 		//copiar o conteudo para a memoria partilhada
