@@ -58,3 +58,13 @@ typedef struct {
 	HANDLE hEventRoads, hMutex;
 	int id;
 } TRoads, * pTRoads;
+
+typedef struct {
+	int numRoads;
+	pFrogPos frog_pos;
+	TCHAR* Map;
+	pFrogPos sharedFrogPos;
+	TCHAR* sharedMap;
+	HANDLE hEventRoads, hMutex;
+	int id;
+} TStartEnd, * pTStartEnd;
