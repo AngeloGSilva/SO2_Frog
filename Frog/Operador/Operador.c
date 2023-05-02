@@ -35,6 +35,7 @@ DWORD WINAPI ThreadRoads(LPVOID lpParam)
 	return 0;
 }
 
+//Margem superior e inferior
 DWORD WINAPI ThreadBeginEnd(LPVOID lpParam)
 {
 	pTStartEnd data = (pTStartEnd)lpParam;
