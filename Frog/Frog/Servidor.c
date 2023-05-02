@@ -48,10 +48,12 @@ DWORD WINAPI ThreadRoads(LPVOID lpParam)
 						_tprintf(TEXT("IALSD"));
 					}
 				}
-				else if (data->direction == ROAD_LEFT) {
+				else if (data->direction[data->id] == ROAD_LEFT) {
 					if (data->Map[x * MAX_COLS + y - 1] != OBSTACLE_ELEMENT) {
 						// && data->Map[x * MAX_COLS + y + 1] != CAR_ELEMENT
+						_tprintf(TEXT("Esta a ir para a esquerda"));
 						if (y - 1 == 0) {
+							
 							temp[i].col = MAX_COLS - 2;
 						}
 						else
@@ -154,8 +156,8 @@ DWORD WINAPI ThreadBufferCircular(LPVOID lpParam)
 		}
 
 
-		//_tprintf(TEXT("VOU para %d"), dados->RoadsDirection[2]);
-		//dados->RoadsDirection[2] = ROAD_RIGHT;
+		//_tprintf(text("vou para %d"), dados->roadsdirection[2]);
+		dados->RoadsDirection[2] = ROAD_RIGHT;
 
 
 
