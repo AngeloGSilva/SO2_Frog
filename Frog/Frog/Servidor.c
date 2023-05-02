@@ -125,7 +125,7 @@ DWORD WINAPI ThreadBufferCircular(LPVOID lpParam)
 		WaitForSingleObject(dados->hSemLeitura, INFINITE);
 		WaitForSingleObject(dados->hMutex, INFINITE);
 		//copiar o conteudo para a memoria partilhada
-		_tprintf(TEXT("VOU PARA SEU CORNO OPOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO"));
+		//_tprintf(TEXT("VOU PARA SEU CORNO OPOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO"));
 		CopyMemory(&space, &dados->BufferCircular->espacosDeBuffer[dados->BufferCircular->posLeitura], sizeof(EspacoBuffer));
 		dados->BufferCircular->posLeitura++;
 		if (dados->BufferCircular->posLeitura == 10)
@@ -133,9 +133,9 @@ DWORD WINAPI ThreadBufferCircular(LPVOID lpParam)
 			dados->BufferCircular->posLeitura = 0;
 		}
 
-
+		//mudar direcao
 		//_tprintf(text("vou para %d"), dados->roadsdirection[2]);
-		dados->RoadsDirection[2] = ROAD_RIGHT;
+		//dados->RoadsDirection[2] = ROAD_RIGHT;
 
 
 
@@ -226,7 +226,7 @@ int _tmain(int argc, TCHAR* argv[]) {
 
 	WaitForSingleObject(hSem, INFINITE);
 	_tprintf(TEXT("Got in!\n"));
-	data.numRoads = 3;
+	data.numRoads = 8;
 	data.numCars = 0;
 	//desenho do mapa
 	for (int i = 0; i < data.numRoads + SKIP_BEGINING_END; i++)
@@ -241,8 +241,8 @@ int _tmain(int argc, TCHAR* argv[]) {
 			else
 				data.map[i][j] = ROAD_ELEMENT;
 
-			if (i == 2 && j == 6)
-				data.map[i][j] = OBSTACLE_ELEMENT;
+			//if (i == 2 && j == 6)
+			//	data.map[i][j] = OBSTACLE_ELEMENT;
 		}
 	}
 
@@ -269,6 +269,18 @@ int _tmain(int argc, TCHAR* argv[]) {
 		}
 	}
 	_tprintf(TEXT("NUMERO TOTAL DE CARS %d\n"), data.numCars);
+
+
+	//Gerar sapos (Primeira meta....)
+	int sapRowRandom = data.numRoads + 2; //+3 para ficar na penultima estrada.
+	for (int i = 0; i < 2; i++)
+	{
+		int sapColRandom = (rand() % (MAX_COLS - 2)) + 1;
+		do {
+			sapColRandom = (rand() % (MAX_COLS - 2)) + 1;
+		} while (data.map[sapRowRandom][sapColRandom] == 'S');
+		data.map[sapRowRandom][sapColRandom] = FROGGE_ELEMENT;
+	}
 
 	data.map;
 

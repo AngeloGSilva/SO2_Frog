@@ -40,8 +40,8 @@ DWORD WINAPI ThreadBeginEnd(LPVOID lpParam)
 {
 	pTStartEnd data = (pTStartEnd)lpParam;
 	TCHAR* temp;
-	while (1)
-	{
+	//while (1)
+	//{
 		WaitForSingleObject(data->hMutex, INFINITE);
 		CopyMemory(&temp, &data->sharedMap, sizeof(TCHAR) * (MAX_ROWS + SKIP_BEGINING_END) * MAX_COLS);
 		HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
@@ -60,8 +60,9 @@ DWORD WINAPI ThreadBeginEnd(LPVOID lpParam)
 			}
 		}
 		ReleaseMutex(data->hMutex);
-	}
-	return 0;
+	//}
+	//return 0;
+	ExitThread(7);
 }
 
 DWORD WINAPI ThreadBufferCircular(LPVOID lpParam)
@@ -81,7 +82,7 @@ DWORD WINAPI ThreadBufferCircular(LPVOID lpParam)
 		//WriteConsole(hConsole, TEXT("<-COMANDO->"), 1, &numWritten, NULL);
 
 		space.id = dados->id;
-		_tprintf(TEXT("COMANDO:"));
+		//_tprintf(TEXT("COMANDO:"));
 		//_tscanf_s(TEXT("%lu"), space.val);
 		WaitForSingleObject(dados->hSemEscrita, INFINITE);
 		WaitForSingleObject(dados->hMutex, INFINITE);
@@ -93,7 +94,7 @@ DWORD WINAPI ThreadBufferCircular(LPVOID lpParam)
 			dados->BufferCircular->posEscrita = 0;
 		}
 
-		_tprintf(TEXT("Produtor %d fez %d\n"), dados->id, space.val);
+		//_tprintf(TEXT("Produtor %d fez %d\n"), dados->id, space.val);
 		ReleaseMutex(dados->hMutex);
 		ReleaseSemaphore(dados->hSemLeitura, 1, NULL);
 		Sleep(((rand() % 4) + 1) * 1000);
@@ -289,6 +290,10 @@ int _tmain(int argc, TCHAR* argv[]) {
 	Sleep(1000);
 	ResetEvent(InitialEvent);
 
+
+	//Para a primeira meta apenas.. para nao estar a utilizar o cursor sem ser necessario
+	//user o suspend ou apenas deixar a thread correr 1 vez e nao em ciclo infinito
+	//SuspendThread(StartEndThreads[0]);
 	while (1)
 	{
 
