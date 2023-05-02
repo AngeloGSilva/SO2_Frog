@@ -40,8 +40,8 @@ DWORD WINAPI ThreadBeginEnd(LPVOID lpParam)
 {
 	pTStartEnd data = (pTStartEnd)lpParam;
 	TCHAR* temp;
-	//while (1)
-	//{
+	while (1)
+	{
 		WaitForSingleObject(data->hMutex, INFINITE);
 		CopyMemory(&temp, &data->sharedMap, sizeof(TCHAR) * (MAX_ROWS + SKIP_BEGINING_END) * MAX_COLS);
 		HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
@@ -60,9 +60,10 @@ DWORD WINAPI ThreadBeginEnd(LPVOID lpParam)
 			}
 		}
 		ReleaseMutex(data->hMutex);
-	//}
-	//return 0;
-	ExitThread(7);
+		Sleep(20000);
+	}
+	return 0;
+	//ExitThread(7);
 }
 
 DWORD WINAPI ThreadBufferCircular(LPVOID lpParam)

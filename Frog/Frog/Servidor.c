@@ -226,7 +226,7 @@ int _tmain(int argc, TCHAR* argv[]) {
 
 	WaitForSingleObject(hSem, INFINITE);
 	_tprintf(TEXT("Got in!\n"));
-	data.numRoads = 8;
+	data.numRoads = 2;
 	data.numCars = 0;
 	//desenho do mapa
 	for (int i = 0; i < data.numRoads + SKIP_BEGINING_END; i++)
@@ -357,7 +357,8 @@ int _tmain(int argc, TCHAR* argv[]) {
 		RoadsData[i].hEventRoads = CreateEvent(NULL, TRUE, FALSE, TEXT("EVENT_ROADS") + i);
 		RoadsData[i].id = i + SKIP_BEGINING; //o numero do id é a estrada q elas estao encarregues
 		RoadsData[i].speed = ((rand() % 8) + 1) * 1000;
-		RoadsData[i].direction[RoadsData[i].id] = ROAD_LEFT;//(rand() % 1)
+		_tprintf(TEXT("Direcao AAAAAAAAAAAAA %d\n"), (rand() % 1));
+		RoadsData[i].direction[RoadsData[i].id] = (rand() % 2);
 		RoadThreads[i] = CreateThread(
 			NULL,    // Thread attributes
 			0,       // Stack size (0 = use default)
