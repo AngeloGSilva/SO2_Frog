@@ -91,7 +91,7 @@ DWORD WINAPI ThreadBufferCircular(LPVOID lpParam)
 		//S -> Stop
 		//B -> Start
 		//R -> Rock (tal como o change ainda nao sei o numero)
-		strncpy_s(space.val, sizeof(space.val), "Change", sizeof("Change"));
+		//strncpy_s(space.val, sizeof(space.val), "Change", sizeof("Change"));
 		WaitForSingleObject(dados->hSemEscrita, INFINITE);
 		WaitForSingleObject(dados->hMutex, INFINITE);
 		//copiar o conteudo para a memoria partilhada

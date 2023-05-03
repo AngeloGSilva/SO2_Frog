@@ -33,9 +33,30 @@ DWORD WINAPI ThreadRoads(LPVOID lpParam)
 				int y = temp[i].col;
 				_tprintf(TEXT("DIRECAOO %d comecou\n"), data->direction[data->id]);
 				if (data->direction[data->id] == ROAD_RIGHT) {
-					if (data->Map[x * MAX_COLS + y + 1] != OBSTACLE_ELEMENT) {
-						//&& data->Map[x * MAX_COLS + y + 1] != CAR_ELEMENT
-						if (y + 1 == 19) {
+					
+					//carros em fila
+					if (data->Map[x * MAX_COLS + y + 1] == BLOCK_ELEMENT && data->Map[x * MAX_COLS + 1] == CAR_ELEMENT)
+						y = 1;
+
+					if (data->Map[x * MAX_COLS + y + 1] == CAR_ELEMENT) {
+						int testing = y;
+						int increment = 1;
+						while (data->Map[x * MAX_COLS + testing + increment] == CAR_ELEMENT) {
+							if (testing + increment == 19) {
+								testing = 1;
+								increment = -1;
+							}
+							increment+=1;
+						}
+						if (data->Map[x * MAX_COLS + testing + increment] != OBSTACLE_ELEMENT) {
+							if (temp[i].col + 1 == 19) {
+								temp[i].col = 1;
+							}
+							else
+								temp[i].col++;
+						}
+					}else if (data->Map[x * MAX_COLS + y + 1] != OBSTACLE_ELEMENT) {
+						if (temp[i].col + 1 == 19) {
 							temp[i].col = 1;
 						}
 						else
@@ -133,35 +154,35 @@ DWORD WINAPI ThreadBufferCircular(LPVOID lpParam)
 			dados->BufferCircular->posLeitura = 0;
 		}
 
-		if (strcmp(space.val, "Stop")) {
-			//Parar o tempo
-			for (int i = 0; i < dados->numRoads; i++)
-			{
-				SuspendThread(dados->threadsHandles[i]);
-			}
-		}
-		else if (strcmp(space.val, "Start")) {
-			for (int i = 0; i < dados->numRoads; i++)
-			{
-				ResumeThread(dados->threadsHandles[i]);
-			}
-		}
-		else if (strcmp(space.val, "Change")) {
-			int roadId;
-			if (sscanf_s(space.val, "Change %d", &roadId) != 1) {
-				// handle error: unable to extract roadId
-				return;
-			}
-			if (dados->RoadsDirection[roadId] == ROAD_RIGHT)
-			{
-				dados->RoadsDirection[roadId] = ROAD_LEFT;
-			}
-			else
-				dados->RoadsDirection[roadId] = ROAD_RIGHT;
-		}
-		else if (strcmp(space.val, "Rock")) {
+		//if (strcmp(space.val, "Stop")) {
+		//	//Parar o tempo
+		//	for (int i = 0; i < dados->numRoads; i++)
+		//	{
+		//		SuspendThread(dados->threadsHandles[i]);
+		//	}
+		//}
+		//else if (strcmp(space.val, "Start")) {
+		//	for (int i = 0; i < dados->numRoads; i++)
+		//	{
+		//		ResumeThread(dados->threadsHandles[i]);
+		//	}
+		//}
+		//else if (strcmp(space.val, "Change")) {
+		//	int roadId;
+		//	if (sscanf_s(space.val, "Change %d", &roadId) != 1) {
+		//		// handle error: unable to extract roadId
+		//		return;
+		//	}
+		//	if (dados->RoadsDirection[roadId] == ROAD_RIGHT)
+		//	{
+		//		dados->RoadsDirection[roadId] = ROAD_LEFT;
+		//	}
+		//	else
+		//		dados->RoadsDirection[roadId] = ROAD_RIGHT;
+		//}
+		//else if (strcmp(space.val, "Rock")) {
 
-		}
+		//}
 
 
 		//acrescentar pedra
@@ -212,26 +233,26 @@ int _tmain(int argc, TCHAR* argv[]) {
 #endif
 
 	//NAO APAGAR, IMPORTANTE 
-	//if (argc != 3) { 
-	//	_tprintf(TEXT("Bad usage of parameters \n"));
-	//	return 1;
-	//}
+	if (argc != 3) { 
+		_tprintf(TEXT("Bad usage of parameters \n"));
+	}
+	else {
+		DWORD arg1, arg2, parse_result;
+		parse_result = parse_args(argv[1], argv[2], &arg1, &arg2);
+		if (parse_result != 0) {
+			_tprintf(TEXT("Failed to parse arguments\n"));
+			return 1;
+		}
+		_tprintf(TEXT("Good parse!\n arg1 :%d \narg2 :%d \n"), arg1, arg2);
 
-	//DWORD arg1, arg2, parse_result;
-	//parse_result = parse_args(argv[1], argv[2], &arg1, &arg2);
-	//if (parse_result != 0) {
-	//	_tprintf(TEXT("Failed to parse arguments\n"));
-	//	return 1;
-	//}
-
-	//_tprintf(TEXT("Good parse!\n arg1 :%d \narg2 :%d \n"),arg1,arg2);
+	}
 
 	srand((unsigned)time(NULL));
 
 	GameData data = RegistryKeyValue();
 
 
-	_tprintf(TEXT("car: %d,speed: %d\n"), data.numCars, data.carSpeed);
+	_tprintf(TEXT("car: %d,speed: %d\n"), data.numRoads, data.carSpeed);
 
 	//criar Semaf
 	HANDLE hSem = CreateSemaphore(NULL, 1, 1, SEMAPHORE_UNIQUE_SERVER);
@@ -247,7 +268,7 @@ int _tmain(int argc, TCHAR* argv[]) {
 
 	WaitForSingleObject(hSem, INFINITE);
 	_tprintf(TEXT("Got in!\n"));
-	data.numRoads = 2;
+	//data.numRoads = 2;
 	data.numCars = 0;
 	//desenho do mapa
 	for (int i = 0; i < data.numRoads + SKIP_BEGINING_END; i++)
@@ -262,8 +283,8 @@ int _tmain(int argc, TCHAR* argv[]) {
 			else
 				data.map[i][j] = ROAD_ELEMENT;
 
-			//if (i == 2 && j == 6)
-			//	data.map[i][j] = OBSTACLE_ELEMENT;
+			if (i == 2 && j == 6)
+				data.map[i][j] = OBSTACLE_ELEMENT;
 		}
 	}
 
@@ -282,7 +303,7 @@ int _tmain(int argc, TCHAR* argv[]) {
 			int posInRoad = 0;
 			do {
 				posInRoad = (rand() % (MAX_COLS - 2)) + 1;
-			} while (data.map[i + SKIP_BEGINING][posInRoad] == 'H');
+			} while (data.map[i + SKIP_BEGINING][posInRoad] == 'H' || data.map[i + SKIP_BEGINING][posInRoad] == '#');
 			_tprintf(TEXT("PUS AQUI %d %d\n"), posInRoad, i + SKIP_BEGINING);
 			data.car_pos[data.numCars].col = posInRoad; //y -> coluna
 			data.map[i + SKIP_BEGINING][posInRoad] = CAR_ELEMENT;
@@ -379,7 +400,7 @@ int _tmain(int argc, TCHAR* argv[]) {
 		RoadsData[i].id = i + SKIP_BEGINING; //o numero do id é a estrada q elas estao encarregues
 		RoadsData[i].speed = ((rand() % 8) + 1) * 1000;
 		_tprintf(TEXT("Direcao AAAAAAAAAAAAA %d\n"), (rand() % 1));
-		RoadsData[i].direction[RoadsData[i].id] = (rand() % 2);
+		RoadsData[i].direction[RoadsData[i].id] = ROAD_RIGHT;//(rand() % 2)
 		RoadThreads[i] = CreateThread(
 			NULL,    // Thread attributes
 			0,       // Stack size (0 = use default)

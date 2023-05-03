@@ -16,13 +16,13 @@ GameData RegistryKeyValue() {
 	DWORD valueRoad;
 	DWORD valueSpeed;
 
-	_tprintf(TEXT("Numero de Estradas:"));
+	/*_tprintf(TEXT("Numero de Estradas:"));
 	_tscanf_s(TEXT("%lu"), &valueRoad);
 
 	_tprintf(TEXT("Velocidade dos veiculos:"));
 	_tscanf_s(TEXT("%lu"), &valueSpeed);
 
-	_tprintf(TEXT("Valores angariados Estradas %lu e speed %lu:\n"), valueRoad, valueSpeed);
+	_tprintf(TEXT("Valores angariados Estradas %lu e speed %lu:\n"), valueRoad, valueSpeed);*/
 
 
 	/*Criar ou abrir a chave dir no Registry*/
@@ -71,7 +71,7 @@ GameData RegistryKeyValue() {
 	}else
 		_tprintf(TEXT("Roads esta definido no registry!\n"));
 
-	temp.numCars = valueRoad;
+	temp.numRoads = valueRoad;
 
 	DWORD sizeSpeed = sizeof(sizeSpeed);
 	if (RegQueryValueEx(
@@ -101,8 +101,8 @@ GameData RegistryKeyValue() {
 
 	temp.carSpeed = valueSpeed;
 	_tprintf(TEXT("Speed: %d!\n"), temp.carSpeed);
-	temp.numCars = valueRoad;
-	_tprintf(TEXT("roads: %d!\n"), temp.numCars);
+	temp.numRoads = valueRoad;
+	_tprintf(TEXT("roads: %d!\n"), temp.numRoads);
 	RegCloseKey(registryKey);
 	return temp;
 }
