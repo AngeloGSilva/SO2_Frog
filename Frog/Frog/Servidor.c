@@ -232,12 +232,13 @@ int _tmain(int argc, TCHAR* argv[]) {
 	_setmode(_fileno(stdout), _O_WTEXT);
 #endif
 
+	DWORD arg1 = 0, arg2 = 0, parse_result = 0;
+
 	//NAO APAGAR, IMPORTANTE 
 	if (argc != 3) { 
 		_tprintf(TEXT("Bad usage of parameters \n"));
 	}
 	else {
-		DWORD arg1, arg2, parse_result;
 		parse_result = parse_args(argv[1], argv[2], &arg1, &arg2);
 		if (parse_result != 0) {
 			_tprintf(TEXT("Failed to parse arguments\n"));
@@ -249,7 +250,7 @@ int _tmain(int argc, TCHAR* argv[]) {
 
 	srand((unsigned)time(NULL));
 
-	GameData data = RegistryKeyValue();
+	GameData data = RegistryKeyValue(arg1, arg2);
 
 
 	_tprintf(TEXT("car: %d,speed: %d\n"), data.numRoads, data.carSpeed);

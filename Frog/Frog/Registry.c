@@ -9,20 +9,20 @@
 #include "Utils.h"
 #include "Struct.h"
 
-GameData RegistryKeyValue() {
+GameData RegistryKeyValue(DWORD valueRoad,DWORD valueSpeed) {
 	GameData temp;
 	HKEY registryKey;
 	DWORD keyResult; //o que aconteceu com a chave
-	DWORD valueRoad;
-	DWORD valueSpeed;
+	//DWORD valueRoad;
+	//DWORD valueSpeed;
 
 	/*_tprintf(TEXT("Numero de Estradas:"));
 	_tscanf_s(TEXT("%lu"), &valueRoad);
 
 	_tprintf(TEXT("Velocidade dos veiculos:"));
 	_tscanf_s(TEXT("%lu"), &valueSpeed);
-
-	_tprintf(TEXT("Valores angariados Estradas %lu e speed %lu:\n"), valueRoad, valueSpeed);*/
+	*/
+	_tprintf(TEXT("Valores angariados Estradas %lu e speed %lu:\n"), valueRoad, valueSpeed);
 
 
 	/*Criar ou abrir a chave dir no Registry*/
@@ -100,9 +100,9 @@ GameData RegistryKeyValue() {
 		_tprintf(TEXT("Speed esta definido no registry!\n"));
 
 	temp.carSpeed = valueSpeed;
-	_tprintf(TEXT("Speed: %d!\n"), temp.carSpeed);
+	_tprintf(TEXT("Speed: %lu!\n"), temp.carSpeed);
 	temp.numRoads = valueRoad;
-	_tprintf(TEXT("roads: %d!\n"), temp.numRoads);
+	_tprintf(TEXT("roads: %lu!\n"), temp.numRoads);
 	RegCloseKey(registryKey);
 	return temp;
 }

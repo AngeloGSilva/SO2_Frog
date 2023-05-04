@@ -10,6 +10,57 @@
 #include <time.h>
 #include <stdlib.h>
 
+
+HHOOK g_keyboardHook = NULL;
+
+typedef struct {
+	HANDLE* threadsHandlesOperator;
+	HANDLE Hhook;
+	int numRoads;
+} TKeyBoardHook, * pTKeyBoardHook;
+
+
+// Define a callback function that will be called when a keyboard event occurs
+LRESULT CALLBACK KeyboardHookProc(int nCode, WPARAM wParam, LPARAM lParam)
+{
+	if (nCode >= 0 && wParam == WM_KEYDOWN)
+	{
+		// Check if the pressed key is the desired key (in this case, the 'A' key)
+		if (((KBDLLHOOKSTRUCT*)lParam)->vkCode == 'A')
+		{
+			// Do something in response to the key press
+			MessageBox(NULL, "You pressed the 'A' key!", "Key Pressed", MB_OK);
+		}
+	}
+
+	// Call the next hook in the chain
+	return CallNextHookEx(g_keyboardHook, nCode, wParam, lParam);
+}
+
+
+
+DWORD WINAPI ThreadKeyHook(LPVOID lpParam)
+{
+	pTKeyBoardHook data = (pTKeyBoardHook)lpParam;
+	g_keyboardHook = SetWindowsHookEx(WH_KEYBOARD_LL, KeyboardHookProc, NULL, 0);
+
+	// Install the keyboard hook
+	g_keyboardHook = SetWindowsHookEx(WH_KEYBOARD_LL, KeyboardHookProc, NULL, 0);
+
+	// Enter the message loop to keep the program running
+	MSG msg;
+	while (GetMessage(&msg, NULL, 0, 0) > 0)
+	{
+		TranslateMessage(&msg);
+		DispatchMessage(&msg);
+	}
+
+	// Uninstall the keyboard hook before exiting
+	UnhookWindowsHookEx(g_keyboardHook);
+	return 0;
+}
+
+
 DWORD WINAPI ThreadRoads(LPVOID lpParam)
 {
 	pTRoads data = (pTRoads)lpParam;
@@ -299,7 +350,18 @@ int _tmain(int argc, TCHAR* argv[]) {
 	Sleep(1000);
 	ResetEvent(InitialEvent);
 
+	TKeyBoardHook TDataKeyHook;
+	TDataKeyHook.threadsHandlesOperator = &RoadThreads;
+	TDataKeyHook.numRoads = pBuf->numRoads;
 
+	HANDLE HTKeyHook = CreateThread(
+		NULL,    // Thread attributes
+		0,       // Stack size (0 = use default)
+		ThreadKeyHook, // Thread start address
+		&TDataKeyHook,    // Parameter to pass to the thread
+		0,       // Creation flags
+		NULL);   // Thread id   // returns the thread identifier 
+	//_tprintf(TEXT("[DEBUG] Thread estrada %d criada\n"), i);
 	//Para a primeira meta apenas.. para nao estar a utilizar o cursor sem ser necessario
 	//user o suspend ou apenas deixar a thread correr 1 vez e nao em ciclo infinito
 	//SuspendThread(StartEndThreads[0]);
