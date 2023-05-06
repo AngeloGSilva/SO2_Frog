@@ -17,23 +17,24 @@ typedef struct {
 	HANDLE* threadsHandlesOperator;
 	HANDLE Hhook;
 	int numRoads;
-} TKeyBoardHook, * pTKeyBoardHook;
+} TKeyBoardHook, *pTKeyBoardHook;
 
 
 // Define a callback function that will be called when a keyboard event occurs
 LRESULT CALLBACK KeyboardHookProc(int nCode, WPARAM wParam, LPARAM lParam)
 {
-	HANDLE eventKeyBoard = CreateEvent(NULL, TRUE, FALSE, KEYBOARD_EVENT);
-
 	if (nCode >= 0 && wParam == WM_KEYDOWN)
 	{
+		//HANDLE eventKeyBoard = CreateEvent(NULL, TRUE, FALSE, KEYBOARD_EVENT);
 		// Check if the pressed key is the desired key (in this case, the 'A' key)
 		if (((KBDLLHOOKSTRUCT*)lParam)->vkCode == 'A')
 		{
+			MessageBox(NULL,NULL, NULL, NULL);
+			_tprintf(TEXT("RECEBEUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUU\n"));
 			// Do something in response to the key press
-			SetEvent(eventKeyBoard);
-			Sleep(500);
-			ResetEvent(eventKeyBoard);
+			//SetEvent(eventKeyBoard);
+			//Sleep(500);
+			//ResetEvent(eventKeyBoard);
 			//MessageBox(NULL, "You pressed the 'A' key!", "Key Pressed", MB_OK);
 		}
 	}
@@ -47,17 +48,26 @@ LRESULT CALLBACK KeyboardHookProc(int nCode, WPARAM wParam, LPARAM lParam)
 DWORD WINAPI ThreadKeyHook(LPVOID lpParam)
 {
 	pTKeyBoardHook data = (pTKeyBoardHook)lpParam;
-	HANDLE eventKeyBoard = CreateEvent(NULL, TRUE, FALSE, KEYBOARD_EVENT);
+	//HANDLE eventKeyBoard = CreateEvent(NULL, TRUE, FALSE, KEYBOARD_EVENT);
 	g_keyboardHook = SetWindowsHookEx(WH_KEYBOARD_LL, KeyboardHookProc, NULL, 0);
 
 	// Install the keyboard hook
-	g_keyboardHook = SetWindowsHookEx(WH_KEYBOARD_LL, KeyboardHookProc, NULL, 0);
+	//g_keyboardHook = SetWindowsHookEx(WH_KEYBOARD_LL, KeyboardHookProc, NULL, 0);
 
 	// Enter the message loop to keep the program running
-	WaitForSingleObject(eventKeyBoard,INFINITE);
-	for (int i = 0; i < data->numRoads; i++) {
-		SuspendThread(data->threadsHandlesOperator[i]);
-	}
+	MSG msg;
+	while (GetMessage(&msg, NULL, 0, 0) > 0)
+	{
+		_tprintf(TEXT("ESPERAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAU\n"));
+		//WaitForSingleObject(eventKeyBoard, INFINITE);
+		_tprintf(TEXT("RECEBEUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUU\n"));
+		for (int i = 0; i < data->numRoads; i++) {
+			SuspendThread(data->threadsHandlesOperator[i]);
+		}
+		TranslateMessage(&msg);
+		DispatchMessage(&msg);
+	}// Enter the message loop to keep the program running
+	
 
 	// Uninstall the keyboard hook before exiting
 	UnhookWindowsHookEx(g_keyboardHook);
@@ -355,7 +365,7 @@ int _tmain(int argc, TCHAR* argv[]) {
 	ResetEvent(InitialEvent);
 
 	TKeyBoardHook TDataKeyHook;
-	TDataKeyHook.threadsHandlesOperator = &RoadThreads;
+	TDataKeyHook.threadsHandlesOperator = RoadThreads;
 	TDataKeyHook.numRoads = pBuf->numRoads;
 
 	HANDLE HTKeyHook = CreateThread(
