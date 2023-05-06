@@ -29,13 +29,11 @@ LRESULT CALLBACK KeyboardHookProc(int nCode, WPARAM wParam, LPARAM lParam)
 		// Check if the pressed key is the desired key (in this case, the 'A' key)
 		if (((KBDLLHOOKSTRUCT*)lParam)->vkCode == 'A')
 		{
-			MessageBox(NULL,NULL, NULL, NULL);
-			_tprintf(TEXT("RECEBEUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUU\n"));
 			// Do something in response to the key press
+			MessageBox(NULL, TEXT("Escondes te o jogo, podes digitar um comando"), TEXT("Modo Comando"), MB_OK);
 			//SetEvent(eventKeyBoard);
 			//Sleep(500);
 			//ResetEvent(eventKeyBoard);
-			//MessageBox(NULL, "You pressed the 'A' key!", "Key Pressed", MB_OK);
 		}
 	}
 
@@ -48,7 +46,7 @@ LRESULT CALLBACK KeyboardHookProc(int nCode, WPARAM wParam, LPARAM lParam)
 DWORD WINAPI ThreadKeyHook(LPVOID lpParam)
 {
 	pTKeyBoardHook data = (pTKeyBoardHook)lpParam;
-	//HANDLE eventKeyBoard = CreateEvent(NULL, TRUE, FALSE, KEYBOARD_EVENT);
+	HANDLE eventKeyBoard = CreateEvent(NULL, TRUE, FALSE, KEYBOARD_EVENT);
 	g_keyboardHook = SetWindowsHookEx(WH_KEYBOARD_LL, KeyboardHookProc, NULL, 0);
 
 	// Install the keyboard hook
@@ -58,19 +56,15 @@ DWORD WINAPI ThreadKeyHook(LPVOID lpParam)
 	MSG msg;
 	while (GetMessage(&msg, NULL, 0, 0) > 0)
 	{
-		_tprintf(TEXT("ESPERAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAU\n"));
 		//WaitForSingleObject(eventKeyBoard, INFINITE);
-		_tprintf(TEXT("RECEBEUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUU\n"));
-		for (int i = 0; i < data->numRoads; i++) {
-			SuspendThread(data->threadsHandlesOperator[i]);
-		}
+
 		TranslateMessage(&msg);
 		DispatchMessage(&msg);
+		SetEvent(eventKeyBoard);
+		Sleep(500);
+		ResetEvent(eventKeyBoard);
+		UnhookWindowsHookEx(g_keyboardHook);
 	}// Enter the message loop to keep the program running
-	
-
-	// Uninstall the keyboard hook before exiting
-	UnhookWindowsHookEx(g_keyboardHook);
 	return 0;
 }
 
@@ -79,22 +73,25 @@ DWORD WINAPI ThreadRoads(LPVOID lpParam)
 {
 	pTRoads data = (pTRoads)lpParam;
 	TCHAR* temp;
+	COORD cursorPos;
+	DWORD numWritten; // Number of characters actually written
 	while (1)
 	{
 		WaitForSingleObject(data->hEventRoads, INFINITE);
 		WaitForSingleObject(data->hMutex, INFINITE);
 		CopyMemory(&temp, &data->sharedMap, sizeof(TCHAR) * (MAX_ROWS + SKIP_BEGINING_END) * MAX_COLS);
 		HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
-		COORD cursorPos;
 		for (int i = 0; i < MAX_COLS; i++)
 		{
-			DWORD numWritten; // Number of characters actually written
 			cursorPos.X = i;
 			cursorPos.Y = data->id;
 			//_tprintf(TEXT("coluna do carro %d :%d\n"), i,temp[i].col);
 			SetConsoleCursorPosition(hConsole, cursorPos);
 			WriteConsole(hConsole, &temp[data->id * MAX_COLS + i], 1, &numWritten, NULL);
 		}
+		cursorPos.Y = data->id + 14;
+		SetConsoleCursorPosition(hConsole, cursorPos);
+		WriteConsole(hConsole, TEXT("ATUALIZEI A THREAD"), 18, &numWritten, NULL);
 		ReleaseMutex(data->hMutex);
 	}
 	return 0;
@@ -133,30 +130,44 @@ DWORD WINAPI ThreadBeginEnd(LPVOID lpParam)
 
 DWORD WINAPI ThreadBufferCircular(LPVOID lpParam)
 {
+	HANDLE eventKeyBoard = CreateEvent(NULL, TRUE, FALSE, KEYBOARD_EVENT);
 	pTDados dados = (pTDados)lpParam;
 	EspacoBuffer space;
 	HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
 	COORD cursorPos;
+	TKeyBoardHook TDataKeyHook;
+	TDataKeyHook.threadsHandlesOperator = dados->threadsHandles;
+	TDataKeyHook.numRoads = dados->numRoads;
+
+
+
+
 	while (1)
 	{
-		Sleep(10000);
-		//DWORD numWritten; // Number of characters actually written
-		//cursorPos.X = 0;
-		//cursorPos.Y = 20;
-		////_tprintf(TEXT("coluna do carro %d :%d\n"), i,temp[i].col);
-		//SetConsoleCursorPosition(hConsole, cursorPos);
-		//WriteConsole(hConsole, TEXT("<-COMANDO->"), 1, &numWritten, NULL);
+		HANDLE HTKeyHook = CreateThread(
+			NULL,    // Thread attributes
+			0,       // Stack size (0 = use default)
+			ThreadKeyHook, // Thread start address
+			&TDataKeyHook,    // Parameter to pass to the thread
+			0,       // Creation flags
+			NULL);   // Thread id   // returns the thread identifier 
 
 		space.id = dados->id;
-		//_tprintf(TEXT("COMANDO:"));
-		//_tscanf_s(TEXT("%lu"), space.val);
-		 // Copy the string "Change" into space_val
-		// talvez fazer teclas ficarem em carregues de enviar comandos
-		//EX: C -> envia "Change" (o numero ainda nao sei)
-		//S -> Stop
-		//B -> Start
-		//R -> Rock (tal como o change ainda nao sei o numero)
-		//strncpy_s(space.val, sizeof(space.val), "Change", sizeof("Change"));
+		WaitForSingleObject(eventKeyBoard, INFINITE);
+		for (int i = 0; i < dados->numRoads; i++) {
+			SuspendThread(TDataKeyHook.threadsHandlesOperator[i]);
+		}
+		DWORD numWritten; // Number of characters actually written
+		cursorPos.X = 0;
+		cursorPos.Y = 20;
+		SetConsoleCursorPosition(hConsole, cursorPos);
+		_tprintf(TEXT("COMANDO:"));
+		//scanf_s("%100s", space.val);
+		_getts_s(space.val,20);
+		//_tscanf_s(TEXT("%s"), space.val);
+
+
+
 		WaitForSingleObject(dados->hSemEscrita, INFINITE);
 		WaitForSingleObject(dados->hMutex, INFINITE);
 		//copiar o conteudo para a memoria partilhada
@@ -171,6 +182,9 @@ DWORD WINAPI ThreadBufferCircular(LPVOID lpParam)
 		ReleaseMutex(dados->hMutex);
 		ReleaseSemaphore(dados->hSemLeitura, 1, NULL);
 		Sleep(((rand() % 4) + 1) * 1000);
+		for (int i = 0; i < dados->numRoads; i++) {
+			ResumeThread(TDataKeyHook.threadsHandlesOperator[i]);
+		}
 	}
 	return 0;
 }
@@ -218,46 +232,7 @@ int _tmain(int argc, TCHAR* argv[]) {
 
 	GameData data;
 
-	TDados dataThread;
-
-	dataThread.hMutex = CreateMutex(NULL, FALSE, BUFFER_CIRCULAR_MUTEX_ESCRITOR);
-	dataThread.hSemEscrita = CreateSemaphore(NULL, 10, 10, BUFFER_CIRCULAR_SEMAPHORE_ESCRITOR);
-	dataThread.hSemLeitura = CreateSemaphore(NULL, 0, 10, BUFFER_CIRCULAR_SEMAPHORE_LEITORE);
-
-	HANDLE HMapFileBuffer = OpenFileMapping(FILE_MAP_ALL_ACCESS, FALSE, FILE_MAPPING_BUFFER_CIRCULAR);
-	if (HMapFileBuffer == NULL)
-	{
-		_tprintf(TEXT("CreateFileMapping\n"));
-		HMapFileBuffer = CreateFileMapping(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, sizeof(Buffer), TEXT("SO2_BUFFERCIRCULAR"));
-		dataThread.BufferCircular = (pBuffer)MapViewOfFile(HMapFileBuffer, FILE_MAP_ALL_ACCESS, 0, 0, 0);
-		dataThread.BufferCircular->nConsumidores = 0;
-		dataThread.BufferCircular->nProdutores = 0;
-		dataThread.BufferCircular->posEscrita = 0;
-		dataThread.BufferCircular->posLeitura = 0;
-		if (HMapFileBuffer == NULL)
-		{
-			_tprintf(TEXT("ERRO CreateFileMapping\n"));
-			return 0;
-		}
-	}
-	else
-	{
-		dataThread.BufferCircular = (Buffer*)MapViewOfFile(HMapFileBuffer, FILE_MAP_ALL_ACCESS, 0, 0, 0);
-		if (HMapFileBuffer == NULL)
-		{
-			_tprintf(TEXT("ERRO CreateFileMapping\n"));
-			return 0;
-		}
-	}
-	dataThread.id = dataThread.BufferCircular->nProdutores++;
-
-	HANDLE hThreads = CreateThread(
-		NULL,    // Thread attributes
-		0,       // Stack size (0 = use default)
-		ThreadBufferCircular, // Thread start address
-		&dataThread,    // Parameter to pass to the thread
-		0,       // Creation flags
-		NULL);   // Thread id   // returns the thread identifier 
+ 
 
 	//data tem de sair e so ficar pbuf penso eu
 	HANDLE HMapFile = CreateFileMapping(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, sizeof(GameData), FILE_MAPPING_GAME_DATA);
@@ -358,23 +333,59 @@ int _tmain(int argc, TCHAR* argv[]) {
 		//_tprintf(TEXT("[DEBUG] Thread estrada %d criada\n"), i);
 	}
 
+
+	TDados dataThread;
+
+	dataThread.hMutex = CreateMutex(NULL, FALSE, BUFFER_CIRCULAR_MUTEX_ESCRITOR);
+	dataThread.hSemEscrita = CreateSemaphore(NULL, 10, 10, BUFFER_CIRCULAR_SEMAPHORE_ESCRITOR);
+	dataThread.hSemLeitura = CreateSemaphore(NULL, 0, 10, BUFFER_CIRCULAR_SEMAPHORE_LEITORE);
+
+	HANDLE HMapFileBuffer = OpenFileMapping(FILE_MAP_ALL_ACCESS, FALSE, FILE_MAPPING_BUFFER_CIRCULAR);
+	if (HMapFileBuffer == NULL)
+	{
+		_tprintf(TEXT("CreateFileMapping\n"));
+		HMapFileBuffer = CreateFileMapping(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, sizeof(Buffer), TEXT("SO2_BUFFERCIRCULAR"));
+		dataThread.BufferCircular = (pBuffer)MapViewOfFile(HMapFileBuffer, FILE_MAP_ALL_ACCESS, 0, 0, 0);
+		dataThread.BufferCircular->nConsumidores = 0;
+		dataThread.BufferCircular->nProdutores = 0;
+		dataThread.BufferCircular->posEscrita = 0;
+		dataThread.BufferCircular->posLeitura = 0;
+		dataThread.threadsHandles = &RoadThreads;
+		dataThread.numRoads = pBuf->numRoads;
+		if (HMapFileBuffer == NULL)
+		{
+			_tprintf(TEXT("ERRO CreateFileMapping\n"));
+			return 0;
+		}
+	}
+	else
+	{
+		dataThread.BufferCircular = (Buffer*)MapViewOfFile(HMapFileBuffer, FILE_MAP_ALL_ACCESS, 0, 0, 0);
+		if (HMapFileBuffer == NULL)
+		{
+			_tprintf(TEXT("ERRO CreateFileMapping\n"));
+			return 0;
+		}
+	}
+	dataThread.id = dataThread.BufferCircular->nProdutores++;
+
+	HANDLE hThreads = CreateThread(
+		NULL,    // Thread attributes
+		0,       // Stack size (0 = use default)
+		ThreadBufferCircular, // Thread start address
+		&dataThread,    // Parameter to pass to the thread
+		0,       // Creation flags
+		NULL);   // Thread id   // returns the thread identifier
+
+
 	HANDLE InitialEvent = CreateEvent(NULL, TRUE, FALSE, TEXT("INITIAL EVENT"));
 
 	SetEvent(InitialEvent);
 	Sleep(1000);
 	ResetEvent(InitialEvent);
 
-	TKeyBoardHook TDataKeyHook;
-	TDataKeyHook.threadsHandlesOperator = RoadThreads;
-	TDataKeyHook.numRoads = pBuf->numRoads;
 
-	HANDLE HTKeyHook = CreateThread(
-		NULL,    // Thread attributes
-		0,       // Stack size (0 = use default)
-		ThreadKeyHook, // Thread start address
-		&TDataKeyHook,    // Parameter to pass to the thread
-		0,       // Creation flags
-		NULL);   // Thread id   // returns the thread identifier 
+	
 	//_tprintf(TEXT("[DEBUG] Thread estrada %d criada\n"), i);
 	//Para a primeira meta apenas.. para nao estar a utilizar o cursor sem ser necessario
 	//user o suspend ou apenas deixar a thread correr 1 vez e nao em ciclo infinito

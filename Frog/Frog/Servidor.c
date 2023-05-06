@@ -154,35 +154,35 @@ DWORD WINAPI ThreadBufferCircular(LPVOID lpParam)
 			dados->BufferCircular->posLeitura = 0;
 		}
 
-		//if (strcmp(space.val, "Stop")) {
-		//	//Parar o tempo
-		//	for (int i = 0; i < dados->numRoads; i++)
-		//	{
-		//		SuspendThread(dados->threadsHandles[i]);
-		//	}
-		//}
-		//else if (strcmp(space.val, "Start")) {
-		//	for (int i = 0; i < dados->numRoads; i++)
-		//	{
-		//		ResumeThread(dados->threadsHandles[i]);
-		//	}
-		//}
-		//else if (strcmp(space.val, "Change")) {
-		//	int roadId;
-		//	if (sscanf_s(space.val, "Change %d", &roadId) != 1) {
-		//		// handle error: unable to extract roadId
-		//		return;
-		//	}
-		//	if (dados->RoadsDirection[roadId] == ROAD_RIGHT)
-		//	{
-		//		dados->RoadsDirection[roadId] = ROAD_LEFT;
-		//	}
-		//	else
-		//		dados->RoadsDirection[roadId] = ROAD_RIGHT;
-		//}
-		//else if (strcmp(space.val, "Rock")) {
+		if (strcmp(space.val, "Stop") == 0) {
+			//Parar o tempo
+			for (int i = 0; i < dados->numRoads; i++)
+			{
+				SuspendThread(dados->threadsHandles[i]);
+			}
+		}
+		else if (strcmp(space.val, "Start") == 0) {
+			for (int i = 0; i < dados->numRoads; i++)
+			{
+				ResumeThread(dados->threadsHandles[i]);
+			}
+		}
+		else if (strcmp(space.val, "Change") == 0) {
+			int roadId;
+			if (sscanf_s(space.val, "Change %d", &roadId) != 1) {
+				// handle error: unable to extract roadId
+				return;
+			}
+			if (dados->RoadsDirection[roadId] == ROAD_RIGHT)
+			{
+				dados->RoadsDirection[roadId] = ROAD_LEFT;
+			}
+			else
+				dados->RoadsDirection[roadId] = ROAD_RIGHT;
+		}
+		else if (strcmp(space.val, "Rock") == 0) {
 
-		//}
+		}
 
 
 		//acrescentar pedra
@@ -270,7 +270,7 @@ int _tmain(int argc, TCHAR* argv[]) {
 
 	WaitForSingleObject(hSem, INFINITE);
 	_tprintf(TEXT("Got in!\n"));
-	//data.numRoads = 2;
+	data.numRoads = 1;
 	data.numCars = 0;
 	//desenho do mapa
 	for (int i = 0; i < data.numRoads + SKIP_BEGINING_END; i++)
