@@ -8,3 +8,5 @@
 #define KEY_SPEED_VALUE TEXT("Speed")
 
 GameData RegistryKeyValue(DWORD valueRoad, DWORD valueSpeed);
+
+GameData RegistryGetValues();

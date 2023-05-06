@@ -211,16 +211,16 @@ DWORD WINAPI ThreadBufferCircular(LPVOID lpParam)
 int parse_args(TCHAR* arg1_str, TCHAR* arg2_str, DWORD* arg1, DWORD* arg2) {
 	_tprintf(TEXT("%s %s \n"), arg1_str, arg2_str);
 
-	*arg1 = atoi(arg1_str);
-	*arg2 = atoi(arg2_str);
+	*arg1 = _wtoi(arg1_str);
+	*arg2 = _wtoi(arg2_str);
 
 	if (!arg1 || !arg2) {
 		_tprintf(TEXT("Invalid argument format\n"));
 		return 1;
 	}
 
-	_tprintf(TEXT("arg1 = %d\n"), *arg1);
-	_tprintf(TEXT("arg2 = %d\n"), *arg2);
+	_tprintf(TEXT("arg1 = %lu\n"), *arg1);
+	_tprintf(TEXT("arg2 = %lu\n"), *arg2);
 
 	return 0;
 }
@@ -231,12 +231,16 @@ int _tmain(int argc, TCHAR* argv[]) {
 	_setmode(_fileno(stdin), _O_WTEXT);
 	_setmode(_fileno(stdout), _O_WTEXT);
 #endif
+	srand((unsigned)time(NULL));
 
 	DWORD arg1 = 0, arg2 = 0, parse_result = 0;
 
 	//NAO APAGAR, IMPORTANTE 
+	GameData data;
 	if (argc != 3) { 
 		_tprintf(TEXT("Bad usage of parameters \n"));
+		//função que vai buscar ao registry se existir, senão return 1;
+		data = RegistryGetValues();
 	}
 	else {
 		parse_result = parse_args(argv[1], argv[2], &arg1, &arg2);
@@ -244,13 +248,10 @@ int _tmain(int argc, TCHAR* argv[]) {
 			_tprintf(TEXT("Failed to parse arguments\n"));
 			return 1;
 		}
-		_tprintf(TEXT("Good parse!\n arg1 :%d \narg2 :%d \n"), arg1, arg2);
+		_tprintf(TEXT("Good parse!\n arg1 :%lu \narg2 :%lu \n"), arg1, arg2);
+		data = RegistryKeyValue(arg1, arg2);
 
 	}
-
-	srand((unsigned)time(NULL));
-
-	GameData data = RegistryKeyValue(arg1, arg2);
 
 
 	_tprintf(TEXT("car: %d,speed: %d\n"), data.numRoads, data.carSpeed);
