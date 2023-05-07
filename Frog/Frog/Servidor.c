@@ -171,13 +171,27 @@ DWORD WINAPI ThreadBufferCircular(LPVOID lpParam)
 		}
 
 		//caso nao seja nenhuma das anteriores separar
-		int num;
+		/*int num;
 		char* token = strtok_s(space.val, " ");
 		char* str_part = token;
 		token = strtok_s(NULL, " ");
-		int num_part = atoi(token);
+		int num_part = atoi(token);*/
+
+
+		TCHAR wording[100] = TEXT("Change Change Change Change");
+		TCHAR* pointer;
+		TCHAR* word = NULL;
+		TCHAR* delim = TEXT(" ");
+
+		word = _tcstok_s(wording, delim, &pointer);
+		while (word != NULL)
+		{
+			_tprintf(TEXT("%s\n"), word);
+			word = _tcstok_s(NULL, delim, &pointer);
+		}
+
 		
-		if (strcmp(str_part, "Change") == 0) {
+		if (strcmp(space.val, "Change") == 0) {
 			int roadId;
 			if (sscanf_s(space.val, "Change %d", &roadId) != 1) {
 				// handle error: unable to extract roadId
