@@ -135,6 +135,8 @@ DWORD WINAPI CheckOperators(LPVOID lpParam)
 	}
 }
 
+
+
 DWORD WINAPI ThreadBufferCircular(LPVOID lpParam)
 {
 	pTDados dados = (pTDados)lpParam;
@@ -167,7 +169,15 @@ DWORD WINAPI ThreadBufferCircular(LPVOID lpParam)
 				ResumeThread(dados->threadsHandles[i]);
 			}
 		}
-		else if (strcmp(space.val, "Change") == 0) {
+
+		//caso nao seja nenhuma das anteriores separar
+		int num;
+		char* token = strtok_s(space.val, " ");
+		char* str_part = token;
+		token = strtok_s(NULL, " ");
+		int num_part = atoi(token);
+		
+		if (strcmp(str_part, "Change") == 0) {
 			int roadId;
 			if (sscanf_s(space.val, "Change %d", &roadId) != 1) {
 				// handle error: unable to extract roadId
