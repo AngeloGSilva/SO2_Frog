@@ -32,6 +32,7 @@ DWORD WINAPI ThreadRoads(LPVOID lpParam)
 			{
 				int y = temp[i].col;
 				_tprintf(TEXT("DIRECAOO %d comecou\n"), data->direction[data->id]);
+
 				if (data->direction[data->id] == ROAD_RIGHT) {
 					
 					//carros em fila
@@ -41,7 +42,7 @@ DWORD WINAPI ThreadRoads(LPVOID lpParam)
 					if (data->Map[x * MAX_COLS + y + 1] == CAR_ELEMENT) {
 						int testing = y;
 						int increment = 1;
-						while (data->Map[x * MAX_COLS + testing + increment] == CAR_ELEMENT) {
+						while (data->Map[x * MAX_COLS + testing + increment] == CAR_ELEMENT || data->Map[x * MAX_COLS + testing + increment] == BLOCK_ELEMENT) {
 							if (testing + increment == 19) {
 								testing = 1;
 								increment = -1;
@@ -55,6 +56,8 @@ DWORD WINAPI ThreadRoads(LPVOID lpParam)
 							else
 								temp[i].col++;
 						}
+						else
+							continue;
 					}else if (data->Map[x * MAX_COLS + y + 1] != OBSTACLE_ELEMENT) {
 						if (temp[i].col + 1 == 19) {
 							temp[i].col = 1;
@@ -168,10 +171,14 @@ DWORD WINAPI ThreadBufferCircular(LPVOID lpParam)
 
 		while (word != NULL)
 		{
-			numParted++;
 			_tprintf(TEXT("%s\n"), word);
 			word = _tcstok_s(NULL, delim, &pointer);
+			if(word!=NULL)
+				numParted++;
+
 		}
+
+		//Guardar a word no array dividedWord para usar os comandos
 
 		if (numParted == 1) {
 			if (strcmp(dividedWord[0], "Stop") == 0) {
@@ -315,7 +322,7 @@ int _tmain(int argc, TCHAR* argv[]) {
 			else
 				data.map[i][j] = ROAD_ELEMENT;
 
-			if (i == 2 && j == 6)
+			if (i == 2 && j == 2)
 				data.map[i][j] = OBSTACLE_ELEMENT;
 		}
 	}
