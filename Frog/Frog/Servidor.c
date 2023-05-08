@@ -156,56 +156,61 @@ DWORD WINAPI ThreadBufferCircular(LPVOID lpParam)
 			dados->BufferCircular->posLeitura = 0;
 		}
 
-		if (strcmp(space.val, "Stop") == 0) {
-			//Parar o tempo
-			for (int i = 0; i < dados->numRoads; i++)
-			{
-				SuspendThread(dados->threadsHandles[i]);
-			}
-		}
-		else if (strcmp(space.val, "Start") == 0) {
-			for (int i = 0; i < dados->numRoads; i++)
-			{
-				ResumeThread(dados->threadsHandles[i]);
-			}
-		}
 
-		//caso nao seja nenhuma das anteriores separar
-		/*int num;
-		char* token = strtok_s(space.val, " ");
-		char* str_part = token;
-		token = strtok_s(NULL, " ");
-		int num_part = atoi(token);*/
-
-
-		TCHAR wording[100] = TEXT("Change Change Change Change");
 		TCHAR* pointer;
 		TCHAR* word = NULL;
 		TCHAR* delim = TEXT(" ");
+		TCHAR dividedWord[3];
 
-		word = _tcstok_s(wording, delim, &pointer);
+		int numParted = 1;
+
+		word = _tcstok_s(space.val, delim, &pointer);
+
 		while (word != NULL)
 		{
+			numParted++;
 			_tprintf(TEXT("%s\n"), word);
 			word = _tcstok_s(NULL, delim, &pointer);
 		}
 
-		
-		if (strcmp(space.val, "Change") == 0) {
-			int roadId;
-			if (sscanf_s(space.val, "Change %d", &roadId) != 1) {
-				// handle error: unable to extract roadId
-				return;
+		if (numParted == 1) {
+			if (strcmp(dividedWord[0], "Stop") == 0) {
+				//Parar o tempo
+				for (int i = 0; i < dados->numRoads; i++)
+				{
+					SuspendThread(dados->threadsHandles[i]);
+				}
 			}
-			if (dados->RoadsDirection[roadId] == ROAD_RIGHT)
-			{
-				dados->RoadsDirection[roadId] = ROAD_LEFT;
-			}
-			else
-				dados->RoadsDirection[roadId] = ROAD_RIGHT;
-		}
-		else if (strcmp(space.val, "Rock") == 0) {
+			else if (strcmp(dividedWord[0], "Start") == 0) {
+				for (int i = 0; i < dados->numRoads; i++)
+				{
+					ResumeThread(dados->threadsHandles[i]);
+				}
+			}else
+				_tprintf(TEXT("Not a recognized command: %s"),word);
 
+
+		}
+		else if (numParted == 2) {
+
+			if (strcmp(dividedWord[0], "Change") == 0) {
+				int roadId=1;
+				if (1) {
+				}
+
+				if (dados->RoadsDirection[roadId] == ROAD_RIGHT)
+				{
+					dados->RoadsDirection[roadId] = ROAD_LEFT;
+				}
+				else
+					dados->RoadsDirection[roadId] = ROAD_RIGHT;
+			}else
+				_tprintf(TEXT("Something went wrong!"));
+
+		}
+		else if (numParted == 3) {
+			if (strcmp(dividedWord[0], "Insert") == 0) {
+			}
 		}
 
 
@@ -226,6 +231,7 @@ DWORD WINAPI ThreadBufferCircular(LPVOID lpParam)
 		//}
 
 		//_tprintf(TEXT("Consumidor: id do Produtor: %d comeu %d\n"), space.id, space.val);
+
 		ReleaseMutex(dados->hMutex);
 		ReleaseSemaphore(dados->hSemEscrita, 1, NULL);
 	}
@@ -424,7 +430,7 @@ int _tmain(int argc, TCHAR* argv[]) {
 		RoadsData[i].hMutex = CreateMutex(NULL, FALSE, TEXT("MUTEX_ROADS"));
 		RoadsData[i].hEventRoads = CreateEvent(NULL, TRUE, FALSE, TEXT("EVENT_ROADS") + i);
 		RoadsData[i].id = i + SKIP_BEGINING; //o numero do id é a estrada q elas estao encarregues
-		RoadsData[i].speed = ((rand() % 8) + 1) * 1000;
+		RoadsData[i].speed = 1000;//((rand() % 8) + 1) * 1000
 		_tprintf(TEXT("Direcao AAAAAAAAAAAAA %d\n"), (rand() % 1));
 		RoadsData[i].direction[RoadsData[i].id] = ROAD_RIGHT;//(rand() % 2)
 		RoadThreads[i] = CreateThread(
