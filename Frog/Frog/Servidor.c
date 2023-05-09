@@ -68,9 +68,32 @@ DWORD WINAPI ThreadRoads(LPVOID lpParam)
 					}
 				}
 				else if (data->direction[data->id] == ROAD_LEFT) {
-					if (data->Map[x * MAX_COLS + y - 1] != OBSTACLE_ELEMENT) {
-						// && data->Map[x * MAX_COLS + y + 1] != CAR_ELEMENT
-						_tprintf(TEXT("Esta a ir para a esquerda"));
+					//carros em fila
+					if (data->Map[x * MAX_COLS + y - 1] == BLOCK_ELEMENT && data->Map[x * MAX_COLS + y - 1] == CAR_ELEMENT)
+						y = 18;
+
+					if (data->Map[x * MAX_COLS + y - 1] == CAR_ELEMENT) {
+						int testing = y;
+						int increment = -1;
+						while (data->Map[x * MAX_COLS + testing + increment] == CAR_ELEMENT || data->Map[x * MAX_COLS + testing + increment] == BLOCK_ELEMENT) {
+							if (testing + increment == 0) {
+								testing = 18;
+								increment = 1;
+							}
+							increment -= 1;
+						}
+						if (data->Map[x * MAX_COLS + testing + increment] != OBSTACLE_ELEMENT) {
+							if (y - 1 == 0) {
+
+								temp[i].col = MAX_COLS - 2;
+							}
+							else
+								temp[i].col--;
+						}
+						else
+							continue;
+					}
+					else if (data->Map[x * MAX_COLS + y - 1] != OBSTACLE_ELEMENT) {
 						if (y - 1 == 0) {
 
 							temp[i].col = MAX_COLS - 2;
@@ -139,8 +162,6 @@ DWORD WINAPI CheckOperators(LPVOID lpParam)
 	}
 }
 
-
-
 DWORD WINAPI ThreadBufferCircular(LPVOID lpParam)
 {
 	pTDados dados = (pTDados)lpParam;
@@ -169,20 +190,20 @@ DWORD WINAPI ThreadBufferCircular(LPVOID lpParam)
 		if (token != NULL)
 			_tcscpy_s(command, _countof(command), token);
 
-		if (strcmp(command, TEXT("Stop")) == 0) {
+		if (lstrcmp(command, TEXT("Stop")) == 0) {
 			//Parar o tempo
 			for (int i = 0; i < dados->numRoads; i++)
 			{
 				SuspendThread(dados->threadsHandles[i]);
 			}
 		}
-		else if (strcmp(command, TEXT("Start")) == 0) {
+		else if (lstrcmp(command, TEXT("Start")) == 0) {
 			for (int i = 0; i < dados->numRoads; i++)
 			{
 				ResumeThread(dados->threadsHandles[i]);
 			}
 		}
-		else if (strcmp(command, TEXT("Change")) == 0) {
+		else if (lstrcmp(command, TEXT("Change")) == 0) {
 
 			token = _tcstok_s(NULL, _T(" "), &context);
 			if (token != NULL)
@@ -196,17 +217,35 @@ DWORD WINAPI ThreadBufferCircular(LPVOID lpParam)
 			else
 				dados->RoadsDirection[roadId] = ROAD_RIGHT;
 		}
-		else if (strcmp(command, TEXT("Insert")) == 0) {
+		else if (lstrcmp(command, TEXT("Insert")) == 0) {
 			//primeiro numero
+			int roadId=0, coluna = 0;
 			token = _tcstok_s(NULL, _T(" "), &context);
 			if (token != NULL)
+			{
 				_tcscpy_s(firstNumber, _countof(firstNumber), token);
-			int roadId = atoi(firstNumber);
+				roadId = _wtoi(firstNumber);
+			}
 			//segundo numero
 			token = _tcstok_s(NULL, _T(" "), &context);
 			if (token != NULL)
+			{
 				_tcscpy_s(secondNumber, _countof(secondNumber), token);
-			int coluna = atoi(secondNumber);
+				coluna = _wtoi(secondNumber);
+			}
+
+			_tprintf(TEXT("Testing[%s]!"), firstNumber);
+			_tprintf(TEXT("Testing[%s]!"), secondNumber);
+
+			if (roadId >= 2 && roadId <= dados->numRoads + 2)
+				_tprintf(TEXT("Am digit[%d]!"), roadId);
+			else
+				_tprintf(TEXT("Am not digit!"));
+
+			if (coluna >= 1 && coluna <= 18)
+				_tprintf(TEXT("Am digit[%d]!"), coluna);
+			else
+				_tprintf(TEXT("Am not digit!"));
 
 			//esperar pela vez dele meter pedra
 			WaitForSingleObject(dados->hMutexInsertRoad,INFINITE);
@@ -302,7 +341,7 @@ int _tmain(int argc, TCHAR* argv[]) {
 			else
 				data.map[i][j] = ROAD_ELEMENT;
 
-			if (i == 2 && j == 2)
+			if (i == 2 && j == 16)
 				data.map[i][j] = OBSTACLE_ELEMENT;
 		}
 	}
@@ -419,7 +458,7 @@ int _tmain(int argc, TCHAR* argv[]) {
 		RoadsData[i].id = i + SKIP_BEGINING; //o numero do id é a estrada q elas estao encarregues
 		RoadsData[i].speed = 1000;//((rand() % 8) + 1) * 1000
 		_tprintf(TEXT("Direcao AAAAAAAAAAAAA %d\n"), (rand() % 1));
-		RoadsData[i].direction[RoadsData[i].id] = ROAD_RIGHT;//(rand() % 2)
+		RoadsData[i].direction[RoadsData[i].id] = ROAD_LEFT;//(rand() % 2)
 		RoadThreads[i] = CreateThread(
 			NULL,    // Thread attributes
 			0,       // Stack size (0 = use default)
