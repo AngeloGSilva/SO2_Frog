@@ -34,7 +34,7 @@ DWORD WINAPI ThreadRoads(LPVOID lpParam)
 				_tprintf(TEXT("DIRECAOO %d comecou\n"), data->direction[data->id]);
 
 				if (data->direction[data->id] == ROAD_RIGHT) {
-					
+
 					//carros em fila
 					if (data->Map[x * MAX_COLS + y + 1] == BLOCK_ELEMENT && data->Map[x * MAX_COLS + 1] == CAR_ELEMENT)
 						y = 1;
@@ -47,7 +47,7 @@ DWORD WINAPI ThreadRoads(LPVOID lpParam)
 								testing = 1;
 								increment = -1;
 							}
-							increment+=1;
+							increment += 1;
 						}
 						if (data->Map[x * MAX_COLS + testing + increment] != OBSTACLE_ELEMENT) {
 							if (temp[i].col + 1 == 19) {
@@ -58,7 +58,8 @@ DWORD WINAPI ThreadRoads(LPVOID lpParam)
 						}
 						else
 							continue;
-					}else if (data->Map[x * MAX_COLS + y + 1] != OBSTACLE_ELEMENT) {
+					}
+					else if (data->Map[x * MAX_COLS + y + 1] != OBSTACLE_ELEMENT) {
 						if (temp[i].col + 1 == 19) {
 							temp[i].col = 1;
 						}
@@ -162,63 +163,89 @@ DWORD WINAPI ThreadBufferCircular(LPVOID lpParam)
 
 		TCHAR* pointer;
 		TCHAR* word = NULL;
-		TCHAR* delim = TEXT(" ");
-		TCHAR dividedWord[3];
+		//TCHAR* delim = TEXT(" ");
+		TCHAR dividedWord[3][100];
 
 		int numParted = 1;
 
-		word = _tcstok_s(space.val, delim, &pointer);
+		//word = _tcstok_s(space.val, delim, &pointer);
+		//int i = 0;
+		//strcmp(dividedWord[i], word);
+		//while (word != NULL)
+		//{
+		//	i++;
+		//	_tprintf(TEXT("%s\n"), word);
+		//	word = _tcstok_s(NULL, delim, &pointer);
+		//	if (word != NULL)
+		//		numParted++;
+		//	strcmp(dividedWord[i], word);
+		//}
 
-		while (word != NULL)
-		{
-			_tprintf(TEXT("%s\n"), word);
-			word = _tcstok_s(NULL, delim, &pointer);
-			if(word!=NULL)
-				numParted++;
+		TCHAR* token;
+		TCHAR* context;
+		TCHAR command[20];   // Assuming a maximum length of 20 for the command
+		TCHAR firstNumber[20];  // Assuming a maximum length of 20 for the first number
+		TCHAR secondNumber[20]; // Assuming a maximum length of 20 for the second number
 
-		}
+		token = _tcstok_s(space.val, _T(" "), &context);
+		if (token != NULL)
+			_tcscpy_s(command, _countof(command), token);
 
-		//Guardar a word no array dividedWord para usar os comandos
-
-		if (numParted == 1) {
-			if (strcmp(dividedWord[0], "Stop") == 0) {
-				//Parar o tempo
-				for (int i = 0; i < dados->numRoads; i++)
-				{
-					SuspendThread(dados->threadsHandles[i]);
-				}
-			}
-			else if (strcmp(dividedWord[0], "Start") == 0) {
-				for (int i = 0; i < dados->numRoads; i++)
-				{
-					ResumeThread(dados->threadsHandles[i]);
-				}
-			}else
-				_tprintf(TEXT("Not a recognized command: %s"),word);
+		//para o segundo numero no inserir
+		/*token = _tcstok_s(NULL, _T(" "), &context);
+		if (token != NULL)
+			_tcscpy_s(secondNumber, _countof(secondNumber), token);*/
 
 
-		}
-		else if (numParted == 2) {
-
-			if (strcmp(dividedWord[0], "Change") == 0) {
-				int roadId=1;
-				if (1) {
-				}
-
-				if (dados->RoadsDirection[roadId] == ROAD_RIGHT)
-				{
-					dados->RoadsDirection[roadId] = ROAD_LEFT;
-				}
-				else
-					dados->RoadsDirection[roadId] = ROAD_RIGHT;
-			}else
-				_tprintf(TEXT("Something went wrong!"));
-
-		}
-		else if (numParted == 3) {
-			if (strcmp(dividedWord[0], "Insert") == 0) {
+		if (strcmp(command, TEXT("Stop")) == 0) {
+			//Parar o tempo
+			for (int i = 0; i < dados->numRoads; i++)
+			{
+				SuspendThread(dados->threadsHandles[i]);
 			}
 		}
+		else if (strcmp(command, TEXT("Start")) == 0) {
+			for (int i = 0; i < dados->numRoads; i++)
+			{
+				ResumeThread(dados->threadsHandles[i]);
+			}
+		}
+		else if (strcmp(command, TEXT("Change")) == 0) {
+
+			token = _tcstok_s(NULL, _T(" "), &context);
+			if (token != NULL)
+				_tcscpy_s(firstNumber, _countof(firstNumber), token);
+			//fazer atoi do secondPart
+			int roadId = 1;
+			if (1) {
+			}
+
+			if (dados->RoadsDirection[roadId] == ROAD_RIGHT)
+			{
+				dados->RoadsDirection[roadId] = ROAD_LEFT;
+			}
+			else
+				dados->RoadsDirection[roadId] = ROAD_RIGHT;
+		}
+		else if (strcmp(command, TEXT("Insert")) == 0) {
+			//primeiro numero
+			token = _tcstok_s(NULL, _T(" "), &context);
+			if (token != NULL)
+				_tcscpy_s(firstNumber, _countof(firstNumber), token);
+
+			//segundo numero
+			token = _tcstok_s(NULL, _T(" "), &context);
+			if (token != NULL)
+				_tcscpy_s(secondNumber, _countof(secondNumber), token);
+		}
+		else
+			_tprintf(TEXT("Something went wrong!"));
+
+		//}
+		//else if (numParted == 3) {
+		//	if (strcmp(dividedWord[0], "Insert") == 0) {
+		//	}
+		//}
 
 
 		//acrescentar pedra
@@ -274,7 +301,7 @@ int _tmain(int argc, TCHAR* argv[]) {
 
 	//NAO APAGAR, IMPORTANTE 
 	GameData data;
-	if (argc != 3) { 
+	if (argc != 3) {
 		_tprintf(TEXT("Bad usage of parameters \n"));
 		//função que vai buscar ao registry se existir, senão return 1;
 		data = RegistryGetValues();
