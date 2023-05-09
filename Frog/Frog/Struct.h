@@ -38,12 +38,12 @@ typedef struct {
 }Buffer, * pBuffer;
 
 typedef struct {
-	//TCHAR* Mapv2;
+	TCHAR* Map;
 	BOOLEAN *RoadsDirection;
 	int numRoads;
 	HANDLE *threadsHandles;
 	pBuffer BufferCircular;
-	HANDLE hSemEscrita, hSemLeitura, hMutex;
+	HANDLE hSemEscrita, hSemLeitura, hMutex, hMutexInsertRoad;
 	int id;
 } TDados, * pTDados;
 

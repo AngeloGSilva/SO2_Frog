@@ -152,34 +152,12 @@ DWORD WINAPI ThreadBufferCircular(LPVOID lpParam)
 		WaitForSingleObject(dados->hSemLeitura, INFINITE);
 		WaitForSingleObject(dados->hMutex, INFINITE);
 		//copiar o conteudo para a memoria partilhada
-		//_tprintf(TEXT("VOU PARA SEU CORNO OPOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO"));
 		CopyMemory(&space, &dados->BufferCircular->espacosDeBuffer[dados->BufferCircular->posLeitura], sizeof(EspacoBuffer));
 		dados->BufferCircular->posLeitura++;
 		if (dados->BufferCircular->posLeitura == 10)
 		{
 			dados->BufferCircular->posLeitura = 0;
 		}
-
-
-		TCHAR* pointer;
-		TCHAR* word = NULL;
-		//TCHAR* delim = TEXT(" ");
-		TCHAR dividedWord[3][100];
-
-		int numParted = 1;
-
-		//word = _tcstok_s(space.val, delim, &pointer);
-		//int i = 0;
-		//strcmp(dividedWord[i], word);
-		//while (word != NULL)
-		//{
-		//	i++;
-		//	_tprintf(TEXT("%s\n"), word);
-		//	word = _tcstok_s(NULL, delim, &pointer);
-		//	if (word != NULL)
-		//		numParted++;
-		//	strcmp(dividedWord[i], word);
-		//}
 
 		TCHAR* token;
 		TCHAR* context;
@@ -190,12 +168,6 @@ DWORD WINAPI ThreadBufferCircular(LPVOID lpParam)
 		token = _tcstok_s(space.val, _T(" "), &context);
 		if (token != NULL)
 			_tcscpy_s(command, _countof(command), token);
-
-		//para o segundo numero no inserir
-		/*token = _tcstok_s(NULL, _T(" "), &context);
-		if (token != NULL)
-			_tcscpy_s(secondNumber, _countof(secondNumber), token);*/
-
 
 		if (strcmp(command, TEXT("Stop")) == 0) {
 			//Parar o tempo
@@ -215,10 +187,7 @@ DWORD WINAPI ThreadBufferCircular(LPVOID lpParam)
 			token = _tcstok_s(NULL, _T(" "), &context);
 			if (token != NULL)
 				_tcscpy_s(firstNumber, _countof(firstNumber), token);
-			//fazer atoi do firstNumber
-			int roadId = 1;
-			if (1) {
-			}
+			int roadId = atoi(firstNumber);
 
 			if (dados->RoadsDirection[roadId] == ROAD_RIGHT)
 			{
@@ -232,41 +201,23 @@ DWORD WINAPI ThreadBufferCircular(LPVOID lpParam)
 			token = _tcstok_s(NULL, _T(" "), &context);
 			if (token != NULL)
 				_tcscpy_s(firstNumber, _countof(firstNumber), token);
-
+			int roadId = atoi(firstNumber);
 			//segundo numero
 			token = _tcstok_s(NULL, _T(" "), &context);
 			if (token != NULL)
 				_tcscpy_s(secondNumber, _countof(secondNumber), token);
+			int coluna = atoi(secondNumber);
 
-			//fazer atoi do firstNumber e secondNumber
+			//esperar pela vez dele meter pedra
+			WaitForSingleObject(dados->hMutexInsertRoad,INFINITE);
+			if (dados->Map[roadId * MAX_COLS + coluna] != CAR_ELEMENT)
+			{
+				dados->Map[roadId * MAX_COLS + coluna] = OBSTACLE_ELEMENT;
+			}
+			ReleaseMutex(dados->hMutexInsertRoad);
 		}
 		else
 			_tprintf(TEXT("Something went wrong!"));
-
-		//}
-		//else if (numParted == 3) {
-		//	if (strcmp(dividedWord[0], "Insert") == 0) {
-		//	}
-		//}
-
-
-		//acrescentar pedra
-		//dados->Mapv2[4 * MAX_COLS + 14] = OBSTACLE_ELEMENT;
-
-		//para alterar a direcao, fazer um array com as threads com a estrada e a direcao e alterar quando for necessario, necessario usar mutex no acesso a esse array
-
-		//_tprintf(TEXT("ESTA PARA A %d"),dados->RoadsData[0].direction);
-
-
-
-		//Sleep(10000);
-
-		//for (int i = 0; i < dados->numRoads; i++)
-		//{
-		//	ResumeThread(dados->threadsHandles[i]);
-		//}
-
-		//_tprintf(TEXT("Consumidor: id do Produtor: %d comeu %d\n"), space.id, space.val);
 
 		ReleaseMutex(dados->hMutex);
 		ReleaseSemaphore(dados->hSemEscrita, 1, NULL);
@@ -498,9 +449,10 @@ int _tmain(int argc, TCHAR* argv[]) {
 		dataThread.BufferCircular->posEscrita = 0;
 		dataThread.BufferCircular->posLeitura = 0;
 		dataThread.RoadsDirection = &RoadsData->direction;
-		//dataThread.Mapv2 = &data.map;
+		dataThread.Map = &data.map;
 		dataThread.threadsHandles = &RoadThreads;
 		dataThread.numRoads = data.numRoads;
+		dataThread.hMutexInsertRoad = CreateMutex(NULL, FALSE, TEXT("MUTEX_ROADS"));
 
 		if (HMapFileBuffer == NULL)
 		{
