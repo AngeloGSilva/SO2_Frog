@@ -138,8 +138,9 @@ DWORD WINAPI ThreadBufferCircular(LPVOID lpParam)
 	TKeyBoardHook TDataKeyHook;
 	TDataKeyHook.threadsHandlesOperator = dados->threadsHandles;
 	TDataKeyHook.numRoads = dados->numRoads;
-
-
+	CONSOLE_SCREEN_BUFFER_INFO consoleInfo;
+	// Get the current console information
+	GetConsoleScreenBufferInfo(hConsole, &consoleInfo);
 
 
 	while (1)
@@ -161,6 +162,7 @@ DWORD WINAPI ThreadBufferCircular(LPVOID lpParam)
 		cursorPos.X = 0;
 		cursorPos.Y = 20;
 		SetConsoleCursorPosition(hConsole, cursorPos);
+		FillConsoleOutputCharacter(hConsole, ' ', consoleInfo.dwSize.X, cursorPos, &numWritten);
 		_tprintf(TEXT("COMANDO:"));
 		//scanf_s("%100s", space.val);
 		_getts_s(space.val,20);
