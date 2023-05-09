@@ -215,7 +215,7 @@ DWORD WINAPI ThreadBufferCircular(LPVOID lpParam)
 			token = _tcstok_s(NULL, _T(" "), &context);
 			if (token != NULL)
 				_tcscpy_s(firstNumber, _countof(firstNumber), token);
-			//fazer atoi do secondPart
+			//fazer atoi do firstNumber
 			int roadId = 1;
 			if (1) {
 			}
@@ -237,6 +237,8 @@ DWORD WINAPI ThreadBufferCircular(LPVOID lpParam)
 			token = _tcstok_s(NULL, _T(" "), &context);
 			if (token != NULL)
 				_tcscpy_s(secondNumber, _countof(secondNumber), token);
+
+			//fazer atoi do firstNumber e secondNumber
 		}
 		else
 			_tprintf(TEXT("Something went wrong!"));
