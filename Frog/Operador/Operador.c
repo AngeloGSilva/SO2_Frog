@@ -193,34 +193,30 @@ DWORD WINAPI ThreadBufferCircular(LPVOID lpParam)
 
 
 
-//DWORD WINAPI ThreadGameInfo(LPVOID lpParam)
-//{
-//	int numRoads = (int)lpParam;
-//	_tprintf(TEXT("Thread info %d\n"),numRoads);
-//	while (1)
-//	{
-//		for (int i = 0; i < numRoads; i++)
-//		{
-//			for (int j = 0; j < MAX_COLS; j++)
-//			{
-//				if (i == 0 || i==1|| i == numRoads+3 || i == numRoads+4)
-//				{
-//					_tprintf(TEXT("Thread info\n"));
-//					HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
-//					COORD cursorPos;
-//					DWORD numWritten; // Number of characters actually written
-//					cursorPos.X = j;
-//					cursorPos.Y = i;
-//					TCHAR buffer = 'X';
-//					SetConsoleCursorPosition(hConsole, cursorPos);
-//					WriteConsole(hConsole, &buffer, 1, &numWritten, NULL);
-//				}
-//			}
-//		}
-//		
-//	}
-//	return 0;
-//}
+DWORD WINAPI ThreadGameInfo(LPVOID lpParam)
+{
+	int numRoads = (int)lpParam;
+	_tprintf(TEXT("Thread info %d\n"),numRoads);
+	HANDLE mutex = CreateMutex(NULL, FALSE, TEXT("MUTEX_ROADS"));
+	//Por agora assim depois mudar para so atualizar com evento quando a pontuacao muda etc
+	while (1)
+	{
+		WaitForSingleObject(mutex,INFINITE);
+		HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+		COORD cursorPos;
+		DWORD numWritten; // Number of characters actually written
+		cursorPos.X = 50;
+		cursorPos.Y = 7;
+		SetConsoleCursorPosition(hConsole, cursorPos);
+		WriteConsole(hConsole, TEXT("JOGO FROGGER"), 15, &numWritten, NULL);
+		cursorPos.Y = 8;
+		SetConsoleCursorPosition(hConsole, cursorPos);
+		WriteConsole(hConsole, TEXT("Pontuacao : 0 Tempo : 0"), 23, &numWritten, NULL);
+		ReleaseMutex(mutex);
+	}
+	
+	return 0;
+}
 
 int _tmain(int argc, TCHAR* argv[]) {
 
@@ -253,14 +249,14 @@ int _tmain(int argc, TCHAR* argv[]) {
 	//libertat o mutex
 	ReleaseMutex(data.Serv_HMutex);
 
-	////Thread para inicio e fim do Mapa + pontuacao/ restante info necessaria 
-	//HANDLE hThreadsINFO = CreateThread(
-	//	NULL,    // Thread attributes
-	//	0,       // Stack size (0 = use default)
-	//	ThreadGameInfo, // Thread start address
-	//	&pBuf->numRoads,    // Parameter to pass to the thread
-	//	0,       // Creation flags
-	//	NULL);   // Thread id   // returns the thread identifier 
+	//Thread para inicio e fim do Mapa + pontuacao/ restante info necessaria 
+	HANDLE hThreadsINFO = CreateThread(
+		NULL,    // Thread attributes
+		0,       // Stack size (0 = use default)
+		ThreadGameInfo, // Thread start address
+		&pBuf->numRoads,    // Parameter to pass to the thread
+		0,       // Creation flags
+		NULL);   // Thread id   // returns the thread identifier 
 
 	//Threads de geração do inicio e fim
 	HANDLE StartEndThreads[1];
