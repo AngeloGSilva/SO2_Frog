@@ -67,24 +67,25 @@ DWORD WINAPI ThreadRoads(LPVOID lpParam)
 							temp[i].col++;
 					}
 				}
+				//logica que acho q é para a esquerda
 				else if (data->direction == ROAD_LEFT) {
-					//carros em fila
-					if (data->Map[x * MAX_COLS + y - 1] == BLOCK_ELEMENT && data->Map[x * MAX_COLS + y - 1] == CAR_ELEMENT)
-						y = 18;
+
+					// carros em fila
+					if (data->Map[x * MAX_COLS + y - 1] == BLOCK_ELEMENT)
+						y = MAX_COLS - 1;
 
 					if (data->Map[x * MAX_COLS + y - 1] == CAR_ELEMENT) {
 						int testing = y;
 						int increment = -1;
 						while (data->Map[x * MAX_COLS + testing + increment] == CAR_ELEMENT || data->Map[x * MAX_COLS + testing + increment] == BLOCK_ELEMENT) {
 							if (testing + increment == 0) {
-								testing = 18;
+								testing = MAX_COLS - 2;
 								increment = 1;
 							}
 							increment -= 1;
 						}
 						if (data->Map[x * MAX_COLS + testing + increment] != OBSTACLE_ELEMENT) {
-							if (y - 1 == 0) {
-
+							if (temp[i].col - 1 == 0) {
 								temp[i].col = MAX_COLS - 2;
 							}
 							else
@@ -94,52 +95,13 @@ DWORD WINAPI ThreadRoads(LPVOID lpParam)
 							continue;
 					}
 					else if (data->Map[x * MAX_COLS + y - 1] != OBSTACLE_ELEMENT) {
-						if (y - 1 == 0) {
-
+						if (temp[i].col - 1 == 0) {
 							temp[i].col = MAX_COLS - 2;
 						}
 						else
 							temp[i].col--;
 					}
 				}
-
-				////logica que acho q é para a esquerda
-				//if (data->direction == ROAD_LEFT) {
-
-				//	// carros em fila
-				//	if (data->Map[x * MAX_COLS + y - 1] == BLOCK_ELEMENT && data->Map[x * MAX_COLS - 1] == CAR_ELEMENT)
-				//		y = MAX_COLS - 2;
-
-				//	if (data->Map[x * MAX_COLS + y - 1] == CAR_ELEMENT) {
-				//		int testing = y;
-				//		int increment = -1;
-				//		while (data->Map[x * MAX_COLS + testing + increment] == CAR_ELEMENT || data->Map[x * MAX_COLS + testing + increment] == BLOCK_ELEMENT) {
-				//			if (testing + increment == 0) {
-				//				testing = MAX_COLS - 2;
-				//				increment = 1;
-				//			}
-				//			increment -= 1;
-				//		}
-				//		if (data->Map[x * MAX_COLS + testing + increment] != OBSTACLE_ELEMENT) {
-				//			if (temp[i].col - 1 == 0) {
-				//				temp[i].col = MAX_COLS - 2;
-				//			}
-				//			else
-				//				temp[i].col--;
-				//		}
-				//		else
-				//			continue;
-				//	}
-				//	else if (data->Map[x * MAX_COLS + y - 1] != OBSTACLE_ELEMENT) {
-				//		if (temp[i].col - 1 == 0) {
-				//			temp[i].col = MAX_COLS - 2;
-				//		}
-				//		else
-				//			temp[i].col--;
-				//	}
-				//}
-
-
 			}
 		}
 		for (int i = 1; i < MAX_COLS - 1; i++)
@@ -252,6 +214,30 @@ void HandleInsertCommand(pTDados dados, const TCHAR* firstNumber, const TCHAR* s
 	ReleaseMutex(dados->hMutexInsertRoad);
 }
 
+void HandleDeleteCommand(pTDados dados, const TCHAR* firstNumber, const TCHAR* secondNumber) {
+	int roadId = _wtoi(firstNumber);
+	int coluna = _wtoi(secondNumber);
+
+	_tprintf(TEXT("Testing[%s]!"), firstNumber);
+	_tprintf(TEXT("Testing[%s]!"), secondNumber);
+
+	if (roadId >= 2 && roadId <= dados->numRoads + 2)
+		_tprintf(TEXT("Am digit[%d]!"), roadId);
+	else
+		_tprintf(TEXT("Am not digit!"));
+
+	if (coluna >= 1 && coluna <= 18)
+		_tprintf(TEXT("Am digit[%d]!"), coluna);
+	else
+		_tprintf(TEXT("Am not digit!"));
+
+	WaitForSingleObject(dados->hMutexInsertRoad, INFINITE);
+	if (dados->Map[roadId * MAX_COLS + coluna] != CAR_ELEMENT && dados->Map[roadId * MAX_COLS + coluna] == OBSTACLE_ELEMENT) {
+		dados->Map[roadId * MAX_COLS + coluna] = ROAD_ELEMENT;
+	}
+	ReleaseMutex(dados->hMutexInsertRoad);
+}
+
 
 
 DWORD WINAPI ThreadBufferCircular(LPVOID lpParam)
@@ -302,94 +288,17 @@ DWORD WINAPI ThreadBufferCircular(LPVOID lpParam)
 			token = _tcstok_s(NULL, _T(" "), &context);
 			if (token != NULL)
 				_tcscpy_s(secondNumber, 20, token);
+			HandleInsertCommand(dados,firstNumber,secondNumber);
 		}
-		//TCHAR* token;
-		//TCHAR* context;
-		//TCHAR command[20];   // Assuming a maximum length of 20 for the command
-		//TCHAR firstNumber[20];  // Assuming a maximum length of 20 for the first number
-		//TCHAR secondNumber[20]; // Assuming a maximum length of 20 for the second number
-
-		//token = _tcstok_s(space.val, _T(" "), &context);
-		//if (token != NULL)
-		//	_tcscpy_s(command, _countof(command), token);
-
-		//if (lstrcmp(command, TEXT("Stop")) == 0) {
-		//	//Parar o tempo
-		//	for (int i = 0; i < dados->numRoads; i++)
-		//	{
-		//		SuspendThread(dados->threadsHandles[i]);
-		//	}
-		//}
-		//else if (lstrcmp(command, TEXT("Start")) == 0) {
-		//	for (int i = 0; i < dados->numRoads; i++)
-		//	{
-		//		ResumeThread(dados->threadsHandles[i]);
-		//	}
-		//}
-		//else if (lstrcmp(command, TEXT("Change")) == 0) {
-
-		//	token = _tcstok_s(NULL, _T(" "), &context);
-		//	if (token != NULL)
-		//		_tcscpy_s(firstNumber, _countof(firstNumber), token);
-		//	int roadId = atoi(firstNumber);
-
-		//	//tenho vergonha disto.. mas nao tou a ver outra maneira agora
-		//	int i = 0;
-		//	for (int i = 0; i < dados->numRoads; i++)
-		//	{
-		//		if (dados->RoadsDirection[i].id == roadId)
-		//		{
-		//			if (dados->RoadsDirection[i].direction == ROAD_RIGHT)
-		//			{
-		//				dados->RoadsDirection[i].direction = ROAD_LEFT;
-		//			}
-		//			else
-		//				dados->RoadsDirection[i].direction = ROAD_RIGHT;
-		//		}
-		//		
-		//	}
-		//	
-		//}
-		//else if (lstrcmp(command, TEXT("Insert")) == 0) {
-		//	//primeiro numero
-		//	int roadId=0, coluna = 0;
-		//	token = _tcstok_s(NULL, _T(" "), &context);
-		//	if (token != NULL)
-		//	{
-		//		_tcscpy_s(firstNumber, _countof(firstNumber), token);
-		//		roadId = _wtoi(firstNumber);
-		//	}
-		//	//segundo numero
-		//	token = _tcstok_s(NULL, _T(" "), &context);
-		//	if (token != NULL)
-		//	{
-		//		_tcscpy_s(secondNumber, _countof(secondNumber), token);
-		//		coluna = _wtoi(secondNumber);
-		//	}
-
-		//	_tprintf(TEXT("Testing[%s]!"), firstNumber);
-		//	_tprintf(TEXT("Testing[%s]!"), secondNumber);
-
-		//	if (roadId >= 2 && roadId <= dados->numRoads + 2)
-		//		_tprintf(TEXT("Am digit[%d]!"), roadId);
-		//	else
-		//		_tprintf(TEXT("Am not digit!"));
-
-		//	if (coluna >= 1 && coluna <= 18)
-		//		_tprintf(TEXT("Am digit[%d]!"), coluna);
-		//	else
-		//		_tprintf(TEXT("Am not digit!"));
-
-		//	//esperar pela vez dele meter pedra
-		//	WaitForSingleObject(dados->hMutexInsertRoad,INFINITE);
-		//	if (dados->Map[roadId * MAX_COLS + coluna] != CAR_ELEMENT)
-		//	{
-		//		dados->Map[roadId * MAX_COLS + coluna] = OBSTACLE_ELEMENT;
-		//	}
-		//	ReleaseMutex(dados->hMutexInsertRoad);
-		//}
-		//else
-		//	_tprintf(TEXT("Something went wrong!"));
+		else if (lstrcmp(command, TEXT("Delete")) == 0) {
+			token = _tcstok_s(NULL, _T(" "), &context);
+			if (token != NULL)
+				_tcscpy_s(firstNumber, 20, token);
+			token = _tcstok_s(NULL, _T(" "), &context);
+			if (token != NULL)
+				_tcscpy_s(secondNumber, 20, token);
+			HandleDeleteCommand(dados, firstNumber, secondNumber);
+		}
 
 		ReleaseMutex(dados->hMutex);
 		ReleaseSemaphore(dados->hSemEscrita, 1, NULL);

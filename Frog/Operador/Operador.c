@@ -27,7 +27,7 @@ LRESULT CALLBACK KeyboardHookProc(int nCode, WPARAM wParam, LPARAM lParam)
 	{
 		//HANDLE eventKeyBoard = CreateEvent(NULL, TRUE, FALSE, KEYBOARD_EVENT);
 		// Check if the pressed key is the desired key (in this case, the 'A' key)
-		if (((KBDLLHOOKSTRUCT*)lParam)->vkCode == 'A')
+		if (((KBDLLHOOKSTRUCT*)lParam)->vkCode == VK_LSHIFT)
 		{
 			// Do something in response to the key press
 			MessageBox(NULL, TEXT("Escondes te o jogo, podes digitar um comando"), TEXT("Modo Comando"), MB_OK);
@@ -40,8 +40,6 @@ LRESULT CALLBACK KeyboardHookProc(int nCode, WPARAM wParam, LPARAM lParam)
 	// Call the next hook in the chain
 	return CallNextHookEx(g_keyboardHook, nCode, wParam, lParam);
 }
-
-
 
 DWORD WINAPI ThreadKeyHook(LPVOID lpParam)
 {
@@ -67,7 +65,6 @@ DWORD WINAPI ThreadKeyHook(LPVOID lpParam)
 	}// Enter the message loop to keep the program running
 	return 0;
 }
-
 
 DWORD WINAPI ThreadRoads(LPVOID lpParam)
 {
@@ -164,11 +161,7 @@ DWORD WINAPI ThreadBufferCircular(LPVOID lpParam)
 		SetConsoleCursorPosition(hConsole, cursorPos);
 		FillConsoleOutputCharacter(hConsole, ' ', consoleInfo.dwSize.X, cursorPos, &numWritten);
 		_tprintf(TEXT("COMANDO:"));
-		//scanf_s("%100s", space.val);
 		_getts_s(space.val,20);
-		//_tscanf_s(TEXT("%s"), space.val);
-
-
 
 		WaitForSingleObject(dados->hSemEscrita, INFINITE);
 		WaitForSingleObject(dados->hMutex, INFINITE);
@@ -250,13 +243,14 @@ int _tmain(int argc, TCHAR* argv[]) {
 	ReleaseMutex(data.Serv_HMutex);
 
 	//Thread para inicio e fim do Mapa + pontuacao/ restante info necessaria 
-	HANDLE hThreadsINFO = CreateThread(
-		NULL,    // Thread attributes
-		0,       // Stack size (0 = use default)
-		ThreadGameInfo, // Thread start address
-		&pBuf->numRoads,    // Parameter to pass to the thread
-		0,       // Creation flags
-		NULL);   // Thread id   // returns the thread identifier 
+	
+	//HANDLE hThreadsINFO = CreateThread(
+	//	NULL,    // Thread attributes
+	//	0,       // Stack size (0 = use default)
+	//	ThreadGameInfo, // Thread start address
+	//	&pBuf->numRoads,    // Parameter to pass to the thread
+	//	0,       // Creation flags
+	//	NULL);   // Thread id   // returns the thread identifier 
 
 	//Threads de geração do inicio e fim
 	HANDLE StartEndThreads[1];
