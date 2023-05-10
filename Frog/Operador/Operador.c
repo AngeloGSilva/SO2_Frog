@@ -267,7 +267,7 @@ int _tmain(int argc, TCHAR* argv[]) {
 
 	TStartEnd StartEndData[1];
 
-	HANDLE HMapFileBeginEnd = CreateFileMapping(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, sizeof(TCHAR) * (MAX_ROWS + SKIP_BEGINING_END) * MAX_COLS, TEXT("SO2_MAP_OLA"));
+	HANDLE HMapFileBeginEnd = CreateFileMapping(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, sizeof(TCHAR) * (MAX_ROWS + SKIP_BEGINING_END) * MAX_COLS, FILE_MAPPING_THREAD_ROADS);
 	//_tprintf(TEXT("SO2_MAP_OLA") + (i + 2));
 	if (HMapFileBeginEnd == NULL)
 	{
@@ -346,7 +346,7 @@ int _tmain(int argc, TCHAR* argv[]) {
 	if (HMapFileBuffer == NULL)
 	{
 		_tprintf(TEXT("CreateFileMapping\n"));
-		HMapFileBuffer = CreateFileMapping(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, sizeof(Buffer), TEXT("SO2_BUFFERCIRCULAR"));
+		HMapFileBuffer = CreateFileMapping(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, sizeof(Buffer), FILE_MAPPING_BUFFER_CIRCULAR);
 		dataThread.BufferCircular = (pBuffer)MapViewOfFile(HMapFileBuffer, FILE_MAP_ALL_ACCESS, 0, 0, 0);
 		dataThread.BufferCircular->nConsumidores = 0;
 		dataThread.BufferCircular->nProdutores = 0;

@@ -31,9 +31,9 @@ DWORD WINAPI ThreadRoads(LPVOID lpParam)
 			if (x == data->id)
 			{
 				int y = temp[i].col;
-				_tprintf(TEXT("DIRECAOO %d comecou\n"), data->direction[data->id]);
+				_tprintf(TEXT("DIRECAOO %d comecou\n"), data->direction);
 
-				if (data->direction[data->id] == ROAD_RIGHT) {
+				if (data->direction == ROAD_RIGHT) {
 
 					//carros em fila
 					if (data->Map[x * MAX_COLS + y + 1] == BLOCK_ELEMENT && data->Map[x * MAX_COLS + 1] == CAR_ELEMENT)
@@ -67,7 +67,7 @@ DWORD WINAPI ThreadRoads(LPVOID lpParam)
 							temp[i].col++;
 					}
 				}
-				else if (data->direction[data->id] == ROAD_LEFT) {
+				else if (data->direction == ROAD_LEFT) {
 					//carros em fila
 					if (data->Map[x * MAX_COLS + y - 1] == BLOCK_ELEMENT && data->Map[x * MAX_COLS + y - 1] == CAR_ELEMENT)
 						y = 18;
@@ -210,12 +210,22 @@ DWORD WINAPI ThreadBufferCircular(LPVOID lpParam)
 				_tcscpy_s(firstNumber, _countof(firstNumber), token);
 			int roadId = atoi(firstNumber);
 
-			if (dados->RoadsDirection[roadId] == ROAD_RIGHT)
+			//tenho vergonha disto.. mas nao tou a ver outra maneira agora
+			int i = 0;
+			for (int i = 0; i < dados->numRoads; i++)
 			{
-				dados->RoadsDirection[roadId] = ROAD_LEFT;
+				if (dados->RoadsDirection[i].id == roadId)
+				{
+					if (dados->RoadsDirection[i].direction == ROAD_RIGHT)
+					{
+						dados->RoadsDirection[i].direction = ROAD_LEFT;
+					}
+					else
+						dados->RoadsDirection[i].direction = ROAD_RIGHT;
+				}
+				
 			}
-			else
-				dados->RoadsDirection[roadId] = ROAD_RIGHT;
+			
 		}
 		else if (lstrcmp(command, TEXT("Insert")) == 0) {
 			//primeiro numero
@@ -436,7 +446,7 @@ int _tmain(int argc, TCHAR* argv[]) {
 	_tprintf(TEXT("[DEBUG] NUM ROADS %d criada\n"), data.numRoads);
 	for (int i = 0; i < data.numRoads; i++)
 	{
-		HANDLE HMapFile = CreateFileMapping(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, sizeof(TCHAR) * (MAX_ROWS + SKIP_BEGINING_END) * MAX_COLS, TEXT("SO2_MAP_OLA"));
+		HANDLE HMapFile = CreateFileMapping(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, sizeof(TCHAR) * (MAX_ROWS + SKIP_BEGINING_END) * MAX_COLS, FILE_MAPPING_THREAD_ROADS);
 		if (HMapFile == NULL)
 		{
 			_tprintf(TEXT("ERRO CreateFileMapping\n"));
@@ -458,7 +468,7 @@ int _tmain(int argc, TCHAR* argv[]) {
 		RoadsData[i].id = i + SKIP_BEGINING; //o numero do id é a estrada q elas estao encarregues
 		RoadsData[i].speed = 1000;//((rand() % 8) + 1) * 1000
 		_tprintf(TEXT("Direcao AAAAAAAAAAAAA %d\n"), (rand() % 1));
-		RoadsData[i].direction[RoadsData[i].id] = ROAD_LEFT;//(rand() % 2)
+		RoadsData[i].direction = ROAD_LEFT;//(rand() % 2)
 		RoadThreads[i] = CreateThread(
 			NULL,    // Thread attributes
 			0,       // Stack size (0 = use default)
@@ -481,17 +491,17 @@ int _tmain(int argc, TCHAR* argv[]) {
 	if (HMapFileBuffer == NULL)
 	{
 		_tprintf(TEXT("CreateFileMapping\n"));
-		HMapFileBuffer = CreateFileMapping(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, sizeof(Buffer), TEXT("SO2_BUFFERCIRCULAR"));
+		HMapFileBuffer = CreateFileMapping(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, sizeof(Buffer), FILE_MAPPING_BUFFER_CIRCULAR);
 		dataThread.BufferCircular = (pBuffer)MapViewOfFile(HMapFileBuffer, FILE_MAP_ALL_ACCESS, 0, 0, 0);
 		dataThread.BufferCircular->nConsumidores = 0;
 		dataThread.BufferCircular->nProdutores = 0;
 		dataThread.BufferCircular->posEscrita = 0;
 		dataThread.BufferCircular->posLeitura = 0;
-		dataThread.RoadsDirection = &RoadsData->direction;
+		/*dataThread.RoadsDirection = &RoadsData;
 		dataThread.Map = &data.map;
 		dataThread.threadsHandles = &RoadThreads;
 		dataThread.numRoads = data.numRoads;
-		dataThread.hMutexInsertRoad = CreateMutex(NULL, FALSE, TEXT("MUTEX_ROADS"));
+		dataThread.hMutexInsertRoad = CreateMutex(NULL, FALSE, TEXT("MUTEX_ROADS"));*/
 
 		if (HMapFileBuffer == NULL)
 		{
@@ -509,6 +519,11 @@ int _tmain(int argc, TCHAR* argv[]) {
 		}
 	}
 	dataThread.id = dataThread.BufferCircular->nConsumidores++;
+	dataThread.RoadsDirection = &RoadsData;
+	dataThread.Map = &data.map;
+	dataThread.threadsHandles = &RoadThreads;
+	dataThread.numRoads = data.numRoads;
+	dataThread.hMutexInsertRoad = CreateMutex(NULL, FALSE, TEXT("MUTEX_ROADS"));
 
 	HANDLE hThreads = CreateThread(
 		NULL,    // Thread attributes
