@@ -271,7 +271,7 @@ int _tmain(int argc, TCHAR* argv[]) {
 		_tprintf(TEXT("ERRO MapViewOfFile\n"));
 		return 0;
 	}
-	StartEndData[0].hMutex = CreateMutex(NULL, FALSE, TEXT("MUTEX_ROADS"));
+	StartEndData[0].hMutex = CreateMutex(NULL, FALSE, THREAD_ROADS_MUTEX);
 	StartEndData[0].numRoads = pBuf->numRoads;
 	StartEndData[0].Map = pBuf->map;
 	StartEndThreads[0] = CreateThread(
@@ -294,7 +294,7 @@ int _tmain(int argc, TCHAR* argv[]) {
 	//criar Threads para lidar com os carros por estrada
 	for (int i = 0; i < pBuf->numRoads; i++)
 	{
-		HANDLE HMapFile = CreateFileMapping(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, sizeof(TCHAR) * (MAX_ROWS + SKIP_BEGINING_END) * MAX_COLS, TEXT("SO2_MAP_OLA"));
+		HANDLE HMapFile = CreateFileMapping(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, sizeof(TCHAR) * (MAX_ROWS + SKIP_BEGINING_END) * MAX_COLS, FILE_MAPPING_THREAD_ROADS);
 		//_tprintf(TEXT("SO2_MAP_OLA") + (i + 2));
 		if (HMapFile == NULL)
 		{
@@ -310,8 +310,8 @@ int _tmain(int argc, TCHAR* argv[]) {
 		}
 
 		RoadsData[i].numCars = pBuf->numCars;
-		RoadsData[i].hMutex = CreateMutex(NULL, FALSE, TEXT("MUTEX_ROADS"));
-		RoadsData[i].hEventRoads = CreateEvent(NULL, TRUE, FALSE, TEXT("EVENT_ROADS") + i);
+		RoadsData[i].hMutex = CreateMutex(NULL, FALSE, THREAD_ROADS_MUTEX);
+		RoadsData[i].hEventRoads = CreateEvent(NULL, TRUE, FALSE, THREAD_ROADS_EVENT + i);
 		RoadsData[i].id = i + SKIP_BEGINING; //o numero do id é a estrada q elas estao encarregues
 		RoadsData[i].speed = 0;
 		//RoadsData[i].direction = 1;
@@ -370,7 +370,7 @@ int _tmain(int argc, TCHAR* argv[]) {
 		NULL);   // Thread id   // returns the thread identifier
 
 
-	HANDLE InitialEvent = CreateEvent(NULL, TRUE, FALSE, TEXT("INITIAL EVENT"));
+	HANDLE InitialEvent = CreateEvent(NULL, TRUE, FALSE, INITIAL_EVENT);
 
 	SetEvent(InitialEvent);
 	Sleep(1000);

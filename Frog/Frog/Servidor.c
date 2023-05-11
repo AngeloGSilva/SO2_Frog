@@ -495,8 +495,8 @@ int _tmain(int argc, TCHAR* argv[]) {
 		RoadsData[i].Map = &data.map;
 		RoadsData[i].car_pos = &data.car_pos;
 		RoadsData[i].numCars = data.numCars;
-		RoadsData[i].hMutex = CreateMutex(NULL, FALSE, TEXT("MUTEX_ROADS"));
-		RoadsData[i].hEventRoads = CreateEvent(NULL, TRUE, FALSE, TEXT("EVENT_ROADS") + i);
+		RoadsData[i].hMutex = CreateMutex(NULL, FALSE, THREAD_ROADS_MUTEX);
+		RoadsData[i].hEventRoads = CreateEvent(NULL, TRUE, FALSE, THREAD_ROADS_EVENT + i);
 		RoadsData[i].id = i + SKIP_BEGINING; //o numero do id é a estrada q elas estao encarregues
 		RoadsData[i].speed = 1000;//((rand() % 8) + 1) * 1000
 		_tprintf(TEXT("Direcao AAAAAAAAAAAAA %d\n"), (rand() % 1));
@@ -555,7 +555,7 @@ int _tmain(int argc, TCHAR* argv[]) {
 	dataThread.Map = &data.map;
 	dataThread.threadsHandles = &RoadThreads;
 	dataThread.numRoads = data.numRoads;
-	dataThread.hMutexInsertRoad = CreateMutex(NULL, FALSE, TEXT("MUTEX_ROADS"));
+	dataThread.hMutexInsertRoad = CreateMutex(NULL, FALSE, THREAD_ROADS_MUTEX);
 
 	HANDLE hThreads = CreateThread(
 		NULL,    // Thread attributes
@@ -565,7 +565,7 @@ int _tmain(int argc, TCHAR* argv[]) {
 		0,       // Creation flags
 		NULL);   // Thread id   // returns the thread identifier 
 
-	HANDLE InitialEvent = CreateEvent(NULL, TRUE, FALSE, TEXT("INITIAL EVENT"));
+	HANDLE InitialEvent = CreateEvent(NULL, TRUE, FALSE, INITIAL_EVENT);
 
 	WaitForSingleObject(InitialEvent, INFINITE);
 	for (int i = 0; i < data.numRoads; i++)
