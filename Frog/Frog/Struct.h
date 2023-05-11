@@ -72,11 +72,3 @@ typedef struct {
 	int id;
 } TStartEnd, *pTStartEnd;
 
-HHOOK g_keyboardHook = NULL;
-
-//Estrutura para KeyHook Thread
-typedef struct {
-	HANDLE* threadsHandlesOperator;
-	HANDLE Hhook;
-	int numRoads;
-} TKeyBoardHook, *pTKeyBoardHook;

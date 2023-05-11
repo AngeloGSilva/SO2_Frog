@@ -10,6 +10,14 @@
 #include <time.h>
 #include <stdlib.h>
 
+HHOOK g_keyboardHook = NULL;
+
+//Estrutura para KeyHook Thread
+typedef struct {
+	HANDLE* threadsHandlesOperator;
+	HANDLE Hhook;
+	int numRoads;
+} TKeyBoardHook, * pTKeyBoardHook;
 
 // Define a callback function that will be called when a keyboard event occurs
 LRESULT CALLBACK KeyboardHookProc(int nCode, WPARAM wParam, LPARAM lParam)
@@ -180,9 +188,11 @@ DWORD WINAPI ThreadGameInfo(LPVOID lpParam)
 	int numRoads = (int)lpParam;
 	//_tprintf(TEXT("Thread info %d\n"),numRoads);
 	HANDLE mutex = CreateMutex(NULL, FALSE, TEXT("MUTEX_ROADS"));
+	HANDLE threadPontuacaoEvent = CreateEvent(NULL, TRUE, FALSE, TEXT('PONTOACAO_EVENT'));
 	//Por agora assim depois mudar para so atualizar com evento quando a pontuacao muda etc
 	while (1)
 	{
+		WaitForSingleObject(threadPontuacaoEvent, INFINITE);
 		WaitForSingleObject(mutex,INFINITE);
 		HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
 		COORD cursorPos;
@@ -233,13 +243,13 @@ int _tmain(int argc, TCHAR* argv[]) {
 
 	//Thread para inicio e fim do Mapa + pontuacao/ restante info necessaria 
 	
-	//HANDLE hThreadsINFO = CreateThread(
-	//	NULL,    // Thread attributes
-	//	0,       // Stack size (0 = use default)
-	//	ThreadGameInfo, // Thread start address
-	//	&pBuf->numRoads,    // Parameter to pass to the thread
-	//	0,       // Creation flags
-	//	NULL);   // Thread id   // returns the thread identifier 
+	HANDLE hThreadsINFO = CreateThread(
+		NULL,    // Thread attributes
+		0,       // Stack size (0 = use default)
+		ThreadGameInfo, // Thread start address
+		&pBuf->numRoads,    // Parameter to pass to the thread
+		0,       // Creation flags
+		NULL);   // Thread id   // returns the thread identifier 
 
 	//Threads de geração do inicio e fim
 	HANDLE StartEndThreads[1];

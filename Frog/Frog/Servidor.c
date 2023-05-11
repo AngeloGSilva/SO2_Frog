@@ -576,6 +576,12 @@ int _tmain(int argc, TCHAR* argv[]) {
 	for (int i = 0; i < data.numRoads; i++)
 		ResumeThread(RoadThreads[i]);
 
+	HANDLE threadPontuacaoEvent = CreateEvent(NULL, TRUE, FALSE, TEXT('PONTOACAO_EVENT'));
+
+	SetEvent(threadPontuacaoEvent);
+	Sleep(1000);
+	ResetEvent(threadPontuacaoEvent);
+
 	while (1)
 	{
 
