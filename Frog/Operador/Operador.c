@@ -188,7 +188,7 @@ DWORD WINAPI ThreadGameInfo(LPVOID lpParam)
 	int numRoads = (int)lpParam;
 	//_tprintf(TEXT("Thread info %d\n"),numRoads);
 	HANDLE mutex = CreateMutex(NULL, FALSE, TEXT("MUTEX_ROADS"));
-	HANDLE threadPontuacaoEvent = CreateEvent(NULL, TRUE, FALSE, TEXT('PONTOACAO_EVENT'));
+	HANDLE threadPontuacaoEvent = CreateEvent(NULL, TRUE, FALSE, TEXT("PONTUACAO"));
 	//Por agora assim depois mudar para so atualizar com evento quando a pontuacao muda etc
 	while (1)
 	{
