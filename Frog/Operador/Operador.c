@@ -11,15 +11,6 @@
 #include <stdlib.h>
 
 
-HHOOK g_keyboardHook = NULL;
-
-typedef struct {
-	HANDLE* threadsHandlesOperator;
-	HANDLE Hhook;
-	int numRoads;
-} TKeyBoardHook, *pTKeyBoardHook;
-
-
 // Define a callback function that will be called when a keyboard event occurs
 LRESULT CALLBACK KeyboardHookProc(int nCode, WPARAM wParam, LPARAM lParam)
 {
@@ -86,9 +77,9 @@ DWORD WINAPI ThreadRoads(LPVOID lpParam)
 			SetConsoleCursorPosition(hConsole, cursorPos);
 			WriteConsole(hConsole, &temp[data->id * MAX_COLS + i], 1, &numWritten, NULL);
 		}
-		cursorPos.Y = data->id + 14;
+		/*cursorPos.Y = data->id + 14;
 		SetConsoleCursorPosition(hConsole, cursorPos);
-		WriteConsole(hConsole, TEXT("ATUALIZEI A THREAD"), 18, &numWritten, NULL);
+		WriteConsole(hConsole, TEXT("ATUALIZEI A THREAD"), 18, &numWritten, NULL);*/
 		ReleaseMutex(data->hMutex);
 	}
 	return 0;
@@ -184,12 +175,10 @@ DWORD WINAPI ThreadBufferCircular(LPVOID lpParam)
 	return 0;
 }
 
-
-
 DWORD WINAPI ThreadGameInfo(LPVOID lpParam)
 {
 	int numRoads = (int)lpParam;
-	_tprintf(TEXT("Thread info %d\n"),numRoads);
+	//_tprintf(TEXT("Thread info %d\n"),numRoads);
 	HANDLE mutex = CreateMutex(NULL, FALSE, TEXT("MUTEX_ROADS"));
 	//Por agora assim depois mudar para so atualizar com evento quando a pontuacao muda etc
 	while (1)
@@ -290,7 +279,7 @@ int _tmain(int argc, TCHAR* argv[]) {
 
 	TRoads RoadsData[MAX_ROADS_THREADS];
 
-	_tprintf(TEXT("[DEBUG] NUM ROADS %d criada\n"), pBuf->numRoads);
+	//_tprintf(TEXT("[DEBUG] NUM ROADS %d criada\n"), pBuf->numRoads);
 	//criar Threads para lidar com os carros por estrada
 	for (int i = 0; i < pBuf->numRoads; i++)
 	{
@@ -335,7 +324,7 @@ int _tmain(int argc, TCHAR* argv[]) {
 	HANDLE HMapFileBuffer = OpenFileMapping(FILE_MAP_ALL_ACCESS, FALSE, FILE_MAPPING_BUFFER_CIRCULAR);
 	if (HMapFileBuffer == NULL)
 	{
-		_tprintf(TEXT("CreateFileMapping\n"));
+		//_tprintf(TEXT("CreateFileMapping\n"));
 		HMapFileBuffer = CreateFileMapping(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, sizeof(Buffer), FILE_MAPPING_BUFFER_CIRCULAR);
 		dataThread.BufferCircular = (pBuffer)MapViewOfFile(HMapFileBuffer, FILE_MAP_ALL_ACCESS, 0, 0, 0);
 		dataThread.BufferCircular->nConsumidores = 0;

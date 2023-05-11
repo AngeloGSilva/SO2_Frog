@@ -6,12 +6,12 @@
 typedef struct {
 	int col;
 	int row;
-}CarPos, * pCarPos;
+}CarPos, *pCarPos;
 
 typedef struct {
 	int col;
 	int row;
-}FrogPos, * pFrogPos;
+}FrogPos, *pFrogPos;
 
 typedef struct {
 	HANDLE Serv_HMutex, Serv_HEvent;
@@ -35,8 +35,9 @@ typedef struct {
 	int posEscrita;
 	int nConsumidores;
 	int nProdutores;
-}Buffer, * pBuffer;
+}Buffer, *pBuffer;
 
+//Estrutura para movimento das Estradas Thread
 typedef struct {
 	int speed;
 	int numCars;
@@ -47,8 +48,9 @@ typedef struct {
 	TCHAR* sharedMap;
 	HANDLE hEventRoads, hMutex;
 	int id;
-} TRoads, * pTRoads;
+} TRoads, *pTRoads;
 
+//Estrutura para BufferCircular Thread
 typedef struct {
 	TCHAR* Map;
 	TRoads* RoadsDirection;
@@ -57,8 +59,9 @@ typedef struct {
 	pBuffer BufferCircular;
 	HANDLE hSemEscrita, hSemLeitura, hMutex, hMutexInsertRoad;
 	int id;
-} TDados, * pTDados;
+} TDados, *pTDados;
 
+//Estrutura para Desenhar Inicio e fim Thread
 typedef struct {
 	int numRoads;
 	pFrogPos frog_pos;
@@ -67,4 +70,13 @@ typedef struct {
 	TCHAR* sharedMap;
 	HANDLE hEventRoads, hMutex;
 	int id;
-} TStartEnd, * pTStartEnd;
+} TStartEnd, *pTStartEnd;
+
+HHOOK g_keyboardHook = NULL;
+
+//Estrutura para KeyHook Thread
+typedef struct {
+	HANDLE* threadsHandlesOperator;
+	HANDLE Hhook;
+	int numRoads;
+} TKeyBoardHook, *pTKeyBoardHook;

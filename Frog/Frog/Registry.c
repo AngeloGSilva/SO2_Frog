@@ -190,5 +190,4 @@ GameData RegistryGetValues() {
 	temp.carSpeed = valueSpeed;
 	RegCloseKey(registryKey);
 	return temp;
-
 }
