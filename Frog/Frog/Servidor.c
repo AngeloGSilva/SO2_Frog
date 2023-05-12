@@ -171,25 +171,29 @@ void ToggleRoadDirection(pTRoads roads, int numRoads, int roadId) {
 	}
 }
 
+void HandleStopCommand(HANDLE *dados, int numRoads) {
+	for (int i = 0; i < numRoads; i++) {
+		SuspendThread(dados[i]);
+	}
+}
+
+void HandleStartCommand(HANDLE* dados, int numRoads) {
+	for (int i = 0; i < numRoads; i++) {
+		ResumeThread(dados[i]);
+	}
+}
+
 DWORD WINAPI threadStopGame(LPVOID lpParam)
 {
 	pTStopGame dados = (pTStopGame)lpParam;
-	HandleStopCommand(dados->roadThreadsHandles);
-	Sleep(_wtoi(dados->time)*1000); // para por em numero e por em segundos
-	HandleStartCommand(dados->roadThreadsHandles);
+	int time = 0;
+	time = _wtoi(dados->time);
+	time = time * 1000;
+	HandleStopCommand(dados->roadThreadsHandles, dados->numRoads);
+	Sleep(time); // for the specified time in seconds
+	HandleStartCommand(dados->roadThreadsHandles, dados->numRoads);
 }
 
-void HandleStopCommand(pTDados dados) {
-	for (int i = 0; i < dados->numRoads; i++) {
-		SuspendThread(dados->threadsHandles[i]);
-	}
-}
-
-void HandleStartCommand(pTDados dados) {
-	for (int i = 0; i < dados->numRoads; i++) {
-		ResumeThread(dados->threadsHandles[i]);
-	}
-}
 
 void HandleChangeCommand(pTDados dados, const TCHAR* firstNumber) {
 	int roadId = _wtoi(firstNumber);
@@ -262,7 +266,6 @@ DWORD WINAPI ThreadBufferCircular(LPVOID lpParam)
 			dados->BufferCircular->posLeitura = 0;
 		}
 
-
 		TCHAR* token;
 		TCHAR* context;
 		TCHAR command[20];
@@ -277,9 +280,10 @@ DWORD WINAPI ThreadBufferCircular(LPVOID lpParam)
 			token = _tcstok_s(NULL, _T(" "), &context);
 			if (token != NULL)
 				_tcscpy_s(firstNumber, 20, token);
-			pTStopGame stopGame;
-			stopGame->roadThreadsHandles = dados->threadsHandles;
-			stopGame->time = firstNumber;//para ser em segundos
+			tStopGame stopGame;
+			stopGame.roadThreadsHandles = dados->threadsHandles;
+			stopGame.time = firstNumber;//para ser em segundos
+			stopGame.numRoads = dados->numRoads;
 			HANDLE hThreadStopGame = CreateThread(
 				NULL,    // Thread attributes
 				0,       // Stack size (0 = use default)
@@ -289,7 +293,7 @@ DWORD WINAPI ThreadBufferCircular(LPVOID lpParam)
 				NULL);   // Thread id   // returns the thread identifier 
 		}
 		else if (lstrcmp(command, TEXT("Start")) == 0) {
-			HandleStartCommand(dados);
+			//HandleStartCommand(dados);
 		}
 		else if (lstrcmp(command, TEXT("Change")) == 0) {
 			token = _tcstok_s(NULL, _T(" "), &context);

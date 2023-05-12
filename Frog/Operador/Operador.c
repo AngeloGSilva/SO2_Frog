@@ -204,6 +204,21 @@ DWORD WINAPI ThreadGameInfo(LPVOID lpParam)
 		cursorPos.Y = 8;
 		SetConsoleCursorPosition(hConsole, cursorPos);
 		WriteConsole(hConsole, TEXT("Pontuacao : 0 Tempo : 0"), 23, &numWritten, NULL);
+		cursorPos.Y = 9;
+		SetConsoleCursorPosition(hConsole, cursorPos);
+		WriteConsole(hConsole, TEXT("Comandos:"), 10, &numWritten, NULL);
+		cursorPos.Y = 10;
+		SetConsoleCursorPosition(hConsole, cursorPos);
+		WriteConsole(hConsole, TEXT("Stop [Tempo em Segundo]"), 24, &numWritten, NULL);
+		cursorPos.Y = 11;
+		SetConsoleCursorPosition(hConsole, cursorPos);
+		WriteConsole(hConsole, TEXT("Start"), 6, &numWritten, NULL);
+		cursorPos.Y = 12;
+		SetConsoleCursorPosition(hConsole, cursorPos);
+		WriteConsole(hConsole, TEXT("Change [Estrada]"), 17, &numWritten, NULL);
+		cursorPos.Y = 13;
+		SetConsoleCursorPosition(hConsole, cursorPos);
+		WriteConsole(hConsole, TEXT("Insert [Estrada] [Coluna]"), 26, &numWritten, NULL);
 		ReleaseMutex(mutex);
 	}
 	
