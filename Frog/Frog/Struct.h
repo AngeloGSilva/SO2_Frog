@@ -72,3 +72,8 @@ typedef struct {
 	int id;
 } TStartEnd, *pTStartEnd;
 
+//Estrutura para Thread De para o jogo x tempo
+typedef struct {
+	HANDLE roadThreadsHandles;
+	int time;
+} tStopGame, * pTStopGame;

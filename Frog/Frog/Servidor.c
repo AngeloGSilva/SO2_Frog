@@ -171,6 +171,14 @@ void ToggleRoadDirection(pTRoads roads, int numRoads, int roadId) {
 	}
 }
 
+DWORD WINAPI threadStopGame(LPVOID lpParam)
+{
+	pTStopGame dados = (pTStopGame)lpParam;
+	HandleStopCommand(dados->roadThreadsHandles);
+	Sleep(_wtoi(dados->time)*1000); // para por em numero e por em segundos
+	HandleStartCommand(dados->roadThreadsHandles);
+}
+
 void HandleStopCommand(pTDados dados) {
 	for (int i = 0; i < dados->numRoads; i++) {
 		SuspendThread(dados->threadsHandles[i]);
@@ -266,7 +274,19 @@ DWORD WINAPI ThreadBufferCircular(LPVOID lpParam)
 			_tcscpy_s(command, 20, token);
 
 		if (lstrcmp(command, TEXT("Stop")) == 0) {
-			HandleStopCommand(dados);
+			token = _tcstok_s(NULL, _T(" "), &context);
+			if (token != NULL)
+				_tcscpy_s(firstNumber, 20, token);
+			pTStopGame stopGame;
+			stopGame->roadThreadsHandles = dados->threadsHandles;
+			stopGame->time = firstNumber;//para ser em segundos
+			HANDLE hThreadStopGame = CreateThread(
+				NULL,    // Thread attributes
+				0,       // Stack size (0 = use default)
+				threadStopGame, // Thread start address
+				&stopGame,    // Parameter to pass to the thread
+				0,       // Creation flags
+				NULL);   // Thread id   // returns the thread identifier 
 		}
 		else if (lstrcmp(command, TEXT("Start")) == 0) {
 			HandleStartCommand(dados);
