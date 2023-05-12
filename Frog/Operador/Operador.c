@@ -219,6 +219,9 @@ DWORD WINAPI ThreadGameInfo(LPVOID lpParam)
 		cursorPos.Y = 13;
 		SetConsoleCursorPosition(hConsole, cursorPos);
 		WriteConsole(hConsole, TEXT("Insert [Estrada] [Coluna]"), 26, &numWritten, NULL);
+		cursorPos.Y = 14;
+		SetConsoleCursorPosition(hConsole, cursorPos);
+		WriteConsole(hConsole, TEXT("Remove [Estrada] [Coluna]"), 26, &numWritten, NULL);
 		ReleaseMutex(mutex);
 	}
 	

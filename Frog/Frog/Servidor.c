@@ -146,8 +146,11 @@ DWORD WINAPI ThreadRoads(LPVOID lpParam)
 
 DWORD WINAPI CheckOperators(LPVOID lpParam)
 {
+	//TODO operador criado pelo operador e aqui esta com waitSingleObject para esse evento
 	while (1) {
 		//Criamos evento para que as threads ja consiga ler
+
+		HANDLE threadPontuacaoEvent = CreateEvent(NULL, TRUE, FALSE, TEXT("PONTUACAO"));
 
 		HANDLE x = CreateEvent(NULL, TRUE, FALSE, SHARED_MEMORIE_EVENT);
 		if (x == NULL)
@@ -156,8 +159,11 @@ DWORD WINAPI CheckOperators(LPVOID lpParam)
 			return 0;
 		}
 		SetEvent(x);
+		Sleep(500);
 		ResetEvent(x);
-
+		SetEvent(threadPontuacaoEvent);
+		Sleep(500);
+		ResetEvent(threadPontuacaoEvent);
 		Sleep(10000);
 	}
 }
@@ -193,7 +199,6 @@ DWORD WINAPI threadStopGame(LPVOID lpParam)
 	Sleep(time); // for the specified time in seconds
 	HandleStartCommand(dados->roadThreadsHandles, dados->numRoads);
 }
-
 
 void HandleChangeCommand(pTDados dados, const TCHAR* firstNumber) {
 	int roadId = _wtoi(firstNumber);
@@ -310,7 +315,7 @@ DWORD WINAPI ThreadBufferCircular(LPVOID lpParam)
 				_tcscpy_s(secondNumber, 20, token);
 			HandleInsertCommand(dados,firstNumber,secondNumber);
 		}
-		else if (lstrcmp(command, TEXT("Delete")) == 0) {
+		else if (lstrcmp(command, TEXT("Remove")) == 0) {
 			token = _tcstok_s(NULL, _T(" "), &context);
 			if (token != NULL)
 				_tcscpy_s(firstNumber, 20, token);
@@ -600,11 +605,7 @@ int _tmain(int argc, TCHAR* argv[]) {
 	for (int i = 0; i < data.numRoads; i++)
 		ResumeThread(RoadThreads[i]);
 
-	HANDLE threadPontuacaoEvent = CreateEvent(NULL, TRUE, FALSE, TEXT("PONTUACAO"));
 
-	SetEvent(threadPontuacaoEvent);
-	Sleep(1000);
-	ResetEvent(threadPontuacaoEvent);
 
 	while (1)
 	{
