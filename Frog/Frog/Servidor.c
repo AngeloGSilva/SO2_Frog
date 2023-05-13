@@ -300,9 +300,9 @@ DWORD WINAPI ThreadBufferCircular(LPVOID lpParam)
 				0,       // Creation flags
 				NULL);   // Thread id   // returns the thread identifier 
 		}
-		else if (lstrcmp(command, TEXT("Terminar"))) {
+		else if (lstrcmp(command, TEXT("Terminar")) == 0) {
 			//acabar com tudo
-			dados->terminar = 1;
+			*dados->terminar = 1;
 		}
 		else if (lstrcmp(command, TEXT("Start")) == 0) {
 			//HandleStartCommand(dados);
@@ -630,12 +630,8 @@ int _tmain(int argc, TCHAR* argv[]) {
 	{
 
 	}
-	if (terminar = 1)
-	{
-		_tprintf(TEXT("SERVIDOR VAI TERMINAR\n"));
-		Sleep(5000);
-
-	}
+		
+	_tprintf(TEXT("SERVIDOR VAI TERMINAR\n"));
 	
 	// FAZER aguarda / controla as threads 
 	//       manda as threads parar

@@ -371,8 +371,6 @@ int _tmain(int argc, TCHAR* argv[]) {
 		dataThread.BufferCircular->nProdutores = 0;
 		dataThread.BufferCircular->posEscrita = 0;
 		dataThread.BufferCircular->posLeitura = 0;
-		dataThread.threadsHandles = &RoadThreads;
-		dataThread.numRoads = pBuf->numRoads;
 		if (HMapFileBuffer == NULL)
 		{
 			_tprintf(TEXT("ERRO CreateFileMapping\n"));
@@ -387,8 +385,11 @@ int _tmain(int argc, TCHAR* argv[]) {
 			_tprintf(TEXT("ERRO CreateFileMapping\n"));
 			return 0;
 		}
+		dataThread.threadsHandles = &RoadThreads;
+		dataThread.numRoads = pBuf->numRoads;
 	}
 	dataThread.id = dataThread.BufferCircular->nProdutores++;
+
 
 	HANDLE hThreads = CreateThread(
 		NULL,    // Thread attributes
