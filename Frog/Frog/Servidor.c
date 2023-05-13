@@ -466,7 +466,7 @@ int _tmain(int argc, TCHAR* argv[]) {
 	}
 
 	//criar Event
-	CreateThread(
+	HANDLE tHCheckOpearators= CreateThread(
 		NULL,    // Thread attributes
 		0,       // Stack size (0 = use default)
 		CheckOperators, // Thread start address
@@ -533,6 +533,10 @@ int _tmain(int argc, TCHAR* argv[]) {
 			&RoadsData[i],    // Parameter to pass to the thread
 			CREATE_SUSPENDED,       // Creation flags
 			NULL);   // Thread id   // returns the thread identifier 
+		if (RoadThreads[i] == NULL) {
+			_tprintf(TEXT("[DEBUG] Thread estrada %d erro\n"), i);
+			return 1;
+		}
 		//_tprintf(TEXT("[DEBUG] Thread estrada %d criada\n"), i);
 	}
 
@@ -589,6 +593,11 @@ int _tmain(int argc, TCHAR* argv[]) {
 		&dataThread,    // Parameter to pass to the thread
 		0,       // Creation flags
 		NULL);   // Thread id   // returns the thread identifier 
+	if (hThreads == NULL)
+	{
+		_tprintf(TEXT("[DEBUG] Thread BufferCircular Erro\n"));
+		return 1;
+	}
 
 	HANDLE InitialEvent = CreateEvent(NULL, TRUE, FALSE, INITIAL_EVENT);
 
@@ -617,7 +626,12 @@ int _tmain(int argc, TCHAR* argv[]) {
 	//WaitForMultipleObjects(data.numRoads, RoadThreads, TRUE, INFINITE);
 
 //}
+	// Close thread handles
+	for (int i = 0; i < data.numRoads; i++) {
+		CloseHandle(RoadThreads[i]);
+	}
 	CloseHandle(hThreads);
+	CloseHandle(tHCheckOpearators);
 	//ReleaseSemaphore(hSem, 1, NULL);
 	//UnmapViewOfFile(pBuf);
 	return 0;
