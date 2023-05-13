@@ -156,6 +156,7 @@ DWORD WINAPI CheckOperators(LPVOID lpParam)
 		HANDLE threadPontuacaoEvent = CreateEvent(NULL, TRUE, FALSE, TEXT("PONTUACAO"));
 
 		HANDLE x = CreateEvent(NULL, TRUE, FALSE, SHARED_MEMORIE_EVENT);
+
 		if (x == NULL)
 		{
 			_tprintf(TEXT("[ERRO]CreateEvent\n"));
@@ -167,7 +168,6 @@ DWORD WINAPI CheckOperators(LPVOID lpParam)
 		SetEvent(threadPontuacaoEvent);
 		Sleep(500);
 		ResetEvent(threadPontuacaoEvent);
-		//Sleep(10000);
 	}
 }
 
@@ -474,14 +474,7 @@ int _tmain(int argc, TCHAR* argv[]) {
 		return 0;
 	}
 
-	//criar Event
-	HANDLE tHCheckOpearators= CreateThread(
-		NULL,    // Thread attributes
-		0,       // Stack size (0 = use default)
-		CheckOperators, // Thread start address
-		NULL,    // Parameter to pass to the thread
-		0,       // Creation flags
-		NULL);
+	
 
 	//criar mutex
 	data.Serv_HMutex = CreateMutex(NULL, FALSE, SHARED_MEMORIE_MUTEX);
@@ -541,7 +534,7 @@ int _tmain(int argc, TCHAR* argv[]) {
 			0,       // Stack size (0 = use default)
 			ThreadRoads, // Thread start address
 			&RoadsData[i],    // Parameter to pass to the thread
-			CREATE_SUSPENDED,       // Creation flags
+			0,       // Creation flags
 			NULL);   // Thread id   // returns the thread identifier 
 		if (RoadThreads[i] == NULL) {
 			_tprintf(TEXT("[DEBUG] Thread estrada %d erro\n"), i);
@@ -622,9 +615,15 @@ int _tmain(int argc, TCHAR* argv[]) {
 	_tprintf(TEXT("\n"));
 	_tprintf(TEXT("\n"));
 
-	for (int i = 0; i < data.numRoads; i++)
-		ResumeThread(RoadThreads[i]);
 
+	//criar Event
+	HANDLE tHCheckOpearators = CreateThread(
+		NULL,    // Thread attributes
+		0,       // Stack size (0 = use default)
+		CheckOperators, // Thread start address
+		NULL,    // Parameter to pass to the thread
+		0,       // Creation flags
+		NULL);
 
 
 	while (terminar == 0)

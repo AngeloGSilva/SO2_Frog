@@ -58,7 +58,7 @@ DWORD WINAPI ThreadKeyHook(LPVOID lpParam)
 		TranslateMessage(&msg);
 		DispatchMessage(&msg);
 		SetEvent(eventKeyBoard);
-		Sleep(500);
+		//Sleep(500);
 		ResetEvent(eventKeyBoard);
 		UnhookWindowsHookEx(g_keyboardHook);
 	}// Enter the message loop to keep the program running
@@ -150,7 +150,9 @@ DWORD WINAPI ThreadBufferCircular(LPVOID lpParam)
 			NULL);   // Thread id   // returns the thread identifier 
 
 		space.id = dados->id;
+
 		WaitForSingleObject(eventKeyBoard, INFINITE);
+
 		for (int i = 0; i < dados->numRoads; i++) {
 			SuspendThread(TDataKeyHook.threadsHandlesOperator[i]);
 		}
@@ -250,7 +252,17 @@ int _tmain(int argc, TCHAR* argv[]) {
 	//data.mutex = OpenMutex(READ_CONTROL, TRUE, TEXT("TP_Mutex"));
 	data.Serv_HMutex = CreateMutex(NULL, FALSE, SHARED_MEMORIE_MUTEX);
 
-	WaitForSingleObject(data.Serv_HEvent, INFINITE);
+	HANDLE InitialEvent = CreateEvent(NULL, TRUE, FALSE, INITIAL_EVENT);
+
+	SetEvent(InitialEvent);
+	ResetEvent(InitialEvent);
+
+
+	DWORD abandon = WaitForSingleObject(data.Serv_HEvent, 5000);
+	if (abandon == WAIT_TIMEOUT) {
+		_tprintf(TEXT("NO SERVER AVAILABLE\n"));
+		return 1;
+	}
 
 	WaitForSingleObject(data.Serv_HMutex, INFINITE);
 
@@ -387,12 +399,7 @@ int _tmain(int argc, TCHAR* argv[]) {
 		NULL);   // Thread id   // returns the thread identifier
 
 
-	HANDLE InitialEvent = CreateEvent(NULL, TRUE, FALSE, INITIAL_EVENT);
-
-	SetEvent(InitialEvent);
-	Sleep(1000);
-	ResetEvent(InitialEvent);
-
+	
 
 	//HANDLE eventToServerOperatorStart = CreateEvent(NULL, TRUE, FALSE, TEXT("EVENT_TO_SERVER_OPERATOR_START"));
 
