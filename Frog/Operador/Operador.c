@@ -394,6 +394,12 @@ int _tmain(int argc, TCHAR* argv[]) {
 	ResetEvent(InitialEvent);
 
 
+	//HANDLE eventToServerOperatorStart = CreateEvent(NULL, TRUE, FALSE, TEXT("EVENT_TO_SERVER_OPERATOR_START"));
+
+	//SetEvent(eventToServerOperatorStart);
+	//Sleep(1000);
+	//ResetEvent(eventToServerOperatorStart);
+
 	
 	//_tprintf(TEXT("[DEBUG] Thread estrada %d criada\n"), i);
 	//Para a primeira meta apenas.. para nao estar a utilizar o cursor sem ser necessario

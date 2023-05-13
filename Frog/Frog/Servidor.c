@@ -146,9 +146,12 @@ DWORD WINAPI ThreadRoads(LPVOID lpParam)
 
 DWORD WINAPI CheckOperators(LPVOID lpParam)
 {
+	HANDLE InitialEvent = CreateEvent(NULL, TRUE, FALSE, INITIAL_EVENT);
 	//TODO operador criado pelo operador e aqui esta com waitSingleObject para esse evento
 	while (1) {
 		//Criamos evento para que as threads ja consiga ler
+		_tprintf(TEXT("[ERRO]Espera do evento check\n"));
+		WaitForSingleObject(InitialEvent, INFINITE);
 
 		HANDLE threadPontuacaoEvent = CreateEvent(NULL, TRUE, FALSE, TEXT("PONTUACAO"));
 
@@ -164,7 +167,7 @@ DWORD WINAPI CheckOperators(LPVOID lpParam)
 		SetEvent(threadPontuacaoEvent);
 		Sleep(500);
 		ResetEvent(threadPontuacaoEvent);
-		Sleep(10000);
+		//Sleep(10000);
 	}
 }
 
@@ -297,6 +300,10 @@ DWORD WINAPI ThreadBufferCircular(LPVOID lpParam)
 				0,       // Creation flags
 				NULL);   // Thread id   // returns the thread identifier 
 		}
+		else if (lstrcmp(command, TEXT("Terminar"))) {
+			//acabar com tudo
+			dados->terminar = 1;
+		}
 		else if (lstrcmp(command, TEXT("Start")) == 0) {
 			//HandleStartCommand(dados);
 		}
@@ -349,6 +356,8 @@ int parse_args(TCHAR* arg1_str, TCHAR* arg2_str, DWORD* arg1, DWORD* arg2) {
 }
 
 int _tmain(int argc, TCHAR* argv[]) {
+
+	int terminar = 0; // para acabar com tudo
 
 #ifdef UNICODE
 	_setmode(_fileno(stdin), _O_WTEXT);
@@ -524,6 +533,7 @@ int _tmain(int argc, TCHAR* argv[]) {
 		RoadsData[i].hEventRoads = CreateEvent(NULL, TRUE, FALSE, THREAD_ROADS_EVENT + i);
 		RoadsData[i].id = i + SKIP_BEGINING; //o numero do id é a estrada q elas estao encarregues
 		RoadsData[i].speed = 1000;//((rand() % 8) + 1) * 1000
+		RoadsData[i].terminar = &terminar;
 		//_tprintf(TEXT("Direcao AAAAAAAAAAAAA %d\n"), (rand() % 1));
 		RoadsData[i].direction = (rand() % 2);
 		RoadThreads[i] = CreateThread(
@@ -585,6 +595,7 @@ int _tmain(int argc, TCHAR* argv[]) {
 	dataThread.threadsHandles = &RoadThreads;
 	dataThread.numRoads = data.numRoads;
 	dataThread.hMutexInsertRoad = CreateMutex(NULL, FALSE, THREAD_ROADS_MUTEX);
+	dataThread.terminar = &terminar;
 
 	HANDLE hThreads = CreateThread(
 		NULL,    // Thread attributes
@@ -606,7 +617,7 @@ int _tmain(int argc, TCHAR* argv[]) {
 	_tprintf(TEXT("SERVIDOR A ESPERA DE PELO MENOS UM OPERADOR\n"));
 	_tprintf(TEXT("\n"));
 	_tprintf(TEXT("\n"));
-	WaitForSingleObject(InitialEvent, INFINITE);
+	//WaitForSingleObject(InitialEvent, INFINITE);
 	_tprintf(TEXT("OPERADOR INICIADO\n"));
 	_tprintf(TEXT("\n"));
 	_tprintf(TEXT("\n"));
@@ -616,11 +627,17 @@ int _tmain(int argc, TCHAR* argv[]) {
 
 
 
-	while (1)
+	while (terminar == 0)
 	{
 
 	}
+	if (terminar = 1)
+	{
+		_tprintf(TEXT("SERVIDOR VAI TERMINAR\n"));
+		Sleep(5000);
 
+	}
+	
 	// FAZER aguarda / controla as threads 
 	//       manda as threads parar
 	//WaitForMultipleObjects(data.numRoads, RoadThreads, TRUE, INFINITE);

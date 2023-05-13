@@ -14,6 +14,7 @@ typedef struct {
 }FrogPos, *pFrogPos;
 
 typedef struct {
+	int *terminar;
 	HANDLE Serv_HMutex, Serv_HEvent;
 	DWORD carSpeed;
 	DWORD numCars;
@@ -39,6 +40,7 @@ typedef struct {
 
 //Estrutura para movimento das Estradas Thread
 typedef struct {
+	int *terminar;
 	int speed;
 	int numCars;
 	pCarPos car_pos;
@@ -52,6 +54,7 @@ typedef struct {
 
 //Estrutura para BufferCircular Thread
 typedef struct {
+	int *terminar;
 	TCHAR* Map;
 	TRoads* RoadsDirection;
 	int numRoads;
@@ -63,6 +66,7 @@ typedef struct {
 
 //Estrutura para Desenhar Inicio e fim Thread
 typedef struct {
+	int *terminar;
 	int numRoads;
 	pFrogPos frog_pos;
 	TCHAR* Map;
@@ -74,6 +78,7 @@ typedef struct {
 
 //Estrutura para Thread De para o jogo x tempo
 typedef struct {
+	int *terminar;
 	HANDLE roadThreadsHandles;
 	TCHAR* time;
 	int numRoads;
