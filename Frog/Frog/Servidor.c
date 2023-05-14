@@ -202,7 +202,7 @@ void HandleInsertCommand(pTDados dados, const TCHAR* firstNumber, const TCHAR* s
 	_tprintf(TEXT("Testing[%s]!"), firstNumber);
 	_tprintf(TEXT("Testing[%s]!"), secondNumber);
 
-	if (roadId >= 2 && roadId <= dados->numRoads + 2)
+	if (roadId >= 1 && roadId <= dados->numRoads + 2)
 		_tprintf(TEXT("Valido[%d]!\n"), roadId + 1);
 	else
 		_tprintf(TEXT("Invalido!\n"));
@@ -213,8 +213,8 @@ void HandleInsertCommand(pTDados dados, const TCHAR* firstNumber, const TCHAR* s
 		_tprintf(TEXT("Invalido!"));
 
 	WaitForSingleObject(dados->hMutexInsertRoad, INFINITE);
-	if (dados->Map[roadId + 1 * MAX_COLS + coluna] == ROAD_ELEMENT) {
-		dados->Map[roadId + 1 * MAX_COLS + coluna] = OBSTACLE_ELEMENT;
+	if (dados->Map[(roadId + 1) * MAX_COLS + coluna] == ROAD_ELEMENT) {
+		dados->Map[(roadId + 1) * MAX_COLS + coluna] = OBSTACLE_ELEMENT;
 	}
 	ReleaseMutex(dados->hMutexInsertRoad);
 }
@@ -223,7 +223,7 @@ void HandleDeleteCommand(pTDados dados, const TCHAR* firstNumber, const TCHAR* s
 	int roadId = _wtoi(firstNumber);
 	int coluna = _wtoi(secondNumber);
 
-	if (roadId >= 2 && roadId <= dados->numRoads + 2)
+	if (roadId >= 1 && roadId <= dados->numRoads + 2)
 		_tprintf(TEXT("Valido[%d]!"), roadId + 1);
 	else
 		_tprintf(TEXT("Invalido!"));
@@ -234,8 +234,8 @@ void HandleDeleteCommand(pTDados dados, const TCHAR* firstNumber, const TCHAR* s
 		_tprintf(TEXT("Invalido!"));
 
 	WaitForSingleObject(dados->hMutexInsertRoad, INFINITE);
-	if (dados->Map[roadId + 1 * MAX_COLS + coluna] != CAR_ELEMENT && dados->Map[roadId * MAX_COLS + coluna] == OBSTACLE_ELEMENT) {
-		dados->Map[roadId + 1 * MAX_COLS + coluna] = ROAD_ELEMENT;
+	if (dados->Map[(roadId + 1) * MAX_COLS + coluna] == OBSTACLE_ELEMENT) {
+		dados->Map[(roadId + 1) * MAX_COLS + coluna] = ROAD_ELEMENT;
 	}
 	ReleaseMutex(dados->hMutexInsertRoad);
 }
@@ -314,9 +314,9 @@ DWORD WINAPI ThreadBufferCircular(LPVOID lpParam)
 				_tcscpy_s(firstNumber, 20, token);
 			token2 = token;
 			token = _tcstok_s(NULL, _T(" "), &context);
-			if (token2 != NULL)
+			if (token != NULL)
 				_tcscpy_s(secondNumber, 20, token);
-			if(token2 != NULL && token != NULL)
+			if(token2 != NULL && token != NULL && lstrcmp(firstNumber, TEXT("empty"))!=0 && lstrcmp(secondNumber, TEXT("empty")) != 0)
 				HandleInsertCommand(dados,firstNumber,secondNumber);
 		}
 		else if (lstrcmp(command, TEXT("remove")) == 0) {
@@ -325,9 +325,9 @@ DWORD WINAPI ThreadBufferCircular(LPVOID lpParam)
 				_tcscpy_s(firstNumber, 20, token);
 			token2 = token;
 			token  = _tcstok_s(NULL, _T(" "), &context);
-			if (token2 != NULL)
+			if (token != NULL)
 				_tcscpy_s(secondNumber, 20, token);
-			if (token2 != NULL && token != NULL)
+			if (token2 != NULL && token != NULL && lstrcmp(firstNumber, TEXT("empty")) != 0 && lstrcmp(secondNumber, TEXT("empty")) != 0)
 			HandleDeleteCommand(dados, firstNumber, secondNumber);
 		}
 		ReleaseMutex(dados->hMutex);
