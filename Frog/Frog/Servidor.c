@@ -17,7 +17,7 @@ DWORD WINAPI ThreadRoads(LPVOID lpParam)
 {
 	pTRoads data = (pTRoads)lpParam;
 	pCarPos temp;
-	_tprintf(TEXT("INICIO DA THREAD %d\n"), data->id);
+	_tprintf(TEXT("[INFO] INICIO DA THREAD %d\n"), data->id);
 	while (*data->terminar == 0)
 	{
 		WaitForSingleObject(data->hMutex, INFINITE);
@@ -150,7 +150,7 @@ DWORD WINAPI CheckOperators(LPVOID lpParam)
 	//TODO operador criado pelo operador e aqui esta com waitSingleObject para esse evento
 	while (1) {
 		//Criamos evento para que as threads ja consiga ler
-		_tprintf(TEXT("[ERRO]Espera do evento check\n"));
+		_tprintf(TEXT("[ERRO] Espera do evento check\n"));
 		WaitForSingleObject(InitialEvent, INFINITE);
 
 		HANDLE threadPontuacaoEvent = CreateEvent(NULL, TRUE, FALSE, TEXT("PONTUACAO"));
@@ -159,7 +159,7 @@ DWORD WINAPI CheckOperators(LPVOID lpParam)
 
 		if (x == NULL)
 		{
-			_tprintf(TEXT("[ERRO]CreateEvent\n"));
+			_tprintf(TEXT("[ERRO] CreateEvent na Thread CheckOperators\n"));
 			return 0;
 		}
 		SetEvent(x);
@@ -261,6 +261,7 @@ DWORD WINAPI ThreadBufferCircular(LPVOID lpParam)
 	pTDados dados = (pTDados)lpParam;
 	EspacoBuffer space;
 	space.id = 0;
+	HANDLE hThreadStopGame = NULL;
 	//space.val = 0;
 	while (*dados->terminar == 0)
 	{
@@ -292,13 +293,18 @@ DWORD WINAPI ThreadBufferCircular(LPVOID lpParam)
 			stopGame.roadThreadsHandles = dados->threadsHandles;
 			stopGame.time = firstNumber;//para ser em segundos
 			stopGame.numRoads = dados->numRoads;
-			HANDLE hThreadStopGame = CreateThread(
+			hThreadStopGame = CreateThread(
 				NULL,    // Thread attributes
 				0,       // Stack size (0 = use default)
 				threadStopGame, // Thread start address
 				&stopGame,    // Parameter to pass to the thread
 				0,       // Creation flags
-				NULL);   // Thread id   // returns the thread identifier 
+				NULL);   // Thread id   // returns the thread identifier
+			if (hThreadStopGame == NULL)
+			{
+				_tprintf(TEXT("[ERRO] Thread BufferCircular Erro ao criar thread de pausa do jogo\n"));
+				return 1;
+			}
 		}
 		else if (lstrcmp(command, TEXT("Terminar")) == 0) {
 			//acabar com tudo
@@ -335,6 +341,7 @@ DWORD WINAPI ThreadBufferCircular(LPVOID lpParam)
 		ReleaseMutex(dados->hMutex);
 		ReleaseSemaphore(dados->hSemEscrita, 1, NULL);
 	}
+	CloseHandle(hThreadStopGame);
 	return 0;
 }
 
@@ -345,7 +352,7 @@ int parse_args(TCHAR* arg1_str, TCHAR* arg2_str, DWORD* arg1, DWORD* arg2) {
 	*arg2 = _wtoi(arg2_str);
 
 	if (!arg1 || !arg2) {
-		_tprintf(TEXT("Invalid argument format\n"));
+		_tprintf(TEXT("[ERRO] Formato invalido para argumentos\n"));
 		return 1;
 	}
 
@@ -370,17 +377,17 @@ int _tmain(int argc, TCHAR* argv[]) {
 	//NAO APAGAR, IMPORTANTE 
 	GameData data;
 	if (argc != 3) {
-		_tprintf(TEXT("Bad usage of parameters \n"));
+		_tprintf(TEXT("[ERRO] Parametros errados \n"));
 		//função que vai buscar ao registry se existir, senão return 1;
 		data = RegistryGetValues();
 	}
 	else {
 		parse_result = parse_args(argv[1], argv[2], &arg1, &arg2);
 		if (parse_result != 0) {
-			_tprintf(TEXT("Failed to parse arguments\n"));
+			_tprintf(TEXT("[ERRO] Conversao de argumentos falhada\n"));
 			return 1;
 		}
-		_tprintf(TEXT("Good parse!\n arg1 :%lu \narg2 :%lu \n"), arg1, arg2);
+		_tprintf(TEXT("[INFO] Conversao completa!\n arg1 :%lu \narg2 :%lu \n"), arg1, arg2);
 		data = RegistryKeyValue(arg1, arg2);
 
 	}
@@ -392,17 +399,17 @@ int _tmain(int argc, TCHAR* argv[]) {
 	HANDLE hSem = CreateSemaphore(NULL, 1, 1, SEMAPHORE_UNIQUE_SERVER);
 	if (hSem == NULL)
 	{
-		_tprintf("[ERRO]CreateSemaphore: %d\n", GetLastError());
+		_tprintf("[ERRO] CreateSemaphore: %d\n", GetLastError());
 		return 1;
 	}
 	// matriz de handles das threads
 	//HANDLE hThreads[MAX_THREADS];
 
-	_tprintf(TEXT("Waiting for slot...\n"));
+	_tprintf(TEXT("[INFO] Waiting for slot...\n"));
 
 	WaitForSingleObject(hSem, INFINITE);
 	//_tprintf(TEXT("Got in!\n"));
-	data.numRoads = 8;
+	//data.numRoads = 8;
 	data.numCars = 0;
 	//desenho do mapa
 	for (int i = 0; i < data.numRoads + SKIP_BEGINING_END; i++)
@@ -431,7 +438,7 @@ int _tmain(int argc, TCHAR* argv[]) {
 	//Gerar carros
 	for (int i = 0; i < data.numRoads; i++)
 	{
-		int carsInRoad = 8; //(rand() % 8) + 1
+		int carsInRoad = (rand() % 8) + 1;
 		for (; carsInRoad > 0; carsInRoad--) {
 			data.car_pos[data.numCars].row = i + SKIP_BEGINING; //X -> linha
 			int posInRoad = 0;
@@ -444,7 +451,7 @@ int _tmain(int argc, TCHAR* argv[]) {
 			data.numCars++;
 		}
 	}
-	_tprintf(TEXT("NUMERO TOTAL DE CARS %d\n"), data.numCars);
+	_tprintf(TEXT("[INFO] Numero total de carros %d\n"), data.numCars);
 
 
 	//Gerar sapos (Primeira meta....)
@@ -463,14 +470,14 @@ int _tmain(int argc, TCHAR* argv[]) {
 	HANDLE HMapFile = CreateFileMapping(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, sizeof(GameData), FILE_MAPPING_GAME_DATA);
 	if (HMapFile == NULL)
 	{
-		_tprintf(TEXT("[ERRO] CreateFileMapping\n"));
+		_tprintf(TEXT("[ERRO] CreateFileMapping GameInfo\n"));
 		return 0;
 	}
 
 	pGameData pBuf = (TCHAR*)MapViewOfFile(HMapFile, FILE_MAP_ALL_ACCESS, 0, 0, 0);
 	if (pBuf == NULL)
 	{
-		_tprintf(TEXT("[ERRO] MapViewOfFile\n"));
+		_tprintf(TEXT("[ERRO] MapViewOfFile GameInfo\n"));
 		return 0;
 	}
 
@@ -480,7 +487,7 @@ int _tmain(int argc, TCHAR* argv[]) {
 	data.Serv_HMutex = CreateMutex(NULL, FALSE, SHARED_MEMORIE_MUTEX);
 	if (data.Serv_HMutex == NULL)
 	{
-		_tprintf(TEXT("[ERRO]CreateMutex\n"));
+		_tprintf(TEXT("[ERRO] CreateMutex GameInfo\n"));
 		return 0;
 	}
 
@@ -508,14 +515,14 @@ int _tmain(int argc, TCHAR* argv[]) {
 		HANDLE HMapFile = CreateFileMapping(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, sizeof(TCHAR) * (MAX_ROWS + SKIP_BEGINING_END) * MAX_COLS, FILE_MAPPING_THREAD_ROADS);
 		if (HMapFile == NULL)
 		{
-			_tprintf(TEXT("ERRO CreateFileMapping\n"));
+			_tprintf(TEXT("[ERRO] CreateFileMapping Mapa\n"));
 			return 0;
 		}
 		//_tprintf(TEXT("Criado CreateFileMapping\n"));
 		RoadsData[i].sharedMap = (TCHAR*)MapViewOfFile(HMapFile, FILE_MAP_ALL_ACCESS, 0, 0, 0);
 		if (RoadsData[i].sharedMap == NULL)
 		{
-			_tprintf(TEXT("ERRO MapViewOfFile\n"));
+			_tprintf(TEXT("[ERRO] MapViewOfFile Mapa\n"));
 			return 0;
 		}
 
@@ -525,7 +532,7 @@ int _tmain(int argc, TCHAR* argv[]) {
 		RoadsData[i].hMutex = CreateMutex(NULL, FALSE, THREAD_ROADS_MUTEX);
 		RoadsData[i].hEventRoads = CreateEvent(NULL, TRUE, FALSE, THREAD_ROADS_EVENT + i);
 		RoadsData[i].id = i + SKIP_BEGINING; //o numero do id é a estrada q elas estao encarregues
-		RoadsData[i].speed = 1000;//((rand() % 8) + 1) * 1000
+		RoadsData[i].speed = data.carSpeed;//((rand() % 8) + 1) * 1000
 		RoadsData[i].terminar = &terminar;
 		//_tprintf(TEXT("Direcao AAAAAAAAAAAAA %d\n"), (rand() % 1));
 		RoadsData[i].direction = (rand() % 2);
@@ -554,7 +561,6 @@ int _tmain(int argc, TCHAR* argv[]) {
 	HANDLE HMapFileBuffer = OpenFileMapping(FILE_MAP_ALL_ACCESS, FALSE, FILE_MAPPING_BUFFER_CIRCULAR);
 	if (HMapFileBuffer == NULL)
 	{
-		_tprintf(TEXT("CreateFileMapping\n"));
 		HMapFileBuffer = CreateFileMapping(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, sizeof(Buffer), FILE_MAPPING_BUFFER_CIRCULAR);
 		dataThread.BufferCircular = (pBuffer)MapViewOfFile(HMapFileBuffer, FILE_MAP_ALL_ACCESS, 0, 0, 0);
 		dataThread.BufferCircular->nConsumidores = 0;
@@ -569,7 +575,7 @@ int _tmain(int argc, TCHAR* argv[]) {
 
 		if (HMapFileBuffer == NULL)
 		{
-			_tprintf(TEXT("ERRO CreateFileMapping\n"));
+			_tprintf(TEXT("[ERRO] CreateFileMapping BufferCircular\n"));
 			return 0;
 		}
 	}
@@ -578,7 +584,7 @@ int _tmain(int argc, TCHAR* argv[]) {
 		dataThread.BufferCircular = (Buffer*)MapViewOfFile(HMapFileBuffer, FILE_MAP_ALL_ACCESS, 0, 0, 0);
 		if (HMapFileBuffer == NULL)
 		{
-			_tprintf(TEXT("ERRO CreateFileMapping\n"));
+			_tprintf(TEXT("[ERRO] CreateFileMapping BufferCircular\n"));
 			return 0;
 		}
 	}
@@ -599,7 +605,7 @@ int _tmain(int argc, TCHAR* argv[]) {
 		NULL);   // Thread id   // returns the thread identifier 
 	if (hThreads == NULL)
 	{
-		_tprintf(TEXT("[DEBUG] Thread BufferCircular Erro\n"));
+		_tprintf(TEXT("[ERRO] Thread BufferCircular\n"));
 		return 1;
 	}
 
@@ -607,11 +613,11 @@ int _tmain(int argc, TCHAR* argv[]) {
 
 	_tprintf(TEXT("\n"));
 	_tprintf(TEXT("\n"));
-	_tprintf(TEXT("SERVIDOR A ESPERA DE PELO MENOS UM OPERADOR\n"));
+	_tprintf(TEXT("[INFO] SERVIDOR A ESPERA DE PELO MENOS UM OPERADOR\n"));
 	_tprintf(TEXT("\n"));
 	_tprintf(TEXT("\n"));
 	//WaitForSingleObject(InitialEvent, INFINITE);
-	_tprintf(TEXT("OPERADOR INICIADO\n"));
+	_tprintf(TEXT("[INFO] OPERADOR INICIADO\n"));
 	_tprintf(TEXT("\n"));
 	_tprintf(TEXT("\n"));
 
@@ -624,20 +630,25 @@ int _tmain(int argc, TCHAR* argv[]) {
 		NULL,    // Parameter to pass to the thread
 		0,       // Creation flags
 		NULL);
-
+	if (tHCheckOpearators == NULL)
+	{
+		_tprintf(TEXT("[DEBUG] Thread CheckOperadores\n"));
+		return 1;
+	}
 
 	while (terminar == 0)
 	{
 
 	}
 		
-	_tprintf(TEXT("SERVIDOR VAI TERMINAR\n"));
+	_tprintf(TEXT("[INFO] SERVIDOR VAI TERMINAR\n"));
 	
 	// FAZER aguarda / controla as threads 
 	//       manda as threads parar
 	//WaitForMultipleObjects(data.numRoads, RoadThreads, TRUE, INFINITE);
 
-//}
+	UnmapViewOfFile(HMapFile);
+	UnmapViewOfFile(HMapFileBuffer);
 	// Close thread handles
 	for (int i = 0; i < data.numRoads; i++) {
 		CloseHandle(RoadThreads[i]);

@@ -21,7 +21,7 @@ typedef struct {
 	int numRoads;
 	int num_frogs;
 	CarPos car_pos[MAX_CARS]; 
-	int frog_pos[MAX_FROGS][2]; //2 seria para representar o x e o y
+	int frog_pos[MAX_FROGS][2];
 	TCHAR map[MAX_ROWS + 4][MAX_COLS];
 }GameData, *pGameData;
 

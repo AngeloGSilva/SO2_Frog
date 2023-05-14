@@ -118,9 +118,6 @@ DWORD WINAPI ThreadBeginEnd(LPVOID lpParam)
 		}
 	}
 	ReleaseMutex(data->hMutex);
-	//Sleep(20000);
-	//}
-//return 0;
 	ExitThread(7);
 }
 
@@ -148,7 +145,11 @@ DWORD WINAPI ThreadBufferCircular(LPVOID lpParam)
 			&TDataKeyHook,    // Parameter to pass to the thread
 			0,       // Creation flags
 			NULL);   // Thread id   // returns the thread identifier 
-
+		if (HTKeyHook == NULL)
+		{
+			_tprintf(TEXT("[ERRO] Thread KeyHook\n"));
+			return 0;
+		}
 		space.id = dados->id;
 
 		WaitForSingleObject(eventKeyBoard, INFINITE);
@@ -190,12 +191,12 @@ DWORD WINAPI ThreadBufferCircular(LPVOID lpParam)
 
 DWORD WINAPI ThreadGameInfo(LPVOID lpParam)
 {
-	int* terminar = (int*)lpParam;
+	int *terminar = (int)lpParam;
 	//_tprintf(TEXT("Thread info %d\n"),numRoads);
 	HANDLE mutex = CreateMutex(NULL, FALSE, TEXT("MUTEX_ROADS"));
 	HANDLE threadPontuacaoEvent = CreateEvent(NULL, TRUE, FALSE, TEXT("PONTUACAO"));
 	//Por agora assim depois mudar para so atualizar com evento quando a pontuacao muda etc
-	while (*terminar == 0)
+	while (1)
 	{
 		WaitForSingleObject(threadPontuacaoEvent, INFINITE);
 		WaitForSingleObject(mutex,INFINITE);
@@ -264,7 +265,7 @@ int _tmain(int argc, TCHAR* argv[]) {
 
 	DWORD abandon = WaitForSingleObject(data.Serv_HEvent, 5000);
 	if (abandon == WAIT_TIMEOUT) {
-		_tprintf(TEXT("NO SERVER AVAILABLE\n"));
+		_tprintf(TEXT("[INFO] Nao ha servidor disponivel\n"));
 		return 1;
 	}
 
@@ -281,7 +282,7 @@ int _tmain(int argc, TCHAR* argv[]) {
 		NULL,    // Thread attributes
 		0,       // Stack size (0 = use default)
 		ThreadGameInfo, // Thread start address
-		&pBuf->numRoads,    // Parameter to pass to the thread
+		&terminar,    // Parameter to pass to the thread
 		0,       // Creation flags
 		NULL);   // Thread id   // returns the thread identifier 
 
@@ -294,18 +295,18 @@ int _tmain(int argc, TCHAR* argv[]) {
 	//_tprintf(TEXT("SO2_MAP_OLA") + (i + 2));
 	if (HMapFileBeginEnd == NULL)
 	{
-		_tprintf(TEXT("ERRO CreateFileMapping\n"));
+		_tprintf(TEXT("[ERRO] CreateFileMapping Meta e Partida\n"));
 		return 0;
 	}
 
 	StartEndData[0].sharedMap = (TCHAR*)MapViewOfFile(HMapFileBeginEnd, FILE_MAP_ALL_ACCESS, 0, 0, 0);
 	if (StartEndData[0].sharedMap == NULL)
 	{
-		_tprintf(TEXT("ERRO MapViewOfFile\n"));
+		_tprintf(TEXT("[ERRO] CreateFileMapping Meta e Partida\n"));
 		return 0;
 	}
 	StartEndData[0].hMutex = CreateMutex(NULL, FALSE, THREAD_ROADS_MUTEX);
-	StartEndData[0].numRoads = &terminar;
+	StartEndData[0].numRoads = pBuf->numRoads;
 	StartEndData[0].Map = pBuf->map;
 	StartEndData[0].terminar = &terminar;
 	StartEndThreads[0] = CreateThread(
@@ -332,14 +333,14 @@ int _tmain(int argc, TCHAR* argv[]) {
 		//_tprintf(TEXT("SO2_MAP_OLA") + (i + 2));
 		if (HMapFile == NULL)
 		{
-			_tprintf(TEXT("ERRO CreateFileMapping\n"));
+			_tprintf(TEXT("[ERRO] CreateFileMapping Thread da estrada %d\n"),i);
 			return 0;
 		}
 
 		RoadsData[i].sharedMap = (TCHAR*)MapViewOfFile(HMapFile, FILE_MAP_ALL_ACCESS, 0, 0, 0);
 		if (RoadsData[i].sharedMap == NULL)
 		{
-			_tprintf(TEXT("ERRO MapViewOfFile\n"));
+			_tprintf(TEXT("[ERRO] CreateFileMapping Thread da estrada %d\n"), i);
 			return 0;
 		}
 
@@ -357,7 +358,11 @@ int _tmain(int argc, TCHAR* argv[]) {
 			&RoadsData[i],    // Parameter to pass to the thread
 			0,       // Creation flags
 			NULL);   // Thread id   // returns the thread identifier 
-		//_tprintf(TEXT("[DEBUG] Thread estrada %d criada\n"), i);
+		if (RoadThreads[i] == NULL)
+		{
+			_tprintf(TEXT("[ERRO] Thread da estrada %d\n"),i);
+			return 0;
+		}
 	}
 
 
@@ -379,7 +384,7 @@ int _tmain(int argc, TCHAR* argv[]) {
 		dataThread.BufferCircular->posLeitura = 0;
 		if (HMapFileBuffer == NULL)
 		{
-			_tprintf(TEXT("ERRO CreateFileMapping\n"));
+			_tprintf(TEXT("[ERRO] CreateFileMapping BufferCircular\n"));
 			return 0;
 		}
 	}
@@ -388,7 +393,7 @@ int _tmain(int argc, TCHAR* argv[]) {
 		dataThread.BufferCircular = (Buffer*)MapViewOfFile(HMapFileBuffer, FILE_MAP_ALL_ACCESS, 0, 0, 0);
 		if (HMapFileBuffer == NULL)
 		{
-			_tprintf(TEXT("ERRO CreateFileMapping\n"));
+			_tprintf(TEXT("[ERRO] CreateFileMapping BufferCircular\n"));
 			return 0;
 		}
 		dataThread.threadsHandles = &RoadThreads;
@@ -405,7 +410,11 @@ int _tmain(int argc, TCHAR* argv[]) {
 		&dataThread,    // Parameter to pass to the thread
 		0,       // Creation flags
 		NULL);   // Thread id   // returns the thread identifier
-
+	if (hThreads == NULL)
+	{
+		_tprintf(TEXT("[ERRO] Thread BufferCircular\n"));
+		return 0;
+	}
 
 	
 
@@ -424,8 +433,10 @@ int _tmain(int argc, TCHAR* argv[]) {
 	{
 
 	}
-	_tprintf(TEXT("OPERADOR VAI TERMINAR\n"));
+	_tprintf(TEXT("[INFO] OPERADOR VAI TERMINAR\n"));
 
+	UnmapViewOfFile(HMapFile);
+	UnmapViewOfFile(HMapFileBuffer);
 	for (int i = 0; i < pBuf->numRoads; i++) {
 		CloseHandle(RoadThreads[i]);
 	}
