@@ -230,9 +230,9 @@ int _tmain(int argc, TCHAR* argv[]) {
 	HANDLE HMapFile = CreateFileMapping(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, sizeof(GameData), FILE_MAPPING_GAME_DATA);
 	pGameData pBuf = (GameData*)MapViewOfFile(HMapFile, FILE_MAP_ALL_ACCESS, 0, 0, 0);
 	//data.event = OpenEvent(READ_CONTROL,TRUE, TEXT("TP_Evento"));
-	data.Serv_HEvent = CreateEvent(NULL, TRUE, FALSE, SHARED_MEMORIE_EVENT);
+	data.Serv_HEvent = CreateEvent(NULL, TRUE, FALSE, SHARED_MEMORY_EVENT);
 	//data.mutex = OpenMutex(READ_CONTROL, TRUE, TEXT("TP_Mutex"));
-	data.Serv_HMutex = CreateMutex(NULL, FALSE, SHARED_MEMORIE_MUTEX);
+	data.Serv_HMutex = CreateMutex(NULL, FALSE, SHARED_MEMORY_MUTEX);
 
 	HANDLE InitialEvent = CreateEvent(NULL, TRUE, FALSE, INITIAL_EVENT);
 

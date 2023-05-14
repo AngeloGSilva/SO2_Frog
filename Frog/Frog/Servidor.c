@@ -143,7 +143,7 @@ DWORD WINAPI CheckOperators(LPVOID lpParam)
 
 		HANDLE threadPontuacaoEvent = CreateEvent(NULL, TRUE, FALSE, TEXT("PONTUACAO"));
 
-		HANDLE x = CreateEvent(NULL, TRUE, FALSE, SHARED_MEMORIE_EVENT);
+		HANDLE x = CreateEvent(NULL, TRUE, FALSE, SHARED_MEMORY_EVENT);
 
 		if (x == NULL)
 		{
@@ -445,7 +445,7 @@ int _tmain(int argc, TCHAR* argv[]) {
 	}
 
 	//criar mutex
-	data.Serv_HMutex = CreateMutex(NULL, FALSE, SHARED_MEMORIE_MUTEX);
+	data.Serv_HMutex = CreateMutex(NULL, FALSE, SHARED_MEMORY_MUTEX);
 	if (data.Serv_HMutex == NULL)
 	{
 		_tprintf(TEXT("[ERRO] CreateMutex GameInfo\n"));
@@ -510,7 +510,7 @@ int _tmain(int argc, TCHAR* argv[]) {
 	//BufferCircular
 	TDados dataThread;
 
-	dataThread.hMutex = CreateMutex(NULL, FALSE, BUFFER_CIRCULAR_MUTEX_LEITORE);
+	dataThread.hMutex = CreateMutex(NULL, FALSE, BUFFER_CIRCULAR_MUTEX_LEITOR);
 	dataThread.hSemEscrita = CreateSemaphore(NULL, 10, 10, BUFFER_CIRCULAR_SEMAPHORE_ESCRITOR);
 	dataThread.hSemLeitura = CreateSemaphore(NULL, 0, 10, BUFFER_CIRCULAR_SEMAPHORE_LEITORE);
 
