@@ -190,12 +190,12 @@ DWORD WINAPI ThreadBufferCircular(LPVOID lpParam)
 
 DWORD WINAPI ThreadGameInfo(LPVOID lpParam)
 {
-	int numRoads = (int)lpParam;
+	int* terminar = (int*)lpParam;
 	//_tprintf(TEXT("Thread info %d\n"),numRoads);
 	HANDLE mutex = CreateMutex(NULL, FALSE, TEXT("MUTEX_ROADS"));
 	HANDLE threadPontuacaoEvent = CreateEvent(NULL, TRUE, FALSE, TEXT("PONTUACAO"));
 	//Por agora assim depois mudar para so atualizar com evento quando a pontuacao muda etc
-	while (1)
+	while (*terminar == 0)
 	{
 		WaitForSingleObject(threadPontuacaoEvent, INFINITE);
 		WaitForSingleObject(mutex,INFINITE);
@@ -305,7 +305,7 @@ int _tmain(int argc, TCHAR* argv[]) {
 		return 0;
 	}
 	StartEndData[0].hMutex = CreateMutex(NULL, FALSE, THREAD_ROADS_MUTEX);
-	StartEndData[0].numRoads = pBuf->numRoads;
+	StartEndData[0].numRoads = &terminar;
 	StartEndData[0].Map = pBuf->map;
 	StartEndData[0].terminar = &terminar;
 	StartEndThreads[0] = CreateThread(
