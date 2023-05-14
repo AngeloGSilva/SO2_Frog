@@ -71,7 +71,7 @@ DWORD WINAPI ThreadRoads(LPVOID lpParam)
 	TCHAR* temp;
 	COORD cursorPos;
 	DWORD numWritten; // Number of characters actually written
-	while (1)
+	while (*data->terminar == 0)
 	{
 		WaitForSingleObject(data->hEventRoads, INFINITE);
 		WaitForSingleObject(data->hMutex, INFINITE);
@@ -139,7 +139,7 @@ DWORD WINAPI ThreadBufferCircular(LPVOID lpParam)
 	GetConsoleScreenBufferInfo(hConsole, &consoleInfo);
 
 
-	while (1)
+	while (*dados->terminar == 0)
 	{
 		HANDLE HTKeyHook = CreateThread(
 			NULL,    // Thread attributes
@@ -163,7 +163,10 @@ DWORD WINAPI ThreadBufferCircular(LPVOID lpParam)
 		FillConsoleOutputCharacter(hConsole, ' ', consoleInfo.dwSize.X, cursorPos, &numWritten);
 		_tprintf(TEXT("COMANDO:"));
 		_getts_s(space.val,20);
-
+		if (lstrcmp(space.val, TEXT("Terminar")) == 0)
+		{
+			*dados->terminar = 1;
+		}
 		WaitForSingleObject(dados->hSemEscrita, INFINITE);
 		WaitForSingleObject(dados->hMutex, INFINITE);
 		//copiar o conteudo para a memoria partilhada
@@ -236,6 +239,7 @@ int _tmain(int argc, TCHAR* argv[]) {
 	_setmode(_fileno(stdin), _O_WTEXT);
 	_setmode(_fileno(stdout), _O_WTEXT);
 #endif 
+	int terminar = 0;
 
 	//rand
 	srand((unsigned)time(NULL));
@@ -303,6 +307,7 @@ int _tmain(int argc, TCHAR* argv[]) {
 	StartEndData[0].hMutex = CreateMutex(NULL, FALSE, THREAD_ROADS_MUTEX);
 	StartEndData[0].numRoads = pBuf->numRoads;
 	StartEndData[0].Map = pBuf->map;
+	StartEndData[0].terminar = &terminar;
 	StartEndThreads[0] = CreateThread(
 		NULL,
 		0,
@@ -343,6 +348,7 @@ int _tmain(int argc, TCHAR* argv[]) {
 		RoadsData[i].hEventRoads = CreateEvent(NULL, TRUE, FALSE, THREAD_ROADS_EVENT + i);
 		RoadsData[i].id = i + SKIP_BEGINING; //o numero do id é a estrada q elas estao encarregues
 		RoadsData[i].speed = 0;
+		RoadsData[i].terminar = &terminar;
 		//RoadsData[i].direction = 1;
 		RoadThreads[i] = CreateThread(
 			NULL,    // Thread attributes
@@ -389,6 +395,7 @@ int _tmain(int argc, TCHAR* argv[]) {
 		dataThread.numRoads = pBuf->numRoads;
 	}
 	dataThread.id = dataThread.BufferCircular->nProdutores++;
+	dataThread.terminar = &terminar;
 
 
 	HANDLE hThreads = CreateThread(
@@ -413,10 +420,17 @@ int _tmain(int argc, TCHAR* argv[]) {
 	//Para a primeira meta apenas.. para nao estar a utilizar o cursor sem ser necessario
 	//user o suspend ou apenas deixar a thread correr 1 vez e nao em ciclo infinito
 	//SuspendThread(StartEndThreads[0]);
-	while (1)
+	while (terminar == 0)
 	{
 
 	}
+	_tprintf(TEXT("OPERADOR VAI TERMINAR\n"));
+
+	for (int i = 0; i < pBuf->numRoads; i++) {
+		CloseHandle(RoadThreads[i]);
+	}
+	CloseHandle(hThreadsINFO);
+	CloseHandle(StartEndThreads);
 	CloseHandle(hThreads);
 	return 0;
 }

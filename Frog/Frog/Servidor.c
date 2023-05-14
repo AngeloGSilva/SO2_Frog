@@ -18,7 +18,7 @@ DWORD WINAPI ThreadRoads(LPVOID lpParam)
 	pTRoads data = (pTRoads)lpParam;
 	pCarPos temp;
 	_tprintf(TEXT("INICIO DA THREAD %d\n"), data->id);
-	while (1)
+	while (*data->terminar == 0)
 	{
 		WaitForSingleObject(data->hMutex, INFINITE);
 		temp = data->car_pos;
@@ -262,7 +262,7 @@ DWORD WINAPI ThreadBufferCircular(LPVOID lpParam)
 	EspacoBuffer space;
 	space.id = 0;
 	//space.val = 0;
-	while (1)
+	while (*dados->terminar == 0)
 	{
 		WaitForSingleObject(dados->hSemLeitura, INFINITE);
 		WaitForSingleObject(dados->hMutex, INFINITE);
