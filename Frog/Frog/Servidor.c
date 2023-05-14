@@ -126,7 +126,6 @@ DWORD WINAPI ThreadRoads(LPVOID lpParam)
 
 		//Criamos evento para que as threads ja consiga ler
 		SetEvent(data->hEventRoads);
-		Sleep(500);
 		ResetEvent(data->hEventRoads);
 		Sleep(data->speed);
 	}
@@ -141,7 +140,7 @@ DWORD WINAPI CheckOperators(LPVOID lpParam)
 		_tprintf(TEXT("[INFO] Espera do evento check\n"));
 		WaitForSingleObject(InitialEvent, INFINITE);
 
-		HANDLE threadPontuacaoEvent = CreateEvent(NULL, TRUE, FALSE, TEXT("PONTUACAO"));
+		HANDLE threadPontuacaoEvent = CreateEvent(NULL, TRUE, FALSE, GAMEDATA_EVENT);
 
 		HANDLE x = CreateEvent(NULL, TRUE, FALSE, SHARED_MEMORY_EVENT);
 
@@ -193,7 +192,7 @@ DWORD WINAPI threadStopGame(LPVOID lpParam)
 
 void HandleChangeCommand(pTDados dados, const TCHAR* firstNumber) {
 	int roadId = _wtoi(firstNumber);
-	ToggleRoadDirection(dados->RoadsDirection, dados->numRoads, roadId);
+	ToggleRoadDirection(dados->RoadsDirection, dados->numRoads, roadId + 1);
 }
 
 void HandleInsertCommand(pTDados dados, const TCHAR* firstNumber, const TCHAR* secondNumber) {
@@ -204,18 +203,18 @@ void HandleInsertCommand(pTDados dados, const TCHAR* firstNumber, const TCHAR* s
 	_tprintf(TEXT("Testing[%s]!"), secondNumber);
 
 	if (roadId >= 2 && roadId <= dados->numRoads + 2)
-		_tprintf(TEXT("Am digit[%d]!"), roadId);
+		_tprintf(TEXT("Valido[%d]!\n"), roadId + 1);
 	else
-		_tprintf(TEXT("Am not digit!"));
+		_tprintf(TEXT("Invalido!\n"));
 
 	if (coluna >= 1 && coluna <= 18)
-		_tprintf(TEXT("Am digit[%d]!"), coluna);
+		_tprintf(TEXT("Valido[%d]!"), coluna);
 	else
-		_tprintf(TEXT("Am not digit!"));
+		_tprintf(TEXT("Invalido!"));
 
 	WaitForSingleObject(dados->hMutexInsertRoad, INFINITE);
-	if (dados->Map[roadId * MAX_COLS + coluna] != CAR_ELEMENT) {
-		dados->Map[roadId * MAX_COLS + coluna] = OBSTACLE_ELEMENT;
+	if (dados->Map[roadId + 1 * MAX_COLS + coluna] == ROAD_ELEMENT) {
+		dados->Map[roadId + 1 * MAX_COLS + coluna] = OBSTACLE_ELEMENT;
 	}
 	ReleaseMutex(dados->hMutexInsertRoad);
 }
@@ -225,18 +224,18 @@ void HandleDeleteCommand(pTDados dados, const TCHAR* firstNumber, const TCHAR* s
 	int coluna = _wtoi(secondNumber);
 
 	if (roadId >= 2 && roadId <= dados->numRoads + 2)
-		_tprintf(TEXT("Numero [%d]!"), roadId);
+		_tprintf(TEXT("Valido[%d]!"), roadId + 1);
 	else
-		_tprintf(TEXT("Nao numero!"));
+		_tprintf(TEXT("Invalido!"));
 
 	if (coluna >= 1 && coluna <= 18)
-		_tprintf(TEXT("Numero [%d]!"), coluna);
+		_tprintf(TEXT("Valido[%d]!"), coluna);
 	else
-		_tprintf(TEXT("Nao numero!"));
+		_tprintf(TEXT("Invalido!"));
 
 	WaitForSingleObject(dados->hMutexInsertRoad, INFINITE);
-	if (dados->Map[roadId * MAX_COLS + coluna] != CAR_ELEMENT && dados->Map[roadId * MAX_COLS + coluna] == OBSTACLE_ELEMENT) {
-		dados->Map[roadId * MAX_COLS + coluna] = ROAD_ELEMENT;
+	if (dados->Map[roadId + 1 * MAX_COLS + coluna] != CAR_ELEMENT && dados->Map[roadId * MAX_COLS + coluna] == OBSTACLE_ELEMENT) {
+		dados->Map[roadId + 1 * MAX_COLS + coluna] = ROAD_ELEMENT;
 	}
 	ReleaseMutex(dados->hMutexInsertRoad);
 }
@@ -260,16 +259,20 @@ DWORD WINAPI ThreadBufferCircular(LPVOID lpParam)
 		}
 
 		TCHAR* token;
+		TCHAR* token2;
 		TCHAR* context;
-		TCHAR command[20];
-		TCHAR firstNumber[20];
-		TCHAR secondNumber[20];
+		TCHAR command[20] = TEXT("empty");
+		TCHAR firstNumber[20] = TEXT("empty");
+		TCHAR secondNumber[20] = TEXT("empty");
+
+		_tprintf(TEXT("Received from operator:[%s]\n"), space.val);
+
 
 		token = _tcstok_s(space.val, _T(" "), &context);
 		if (token != NULL)
 			_tcscpy_s(command, 20, token);
 
-		if (lstrcmp(command, TEXT("Stop")) == 0) {
+		if (lstrcmp(command, TEXT("stop")) == 0) {
 			token = _tcstok_s(NULL, _T(" "), &context);
 			if (token != NULL)
 				_tcscpy_s(firstNumber, 20, token);
@@ -290,35 +293,41 @@ DWORD WINAPI ThreadBufferCircular(LPVOID lpParam)
 				return 1;
 			}
 		}
-		else if (lstrcmp(command, TEXT("Terminar")) == 0) {
+		else if (lstrcmp(command, TEXT("terminar")) == 0) {
 			//acabar com tudo
 			*dados->terminar = 1;
 		}
-		else if (lstrcmp(command, TEXT("Start")) == 0) {
+		else if (lstrcmp(command, TEXT("start")) == 0) {
 			//HandleStartCommand(dados);
 		}
-		else if (lstrcmp(command, TEXT("Change")) == 0) {
+		else if (lstrcmp(command, TEXT("change")) == 0) {
 			token = _tcstok_s(NULL, _T(" "), &context);
 			if (token != NULL)
+			{
 				_tcscpy_s(firstNumber, 20, token);
-			HandleChangeCommand(dados, firstNumber);
+				HandleChangeCommand(dados, firstNumber);
+			}
 		}
-		else if (lstrcmp(command, TEXT("Insert")) == 0) {
+		else if (lstrcmp(command, TEXT("insert")) == 0) {
 			token = _tcstok_s(NULL, _T(" "), &context);
 			if (token != NULL)
 				_tcscpy_s(firstNumber, 20, token);
+			token2 = token;
 			token = _tcstok_s(NULL, _T(" "), &context);
-			if (token != NULL)
+			if (token2 != NULL)
 				_tcscpy_s(secondNumber, 20, token);
-			HandleInsertCommand(dados,firstNumber,secondNumber);
+			if(token2 != NULL && token != NULL)
+				HandleInsertCommand(dados,firstNumber,secondNumber);
 		}
-		else if (lstrcmp(command, TEXT("Remove")) == 0) {
+		else if (lstrcmp(command, TEXT("remove")) == 0) {
 			token = _tcstok_s(NULL, _T(" "), &context);
 			if (token != NULL)
 				_tcscpy_s(firstNumber, 20, token);
-			token = _tcstok_s(NULL, _T(" "), &context);
-			if (token != NULL)
+			token2 = token;
+			token  = _tcstok_s(NULL, _T(" "), &context);
+			if (token2 != NULL)
 				_tcscpy_s(secondNumber, 20, token);
+			if (token2 != NULL && token != NULL)
 			HandleDeleteCommand(dados, firstNumber, secondNumber);
 		}
 		ReleaseMutex(dados->hMutex);
@@ -381,9 +390,14 @@ int _tmain(int argc, TCHAR* argv[]) {
 		return 1;
 	}
 
-	_tprintf(TEXT("[INFO] Waiting for slot...\n"));
 
-	WaitForSingleObject(hSem, INFINITE);
+	DWORD instanceServer = WaitForSingleObject(hSem, 2000);
+	if (instanceServer == WAIT_TIMEOUT) {
+		_tprintf(TEXT("[INFO] Ja existe um servidor a correr!\n"));
+		return 1;
+	}
+
+
 	data.numCars = 0;
 	//desenho do mapa
 	for (int i = 0; i < data.numRoads + SKIP_BEGINING_END; i++)
@@ -590,7 +604,9 @@ int _tmain(int argc, TCHAR* argv[]) {
 	}
 		
 	_tprintf(TEXT("[INFO] SERVIDOR VAI TERMINAR\n"));
-	
+	HANDLE ending_event = CreateEvent(NULL, TRUE, FALSE, ENDING_EVENT);
+	SetEvent(ending_event);
+
 	UnmapViewOfFile(HMapFile);
 	UnmapViewOfFile(HMapFileBuffer);
 	// Close thread handles
@@ -599,7 +615,6 @@ int _tmain(int argc, TCHAR* argv[]) {
 	}
 	CloseHandle(hThreads);
 	CloseHandle(tHCheckOpearators);
-	//ReleaseSemaphore(hSem, 1, NULL);
-	//UnmapViewOfFile(pBuf);
+	
 	return 0;
 }

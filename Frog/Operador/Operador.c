@@ -49,6 +49,16 @@ DWORD WINAPI ThreadKeyHook(LPVOID lpParam)
 	return 0;
 }
 
+DWORD WINAPI CheckEnding(LPVOID lpParam)
+{
+
+	int* terminate = (int*)lpParam;
+	HANDLE ending_event = CreateEvent(NULL, TRUE, FALSE, ENDING_EVENT);
+	WaitForSingleObject(ending_event, INFINITE);
+
+	*terminate = 1;
+}
+
 DWORD WINAPI ThreadRoads(LPVOID lpParam)
 {
 	pTRoads data = (pTRoads)lpParam;
@@ -142,10 +152,11 @@ DWORD WINAPI ThreadBufferCircular(LPVOID lpParam)
 		FillConsoleOutputCharacter(hConsole, ' ', consoleInfo.dwSize.X, cursorPos, &numWritten);
 		_tprintf(TEXT("COMANDO:"));
 		_getts_s(space.val,20);
-		if (lstrcmp(space.val, TEXT("Terminar")) == 0)
+
+		/*if (lstrcmp(space.val, TEXT("terminar")) == 0)
 		{
 			*dados->terminar = 1;
-		}
+		}*/
 		WaitForSingleObject(dados->hSemEscrita, INFINITE);
 		WaitForSingleObject(dados->hMutex, INFINITE);
 
@@ -170,8 +181,8 @@ DWORD WINAPI ThreadBufferCircular(LPVOID lpParam)
 DWORD WINAPI ThreadGameInfo(LPVOID lpParam)
 {
 	int *terminar = (int)lpParam;
-	HANDLE mutex = CreateMutex(NULL, FALSE, TEXT("MUTEX_ROADS"));
-	HANDLE threadPontuacaoEvent = CreateEvent(NULL, TRUE, FALSE, TEXT("PONTUACAO"));
+	HANDLE mutex = CreateMutex(NULL, FALSE, THREAD_ROADS_MUTEX);
+	HANDLE threadPontuacaoEvent = CreateEvent(NULL, TRUE, FALSE, GAMEDATA_EVENT);
 	while (1)
 	{
 		WaitForSingleObject(threadPontuacaoEvent, INFINITE);
@@ -191,19 +202,19 @@ DWORD WINAPI ThreadGameInfo(LPVOID lpParam)
 		WriteConsole(hConsole, TEXT("Comandos:"), 10, &numWritten, NULL);
 		cursorPos.Y = 10;
 		SetConsoleCursorPosition(hConsole, cursorPos);
-		WriteConsole(hConsole, TEXT("Stop [Tempo em Segundo]"), 24, &numWritten, NULL);
-		cursorPos.Y = 11;
+		WriteConsole(hConsole, TEXT("stop [Tempo em Segundo]"), 24, &numWritten, NULL);
+		/*cursorPos.Y = 11;
 		SetConsoleCursorPosition(hConsole, cursorPos);
-		WriteConsole(hConsole, TEXT("Start"), 6, &numWritten, NULL);
+		WriteConsole(hConsole, TEXT("start"), 6, &numWritten, NULL);*/
 		cursorPos.Y = 12;
 		SetConsoleCursorPosition(hConsole, cursorPos);
-		WriteConsole(hConsole, TEXT("Change [Estrada]"), 17, &numWritten, NULL);
+		WriteConsole(hConsole, TEXT("change [Estrada]"), 17, &numWritten, NULL);
 		cursorPos.Y = 13;
 		SetConsoleCursorPosition(hConsole, cursorPos);
-		WriteConsole(hConsole, TEXT("Insert [Estrada] [Coluna]"), 26, &numWritten, NULL);
+		WriteConsole(hConsole, TEXT("insert [Estrada] [Coluna]"), 26, &numWritten, NULL);
 		cursorPos.Y = 14;
 		SetConsoleCursorPosition(hConsole, cursorPos);
-		WriteConsole(hConsole, TEXT("Remove [Estrada] [Coluna]"), 26, &numWritten, NULL);
+		WriteConsole(hConsole, TEXT("remove [Estrada] [Coluna]"), 26, &numWritten, NULL);
 		cursorPos.Y = 15;
 		SetConsoleCursorPosition(hConsole, cursorPos);
 		WriteConsole(hConsole, TEXT("Para Utilizar os Comandos é necessario clicar na tecla SHIFT"), 61, &numWritten, NULL);
@@ -385,6 +396,19 @@ int _tmain(int argc, TCHAR* argv[]) {
 	{
 		_tprintf(TEXT("[ERRO] Thread BufferCircular\n"));
 		return 0;
+	}
+
+	HANDLE fCheckEnding = CreateThread(
+		NULL,    // Thread attributes
+		0,       // Stack size (0 = use default)
+		CheckEnding, // Thread start address
+		&terminar,    // Parameter to pass to the thread
+		0,       // Creation flags
+		NULL);
+	if (fCheckEnding == NULL)
+	{
+		_tprintf(TEXT("[ERRO] Thread CheckEnding\n"));
+		return 1;
 	}
 
 	while (terminar == 0)
