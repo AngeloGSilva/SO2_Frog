@@ -204,6 +204,9 @@ DWORD WINAPI ThreadGameInfo(LPVOID lpParam)
 		cursorPos.Y = 14;
 		SetConsoleCursorPosition(hConsole, cursorPos);
 		WriteConsole(hConsole, TEXT("Remove [Estrada] [Coluna]"), 26, &numWritten, NULL);
+		cursorPos.Y = 15;
+		SetConsoleCursorPosition(hConsole, cursorPos);
+		WriteConsole(hConsole, TEXT("Para Utilizar os Comandos é necessario clicar na tecla SHIFT"), 61, &numWritten, NULL);
 		ReleaseMutex(mutex);
 	}
 	
