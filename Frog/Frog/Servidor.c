@@ -35,7 +35,7 @@ DWORD WINAPI ThreadMensagens(LPVOID param) {
 	//aqui , o servidor já recebeu um cliente
 	do {
 		//le as mensagens enviadas pelo servidor
-		ret = ReadFile(dados.hPipe, buf, sizeof(buf), &n, NULL);
+		ret = ReadFile(dados->hPipe, buf, sizeof(buf), &n, NULL);
 
 		//termina corretamente a string
 		buf[n / sizeof(TCHAR)] = '\0';
