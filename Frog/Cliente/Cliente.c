@@ -40,7 +40,7 @@ int _tmain(int argc, TCHAR* argv[]) {
 	HANDLE hPipe, hEventPipe;
 	TCHAR buf[256];
 	DWORD n;
-	int i;
+	int i = 0;
 
 	_tprintf(TEXT("[Escritor] Esperar pelo pipe '%s' (WaitNamedPipe)\n"), PIPE_NAME);
 	//bloqueia aqui
@@ -50,12 +50,12 @@ int _tmain(int argc, TCHAR* argv[]) {
 	}
 	_tprintf(TEXT("[Escritor] Ligação ao pipe do leitor... (CreateFile)\n"));
 
-	hPipe = CreateNamedPipe(PIPE_NAME,GENERIC_READ,0,NULL,OPEN_EXISTING,FILE_ATTRIBUTE_NORMAL,NULL);
+	hPipe = CreateFile(PIPE_NAME, GENERIC_READ, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
 	if (hPipe == NULL) {
 		_tprintf(TEXT("[ERRO] Ligar ao pipe '%s'! (CreateFile)\n"), PIPE_NAME);
 		exit(-1);
 	}
-	_tprintf(TEXT("[Escritor] Liguei-me...\n"));
+	_tprintf(TEXT("[Escritor] Liguei-me...%s\n"));
 	HANDLE mutex = CreateMutex(NULL, FALSE, NULL);
 	//aqui , o servidor já recebeu um cliente
 	do {
@@ -63,7 +63,7 @@ int _tmain(int argc, TCHAR* argv[]) {
 		_tprintf(TEXT("[ESCRITOR] Frase: "));
 		_fgetts(buf, 256, stdin);
 		buf[_tcslen(buf) - 1] = '\0';
-
+		_tprintf(TEXT("ESCREVEU '%s'! \n"), buf);
 		//bloqueamos aqui porque é uma regiao critica
 		WaitForSingleObject(mutex, INFINITE);
 
