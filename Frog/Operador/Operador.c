@@ -171,6 +171,7 @@ DWORD WINAPI ThreadBufferCircular(LPVOID lpParam)
 		ReleaseMutex(dados->hMutex);
 		ReleaseSemaphore(dados->hSemLeitura, 1, NULL);
 		Sleep(((rand() % 4) + 1) * 1000);
+
 		for (int i = 0; i < dados->numRoads; i++) {
 			ResumeThread(TDataKeyHook.threadsHandlesOperator[i]);
 		}

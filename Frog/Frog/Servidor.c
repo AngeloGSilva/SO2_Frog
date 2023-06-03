@@ -18,6 +18,7 @@
 typedef struct {
 	HANDLE hPipe[3];
 	HANDLE hMutex; //para controlar o numClientes
+	GameData* gamedatatemp;
 	int numClientes;
 	int terminar;
 }TdadosPipe, * pTdadosPipe;
@@ -30,14 +31,14 @@ DWORD WINAPI send(LPVOID lpParam)
 	int i;
 
 	do {
-		_tprintf(TEXT("[send] Frase: "));
-		_fgetts(buf, 256, stdin);
-		buf[_tcslen(buf) - 1] = '\0';
+		/*_tprintf(TEXT("[send] Frase: "));
+		_fgetts(buf, 256, stdin);*/
+		/*buf[_tcslen(buf) - 1] = '\0';*/
 
 		WaitForSingleObject(dados->hMutex, INFINITE);
 
 		for (i = 0; i < dados->numClientes; i++) {
-			if (!WriteFile(dados->hPipe[i], buf, _tcslen(buf) * sizeof(TCHAR), &n, NULL)) {
+			if (!WriteFile(dados->hPipe[i], dados->gamedatatemp,sizeof(GameData), &n, NULL)) {
 				_tprintf(TEXT("[ERRO] Escrever no pipe! (WriteFile)\n"));
 				exit(-1);
 			}
@@ -671,6 +672,7 @@ int _tmain(int argc, TCHAR* argv[]) {
 
 	dadosPipe.numClientes = 0;
 	dadosPipe.terminar = 0;
+	dadosPipe.gamedatatemp = &data;
 	dadosPipe.hMutex = CreateMutex(NULL, FALSE, NULL); //Criação do mutex
 
 	if (dadosPipe.hMutex == NULL) {
@@ -695,7 +697,7 @@ int _tmain(int argc, TCHAR* argv[]) {
 
 	while (1) {
 
-		hPipe = CreateNamedPipe(PIPE_NAME, PIPE_ACCESS_DUPLEX | FILE_FLAG_OVERLAPPED, PIPE_WAIT | PIPE_TYPE_MESSAGE | PIPE_READMODE_MESSAGE, 3, 256 * sizeof(TCHAR), 256 * sizeof(TCHAR), 1000, NULL);
+		hPipe = CreateNamedPipe(PIPE_NAME, PIPE_ACCESS_DUPLEX | FILE_FLAG_OVERLAPPED, PIPE_WAIT | PIPE_TYPE_BYTE | PIPE_READMODE_BYTE, 3,sizeof(GameData),sizeof(GameData), 1000, NULL);
 
 		if (hPipe == INVALID_HANDLE_VALUE) {
 			_tprintf(TEXT("[ERRO] Criar Named Pipe! (CreateNamedPipe)"));
