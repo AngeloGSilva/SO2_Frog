@@ -12,6 +12,70 @@
 #include <stdlib.h>
 #include <string.h>
 
+#define PIPE_NAME TEXT("\\\\.\\pipe\\teste")
+
+
+typedef struct {
+	HANDLE hPipe[3];
+	HANDLE hMutex; //para controlar o numClientes
+	int numClientes;
+	int terminar;
+}TdadosPipe, * pTdadosPipe;
+
+DWORD WINAPI send(LPVOID lpParam)
+{
+	TdadosPipe* dados = (TdadosPipe*)lpParam;
+	TCHAR buf[256];
+	DWORD n;
+	int i;
+
+	do {
+		_tprintf(TEXT("[send] Frase: "));
+		_fgetts(buf, 256, stdin);
+		buf[_tcslen(buf) - 1] = '\0';
+
+		WaitForSingleObject(dados->hMutex, INFINITE);
+
+		for (i = 0; i < dados->numClientes; i++) {
+			if (!WriteFile(dados->hPipe[i], buf, _tcslen(buf) * sizeof(TCHAR), &n, NULL)) {
+				_tprintf(TEXT("[ERRO] Escrever no pipe! (WriteFile)\n"));
+				exit(-1);
+			}
+
+			_tprintf(TEXT("[send] Enviei %d bytes ao leitor [%d]... (WriteFile)\n"), n, i);
+		}
+		ReleaseMutex(dados->hMutex);
+
+
+	} while (_tcscmp(buf, TEXT("fim")));
+
+	dados->terminar = 1;
+	return 1;
+
+}
+
+DWORD WINAPI receive(LPVOID lpParam)
+{
+	TdadosPipe* dados = (TdadosPipe*)lpParam;
+	TCHAR buf[256];
+	BOOL ret;
+	DWORD n;
+	int i;
+
+	while (1) {
+		ret = ReadFile(dados->hPipe, buf, sizeof(buf), &n, NULL);
+		buf[n / sizeof(TCHAR)] = '\0';
+		if (!ret || !n) {
+			_tprintf(TEXT("[receive] %d %d... (ReadFile)\n"), ret, n);
+			break;
+		}
+		_tprintf(TEXT("[receive] Recebi %d bytes: '%s'... (ReadFile)\n"), n, buf);
+	}
+
+	dados->terminar = 1;
+	return 1;
+
+}
 
 DWORD WINAPI ThreadRoads(LPVOID lpParam)
 {
@@ -597,6 +661,69 @@ int _tmain(int argc, TCHAR* argv[]) {
 		_tprintf(TEXT("[DEBUG] Thread CheckOperadores\n"));
 		return 1;
 	}
+
+	//Named pip com cliente
+	DWORD n;
+	HANDLE hPipe;
+	HANDLE threadWPipe, threadRPipe;
+	TCHAR bufPipe[256];
+	TdadosPipe dadosPipe;
+
+	dadosPipe.numClientes = 0;
+	dadosPipe.terminar = 0;
+	dadosPipe.hMutex = CreateMutex(NULL, FALSE, NULL); //Criação do mutex
+
+	if (dadosPipe.hMutex == NULL) {
+		_tprintf(TEXT("[Erro] ao criar mutex!\n"));
+		return -1;
+	}
+
+	/*threadRPipe = CreateThread(NULL, 0, receive, &dadosPipe, 0, NULL);
+	if (threadRPipe == NULL) {
+		_tprintf(TEXT("[Erro] ao criar thread receive!\n"));
+		return -1;
+	}*/
+
+	threadWPipe = CreateThread(NULL, 0, send, &dadosPipe, 0, NULL);
+	if (threadWPipe == NULL) {
+		_tprintf(TEXT("[Erro] ao criar thread send!\n"));
+		return -1;
+	}
+	
+
+	_tprintf(TEXT("[Servidor] Criar uma cópia do pipe '%s' ... (CreateNamedPipe)\n"), PIPE_NAME);
+
+	while (1) {
+
+		hPipe = CreateNamedPipe(PIPE_NAME, PIPE_ACCESS_DUPLEX | FILE_FLAG_OVERLAPPED, PIPE_WAIT | PIPE_TYPE_MESSAGE | PIPE_READMODE_MESSAGE, 3, 256 * sizeof(TCHAR), 256 * sizeof(TCHAR), 1000, NULL);
+
+		if (hPipe == INVALID_HANDLE_VALUE) {
+			_tprintf(TEXT("[ERRO] Criar Named Pipe! (CreateNamedPipe)"));
+			exit(-1);
+		}
+
+		_tprintf(TEXT("[ESCRITOR] Esperar ligação de um leitor... (ConnectNamedPipe)\n"));
+
+		if (!ConnectNamedPipe(hPipe, NULL)) {
+			_tprintf(TEXT("[ERRO] Ligação ao leitor! (ConnectNamedPipe\n"));
+			exit(-1);
+		}
+
+		//WaitForSingleObject(dados.hMutex, INFINITE);
+
+		dadosPipe.hPipe[dadosPipe.numClientes] = hPipe;
+		dadosPipe.numClientes++;
+
+		ReleaseMutex(dadosPipe.hMutex);
+
+	}
+
+	//criar thread de ler e escrever em cada programa
+
+	//Create pipe no main do servidor e connect named pipe, com as duas threads
+
+	//Main cliente tem create file, com criação das threads
+
 
 	while (terminar == 0)
 	{
