@@ -33,16 +33,19 @@ DWORD WINAPI ThreadMensagens(LPVOID param) {
 	BOOL ret;
 
 	//aqui , o servidor já recebeu um cliente
+	//criar evento para ficar aqui a espera de ter algo para ler
 	do {
+		_tprintf(TEXT("[LEITOR] Espera de mensagem para ler\n"));
 		//le as mensagens enviadas pelo servidor
 		ret = ReadFile(dados->hPipe, buf, sizeof(buf), &n, NULL);
+		_tprintf(TEXT("[LEITOR] Recebeu mensagem para ler\n"));
 
 		//termina corretamente a string
 		buf[n / sizeof(TCHAR)] = '\0';
 
 		if (!ret || !n) {
 			_tprintf(TEXT("[LEITOR] %d %d... (ReadFile)\n"), ret, n);
-			break;
+			//break;
 		}
 
 		_tprintf(TEXT("[LEITOR] Recebi %d bytes: '%s'... (ReadFile)\n"), n, buf);
