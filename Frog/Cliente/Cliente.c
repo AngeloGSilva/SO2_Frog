@@ -346,54 +346,84 @@ LRESULT CALLBACK TrataEventos(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPara
 			SelectObject(hdc, hBrush);
 
 			// Draw the map
-			RECT rect;
+			/*RECT rect;
 			rect.left = 100;
 			rect.top = 100;
 			rect.right = rect.left + 500;
 			rect.bottom = rect.top + 500;
-			FillRect(hdc, &rect, hBrush);
+			FillRect(hdc, &rect, hBrush);*/
 			// Draw the road
-			RECT road;
-			for (int i = 0; i < AllGameData->numRoads; i++) {
-				COLORREF myColorRef = RGB(
-					(BYTE)(rand() % 255), // red component of color
-					(BYTE)(rand() % 255), // green component of color
-					(BYTE)(rand() % 255) // blue component of color
-				);
-				HBRUSH hBrush = CreateSolidBrush(myColorRef);
-				SelectObject(hdc, hBrush);
-				road.left = 100;
-				road.top = 150 +(i * 50);
-				road.right = road.left + 500;
-				road.bottom = road.top + 50;
-				FillRect(hdc, &road, hBrush);
+			RECT car;
+			hBrush = CreateSolidBrush(RGB(255,0,0));
+			SelectObject(hdc, hBrush);
+			for (int i = 0; i < AllGameData->numRoads + 4;i++) {
+				 for (int j = 0; j < 20;j++) {
+					 TCHAR buffer = AllGameData->map[i][j];
+					 if (buffer == 'H')
+						{
+						 hBrush = CreateSolidBrush(RGB(
+							 		(BYTE)(rand() % 255), // red component of color
+							 		(BYTE)(rand() % 255), // green component of color
+							 		(BYTE)(rand() % 255) // blue component of color
+							 	));
+							car.left = j * 16;
+							car.top = i * 16;
+							car.right = car.left + 10;
+							car.bottom = car.top +10;
+
+							FillRect(hdc, &car, hBrush);
+						}
+
 			}
+
+		}
+			//RECT road;
+			//for (int i = 0; i < 8; i++) {
+			//	COLORREF myColorRef =
+			//		RGB(128, 128, 128);
+			//	//	RGB(
+			//	//	(BYTE)(rand() % 255), // red component of color
+			//	//	(BYTE)(rand() % 255), // green component of color
+			//	//	(BYTE)(rand() % 255) // blue component of color
+			//	//);
+			//	HBRUSH hBrush = CreateSolidBrush(myColorRef);
+			//	SelectObject(hdc, hBrush);
+			//	road.left = 100;
+			//	road.top = 150 +(i * 50);
+			//	road.right = road.left + 500;
+			//	road.bottom = road.top + 50;
+			//	FillRect(hdc, &road, hBrush);
+			//}
+			////draw the car
+			//for (int i = 0; i < 20; i++) {
+			//	BitBlt(memDC, 150, 150, 10, 10, bmpDC, 0, 0, SRCCOPY);
+			//}
 			// Cleanup
 			DeleteObject(hBrush);
 			EndPaint(hWnd, &ps);
 			break;
 			// cria copia em memoria
-			memDC = CreateCompatibleDC(hdc);
-			hBitmapDB = CreateCompatibleBitmap(hdc, rect.right, rect.bottom);
-			// aplicamos na copia em memoria as configs que obtemos com o CreateCompatibleBitmap
-			SelectObject(memDC, hBitmapDB);
-			DeleteObject(hBitmapDB);
+			//memDC = CreateCompatibleDC(hdc);
+			//hBitmapDB = CreateCompatibleBitmap(hdc, rect.right, rect.bottom);
+			//// aplicamos na copia em memoria as configs que obtemos com o CreateCompatibleBitmap
+			//SelectObject(memDC, hBitmapDB);
+			//DeleteObject(hBitmapDB);
 		}
 		// operações feitas na copia que é o memDC
-		FillRect(memDC, &rect, CreateSolidBrush(RGB(125, 125, 125)));
+		//FillRect(memDC, &rect, CreateSolidBrush(RGB(125, 125, 125)));
 
-		WaitForSingleObject(hMutex, INFINITE);
-		// operacoes de escrita da imagem - BitBlt
-		BitBlt(memDC, xBitmap, yBitmap, bmp.bmWidth, bmp.bmHeight, bmpDC, 0, 0, SRCCOPY);
-		ReleaseMutex(hMutex);
+		//WaitForSingleObject(hMutex, INFINITE);
+		//// operacoes de escrita da imagem - BitBlt
+		//BitBlt(memDC, xBitmap, yBitmap, bmp.bmWidth, bmp.bmHeight, bmpDC, 0, 0, SRCCOPY);
+		//ReleaseMutex(hMutex);
 
-		// bitblit da copia que esta em memoria para a janela principal - é a unica operação feita na janela principal
-		BitBlt(hdc, 0, 0, rect.right, rect.bottom, memDC, 0, 0, SRCCOPY);
+		//// bitblit da copia que esta em memoria para a janela principal - é a unica operação feita na janela principal
+		//BitBlt(hdc, 0, 0, rect.right, rect.bottom, memDC, 0, 0, SRCCOPY);
 
 
-		// Encerra a pintura, que substitui o ReleaseDC
-		EndPaint(hWnd, &ps);
-		break;
+		//// Encerra a pintura, que substitui o ReleaseDC
+		//EndPaint(hWnd, &ps);
+		//break;
 
 	case WM_ERASEBKGND:
 		return TRUE;
