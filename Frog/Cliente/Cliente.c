@@ -21,6 +21,7 @@
 #include <string.h>
 #include "../Frog/Utils.h"
 #include "../Frog/Struct.h"
+#include "resource.h"
 
 
 
@@ -329,10 +330,13 @@ LRESULT CALLBACK TrataEventos(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPara
 	MINMAXINFO* mmi;
 
 	static HDC bmpDC = NULL;
+	static HDC bmpDC2 = NULL;
 	HBITMAP hBmp = NULL;
 	HBITMAP hcar = NULL;
+	HBITMAP hfrog = NULL;
 	static BITMAP bmp;
 	static BITMAP car;
+	static BITMAP frog;
 
 	//buffer
 	static HDC memDC = NULL;
@@ -349,9 +353,16 @@ LRESULT CALLBACK TrataEventos(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPara
 
 		GetObject(hcar, sizeof(car), &car);
 
+		hfrog = LoadBitmap(GetModuleHandle(NULL), MAKEINTRESOURCE(IDB_BITMAP_SAPO));
+
+		GetObject(hfrog, sizeof(frog), &frog);
+
 		hdc = GetDC(hWnd);
 		bmpDC = CreateCompatibleDC(hdc);
 		SelectObject(bmpDC, hcar);
+
+		bmpDC2 = CreateCompatibleDC(hdc);
+		SelectObject(bmpDC2, hfrog);
 		ReleaseDC(hWnd, hdc);
 		break;
 
@@ -429,22 +440,25 @@ LRESULT CALLBACK TrataEventos(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPara
 					FillRect(memDC, &filler, hBrush);
 				}
 				else if (buffer == FROGGE_ELEMENT) {
-					hBrush = CreateSolidBrush(RGB(
-						0, // red component of color
-						255, // green component of color
-						0 // blue component of color
-					));
-					filler.left = j * 16;
-					filler.top = i * 16;
-					filler.right = filler.left + 10;
-					filler.bottom = filler.top + 10;
+					//hBrush = CreateSolidBrush(RGB(
+					//	0, // red component of color
+					//	255, // green component of color
+					//	0 // blue component of color
+					//));
+					//filler.left = j * 16;
+					//filler.top = i * 16;
+					//filler.right = filler.left + 10;
+					//filler.bottom = filler.top + 10;
 
-					FillRect(memDC, &filler, hBrush);
+					//FillRect(memDC, &filler, hBrush);
+					BitBlt(memDC, j * 16, i * 16, frog.bmWidth, frog.bmHeight, bmpDC2, 0, 0, SRCCOPY);
+					
 				}
 
 			}
 			DeleteObject(hBrush);
 		}
+
 		BitBlt(hdc, 0, 0, rect.right, rect.bottom,
 			memDC, 0, 0, SRCCOPY);
 		EndPaint(hWnd, &ps);
