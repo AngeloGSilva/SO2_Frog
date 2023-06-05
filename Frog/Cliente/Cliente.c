@@ -96,7 +96,7 @@ HWND hWndGlobal; // handle para a janela
 HANDLE hMutex;
 
 HDC memDC = NULL; // copia do device context que esta em memoria, tem de ser inicializado a null
-HBITMAP hBitmapDB; // copia as caracteristicas da janela original para a janela que vai estar em memoria
+HBITMAP hBitmapDB; // copia as filleracteristicas da janela original para a janela que vai estar em memoria
 GameData* AllGameData ;
 
 
@@ -137,7 +137,7 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR lpCmdLine, int nC
 	HWND hWnd;		// hWnd é o handler da janela, gerado mais abaixo por CreateWindow()
 	MSG lpMsg;		// MSG é uma estrutura definida no Windows para as mensagens
 	WNDCLASSEX wcApp;	// WNDCLASSEX é uma estrutura cujos membros servem para
-	// definir as características da classe da janela
+	// definir as filleracterísticas da classe da janela
 
 	int terminar = 0; // para acabar com tudo
 	TCHAR buf[256];
@@ -156,7 +156,7 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR lpCmdLine, int nC
 	
 
 // ============================================================================
-// 1. Definição das características da janela "wcApp"
+// 1. Definição das filleracterísticas da janela "wcApp"
 //    (Valores dos elementos da estrutura "wcApp" do tipo WNDCLASSEX)
 // ============================================================================
 	wcApp.cbSize = sizeof(WNDCLASSEX);      // Tamanho da estrutura WNDCLASSEX
@@ -199,7 +199,7 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR lpCmdLine, int nC
 	// ============================================================================
 	hWnd = CreateWindow(
 		szProgName,			// Nome da janela (programa) definido acima
-		TEXT("Janelaaaa bruh"),// Texto que figura na barra do título
+		TEXT("FROG"),// Texto que figura na barra do título
 		WS_OVERLAPPEDWINDOW,	// Estilo da janela (WS_OVERLAPPED= normal)
 		CW_USEDEFAULT,		// Posição x pixels (default=à direita da última)
 		CW_USEDEFAULT,		// Posição y pixels (default=abaixo da última)
@@ -216,12 +216,12 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR lpCmdLine, int nC
 	HDC hdc; // representa a propria janela
 	RECT rect;
 
-	// carregar o bitmap
-	hBmp = (HBITMAP)LoadImage(NULL, TEXT("car.bmp"), IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE);
-	GetObject(hBmp, sizeof(bmp), &bmp); // vai buscar info sobre o handle do bitmap
+	// fillerregar o bitmap
+	hBmp = (HBITMAP)LoadImage(NULL, TEXT("filler.bmp"), IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE);
+	GetObject(hBmp, sizeof(bmp), &bmp); // vai busfiller info sobre o handle do bitmap
 
 	hdc = GetDC(hWnd);
-	// criamos copia do device context e colocar em memoria
+	// criamos copia do device context e colofiller em memoria
 	bmpDC = CreateCompatibleDC(hdc);
 	// aplicamos o bitmap ao device context
 	SelectObject(bmpDC, hBmp);
@@ -248,7 +248,7 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR lpCmdLine, int nC
 	hMutex = CreateMutex(NULL, FALSE, NULL);
 
 	// Cria a thread de movimentação
-	CreateThread(NULL, 0, RefreshMap, NULL, 0, NULL);
+	//CreateThread(NULL, 0, RefreshMap, NULL, 0, NULL);
 
 
 	// ============================================================================
@@ -257,8 +257,8 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR lpCmdLine, int nC
 	ShowWindow(hWnd, nCmdShow);	// "hWnd"= handler da janela, devolvido por
 	// "CreateWindow"; "nCmdShow"= modo de exibição (p.e.
 	// normal/modal); é passado como parâmetro de WinMain()
-	UpdateWindow(hWnd);		// Refrescar a janela (Windows envia à janela uma
-	// mensagem para pintar, mostrar dados, (refrescar)
+	UpdateWindow(hWnd);		// Refresfiller a janela (Windows envia à janela uma
+	// mensagem para pintar, mostrar dados, (refresfiller)
 
 // ============================================================================
 // 5. Loop de Mensagens
@@ -324,13 +324,37 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR lpCmdLine, int nC
 LRESULT CALLBACK TrataEventos(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam) {
 	//handle para o device context
 	HDC hdc;
-	PAINTSTRUCT ps;
 	RECT rect;
+	PAINTSTRUCT ps;
+	MINMAXINFO* mmi;
+
+	static HDC bmpDC = NULL;
+	HBITMAP hBmp = NULL;
+	HBITMAP hcar = NULL;
+	static BITMAP bmp;
+	static BITMAP car;
+
+	//buffer
+	static HDC memDC = NULL;
+
 	srand((unsigned)time(NULL));
 
 
 	switch (messg)
 	{
+
+	case WM_CREATE:
+		hcar = (HBITMAP)LoadImage(NULL, TEXT("car.bmp"),
+			IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE);
+
+		GetObject(hcar, sizeof(car), &car);
+
+		hdc = GetDC(hWnd);
+		bmpDC = CreateCompatibleDC(hdc);
+		SelectObject(bmpDC, hcar);
+		ReleaseDC(hWnd, hdc);
+		break;
+
 		// evento que é disparado sempre que o sistema pede um refrescamento da janela
 	case WM_PAINT:
 		// Inicio da pintura da janela, que substitui o GetDC
@@ -339,91 +363,92 @@ LRESULT CALLBACK TrataEventos(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPara
 
 		// se a copia estiver a NULL, significa que é a 1ª vez que estamos a passar no WM_PAINT e estamos a trabalhar com a copia em memoria
 		if (memDC == NULL) {
-			PAINTSTRUCT ps;
+			memDC = CreateCompatibleDC(hdc);
+			hBmp = CreateCompatibleBitmap(hdc, rect.right, rect.bottom);
+			SelectObject(memDC, hBmp);
+			DeleteObject(hBmp);
+			
+			// Cleanup
+		}
+		FillRect(memDC, &rect, CreateSolidBrush(RGB(0, 0, 255)));
+		PAINTSTRUCT ps;
+		// Set the brush color and style
+		HBRUSH hBrush = CreateSolidBrush(RGB(0, 0, 255));
+		SelectObject(hdc, hBrush);
+		// Draw the map
+		/*RECT rect;
+		rect.left = 100;
+		rect.top = 100;
+		rect.right = rect.left + 500;
+		rect.bottom = rect.top + 500;
+		FillRect(hdc, &rect, hBrush);*/
+		// Draw the road
+		RECT filler;
+		hBrush = CreateSolidBrush(RGB(255, 0, 0));
+		SelectObject(memDC, hBrush);
+		for (int i = 0; i < AllGameData->numRoads + 4; i++) {
+			for (int j = 0; j < 20; j++) {
+				TCHAR buffer = AllGameData->map[i][j];
+				if (buffer == CAR_ELEMENT)
+				{
+					/*hBrush = CreateSolidBrush(RGB(255, 0, 0));
+					   filler.left = j * 16;
+					   filler.top = i * 16;
+					   filler.right = filler.left + 10;
+					   filler.bottom = filler.top +10;
 
-			// Set the brush color and style
-			HBRUSH hBrush = CreateSolidBrush(RGB(0, 0, 255));
-			SelectObject(hdc, hBrush);
+					   FillRect(memDC, &filler, hBrush);*/
+					BitBlt(memDC, j * 16, i * 16, car.bmWidth, car.bmHeight, bmpDC, 0, 0, SRCCOPY);
+				}
+				else if (buffer == ROAD_ELEMENT) {
+					hBrush = CreateSolidBrush(RGB(128, 128, 128));
+					filler.left = j * 16;
+					filler.top = i * 16;
+					filler.right = filler.left + 10;
+					filler.bottom = filler.top + 10;
 
-			// Draw the map
-			/*RECT rect;
-			rect.left = 100;
-			rect.top = 100;
-			rect.right = rect.left + 500;
-			rect.bottom = rect.top + 500;
-			FillRect(hdc, &rect, hBrush);*/
-			// Draw the road
-			RECT car;
-			hBrush = CreateSolidBrush(RGB(255,0,0));
-			SelectObject(hdc, hBrush);
-			for (int i = 0; i < AllGameData->numRoads + 4;i++) {
-				 for (int j = 0; j < 20;j++) {
-					 TCHAR buffer = AllGameData->map[i][j];
-					 if (buffer == 'H')
-						{
-						 hBrush = CreateSolidBrush(RGB(
-							 		(BYTE)(rand() % 255), // red component of color
-							 		(BYTE)(rand() % 255), // green component of color
-							 		(BYTE)(rand() % 255) // blue component of color
-							 	));
-							car.left = j * 16;
-							car.top = i * 16;
-							car.right = car.left + 10;
-							car.bottom = car.top +10;
+					FillRect(memDC, &filler, hBrush);
+				}
+				else if (buffer == BEGIN_END_ELEMENT) {
+					hBrush = CreateSolidBrush(RGB(
+						0, 0, 0));
+					filler.left = j * 16;
+					filler.top = i * 16;
+					filler.right = filler.left + 10;
+					filler.bottom = filler.top + 10;
 
-							FillRect(hdc, &car, hBrush);
-						}
+					FillRect(memDC, &filler, hBrush);
+				}
+				else if (buffer == BLOCK_ELEMENT) {
+					hBrush = CreateSolidBrush(RGB(139, 69, 19));
+					filler.left = j * 16;
+					filler.top = i * 16;
+					filler.right = filler.left + 10;
+					filler.bottom = filler.top + 10;
+
+					FillRect(memDC, &filler, hBrush);
+				}
+				else if (buffer == FROGGE_ELEMENT) {
+					hBrush = CreateSolidBrush(RGB(
+						0, // red component of color
+						255, // green component of color
+						0 // blue component of color
+					));
+					filler.left = j * 16;
+					filler.top = i * 16;
+					filler.right = filler.left + 10;
+					filler.bottom = filler.top + 10;
+
+					FillRect(memDC, &filler, hBrush);
+				}
 
 			}
-
-		}
-			//RECT road;
-			//for (int i = 0; i < 8; i++) {
-			//	COLORREF myColorRef =
-			//		RGB(128, 128, 128);
-			//	//	RGB(
-			//	//	(BYTE)(rand() % 255), // red component of color
-			//	//	(BYTE)(rand() % 255), // green component of color
-			//	//	(BYTE)(rand() % 255) // blue component of color
-			//	//);
-			//	HBRUSH hBrush = CreateSolidBrush(myColorRef);
-			//	SelectObject(hdc, hBrush);
-			//	road.left = 100;
-			//	road.top = 150 +(i * 50);
-			//	road.right = road.left + 500;
-			//	road.bottom = road.top + 50;
-			//	FillRect(hdc, &road, hBrush);
-			//}
-			////draw the car
-			//for (int i = 0; i < 20; i++) {
-			//	BitBlt(memDC, 150, 150, 10, 10, bmpDC, 0, 0, SRCCOPY);
-			//}
-			// Cleanup
 			DeleteObject(hBrush);
-			EndPaint(hWnd, &ps);
-			break;
-			// cria copia em memoria
-			//memDC = CreateCompatibleDC(hdc);
-			//hBitmapDB = CreateCompatibleBitmap(hdc, rect.right, rect.bottom);
-			//// aplicamos na copia em memoria as configs que obtemos com o CreateCompatibleBitmap
-			//SelectObject(memDC, hBitmapDB);
-			//DeleteObject(hBitmapDB);
 		}
-		// operações feitas na copia que é o memDC
-		//FillRect(memDC, &rect, CreateSolidBrush(RGB(125, 125, 125)));
-
-		//WaitForSingleObject(hMutex, INFINITE);
-		//// operacoes de escrita da imagem - BitBlt
-		//BitBlt(memDC, xBitmap, yBitmap, bmp.bmWidth, bmp.bmHeight, bmpDC, 0, 0, SRCCOPY);
-		//ReleaseMutex(hMutex);
-
-		//// bitblit da copia que esta em memoria para a janela principal - é a unica operação feita na janela principal
-		//BitBlt(hdc, 0, 0, rect.right, rect.bottom, memDC, 0, 0, SRCCOPY);
-
-
-		//// Encerra a pintura, que substitui o ReleaseDC
-		//EndPaint(hWnd, &ps);
-		//break;
+		BitBlt(hdc, 0, 0, rect.right, rect.bottom,
+			memDC, 0, 0, SRCCOPY);
+		EndPaint(hWnd, &ps);
+		break;
 
 	case WM_ERASEBKGND:
 		return TRUE;
