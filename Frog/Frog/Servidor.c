@@ -28,15 +28,21 @@ DWORD WINAPI send(LPVOID lpParam)
 	TdadosPipe* dados = (TdadosPipe*)lpParam;
 	TCHAR buf[256];
 	DWORD n;
+	HANDLE heventmapwrite;
+	HANDLE heventmapread;
 	int i;
+	heventmapwrite = CreateEvent(NULL, TRUE, FALSE, TEXT("eventoPipeWrite"));
+	heventmapread = CreateEvent(NULL, TRUE, FALSE, TEXT("eventoPipeRead"));
 
-	do {
+	while(1){
 		//criar e fazer set evento para a janela do cliente saber que tem dados novos
 		/*_tprintf(TEXT("[send] Frase: "));
 		_fgetts(buf, 256, stdin);*/
 		/*buf[_tcslen(buf) - 1] = '\0';*/
 
-		WaitForSingleObject(dados->hMutex, INFINITE);
+		//WaitForSingleObject(dados->hMutex, INFINITE);
+		WaitForSingleObject(heventmapwrite,INFINITE);
+		Sleep(100);
 
 		for (i = 0; i < dados->numClientes; i++) {
 			if (!WriteFile(dados->hPipe[i], dados->gamedatatemp,sizeof(GameData), &n, NULL)) {
@@ -46,11 +52,10 @@ DWORD WINAPI send(LPVOID lpParam)
 
 			_tprintf(TEXT("[send] Enviei %d bytes ao leitor [%d]... (WriteFile)\n"), n, i);
 		}
+		SetEvent(heventmapread);
+		ResetEvent(heventmapread);
 		ReleaseMutex(dados->hMutex);
-
-
-	} while (_tcscmp(buf, TEXT("fim")));
-
+	} 
 	dados->terminar = 1;
 	return 1;
 
@@ -194,6 +199,9 @@ DWORD WINAPI ThreadRoads(LPVOID lpParam)
 		SetEvent(data->hEventRoads);
 		ResetEvent(data->hEventRoads);
 		Sleep(data->speed);
+		HANDLE hidk = CreateEvent(NULL, TRUE, FALSE, TEXT("eventoPipeWrite"));
+		SetEvent(hidk, INFINITE);
+		ResetEvent(hidk);
 	}
 	return 0;
 }

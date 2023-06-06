@@ -139,6 +139,30 @@ DWORD WINAPI RefreshMap(LPVOID lParam) {
 
 DWORD WINAPI mapPipe(LPVOID lpParam)
 {
+	//esta parte tem de ser numa thread
+	int terminar = 0; // para acabar com tudo
+	TCHAR buf[256];
+	HANDLE hPipe;
+	int i = 0;
+	BOOL ret;
+	DWORD n;
+	HANDLE heventmapread;
+
+	heventmapread = CreateEvent(NULL, TRUE, FALSE, TEXT("eventoPipeRead"));
+
+	AllGameData = (GameData*)malloc(sizeof(GameData));
+
+	if (!WaitNamedPipe(PIPE_NAME, NMPWAIT_WAIT_FOREVER)) {
+	}
+	hPipe = CreateFile(PIPE_NAME, GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+	if (hPipe == NULL) {
+	}
+	
+
+	while (1) {
+		WaitForSingleObject(heventmapread, INFINITE);
+		ret = ReadFile(hPipe, AllGameData, sizeof(GameData), &n, NULL);
+	}
 	//wait do evento de atualizacao do mapa
 	//e mutex para esperar pela vez de desenhar
 
@@ -171,23 +195,6 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR lpCmdLine, int nC
 		_tprintf(TEXT("[ERRO] Thread pipe Map\n"));
 		return 1;
 	}
-
-	//esta parte tem de ser numa thread
-	int terminar = 0; // para acabar com tudo
-	TCHAR buf[256];
-	HANDLE hPipe;
-	int i = 0;
-	BOOL ret;
-	DWORD n;
-
-	if (!WaitNamedPipe(PIPE_NAME, NMPWAIT_WAIT_FOREVER)) {
-	}
-	hPipe = CreateFile(PIPE_NAME, GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
-	if (hPipe == NULL) {
-	}
-	AllGameData = (GameData*)malloc(sizeof(GameData));
-	ret = ReadFile(hPipe, AllGameData, sizeof(GameData), &n, NULL);
-	
 
 // ============================================================================
 // 1. Definição das filleracterísticas da janela "wcApp"
