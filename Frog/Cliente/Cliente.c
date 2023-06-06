@@ -149,8 +149,10 @@ DWORD WINAPI mapPipe(LPVOID lpParam)
 	HANDLE heventmapread;
 
 	heventmapread = CreateEvent(NULL, TRUE, FALSE, TEXT("eventoPipeRead"));
+	/*if (heventmapread == NULL) {
 
-	AllGameData = (GameData*)malloc(sizeof(GameData));
+	}*/
+
 
 	if (!WaitNamedPipe(PIPE_NAME, NMPWAIT_WAIT_FOREVER)) {
 	}
@@ -162,6 +164,7 @@ DWORD WINAPI mapPipe(LPVOID lpParam)
 	while (1) {
 		WaitForSingleObject(heventmapread, INFINITE);
 		ret = ReadFile(hPipe, AllGameData, sizeof(GameData), &n, NULL);
+		InvalidateRect(hWndGlobal, NULL, FALSE);
 	}
 	//wait do evento de atualizacao do mapa
 	//e mutex para esperar pela vez de desenhar
@@ -169,7 +172,6 @@ DWORD WINAPI mapPipe(LPVOID lpParam)
 	//receber o mapa e atualizar a variavel que possui o mapa
 
 	//invalidar a janela para o paint correr outra vez
-	InvalidateRect(hWndGlobal, NULL, FALSE);
 	Sleep(1);
 
 	return 0;
@@ -182,6 +184,8 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR lpCmdLine, int nC
 	MSG lpMsg;		// MSG é uma estrutura definida no Windows para as mensagens
 	WNDCLASSEX wcApp;	// WNDCLASSEX é uma estrutura cujos membros servem para
 	// definir as filleracterísticas da classe da janela
+	//mapa
+	AllGameData = (GameData*)malloc(sizeof(GameData));
 
 	HANDLE hThreadMapPipe = CreateThread(
 		NULL,    // Thread attributes
