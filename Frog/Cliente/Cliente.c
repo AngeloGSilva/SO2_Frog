@@ -47,6 +47,7 @@ typedef struct {
 
 
 
+
 /* ===================================================== */
 /* Programa base (esqueleto) para aplicações Windows     */
 /* ===================================================== */
@@ -134,12 +135,44 @@ DWORD WINAPI RefreshMap(LPVOID lParam) {
 
 }
 
+
+
+DWORD WINAPI mapPipe(LPVOID lpParam)
+{
+	//wait do evento de atualizacao do mapa
+	//e mutex para esperar pela vez de desenhar
+
+	//receber o mapa e atualizar a variavel que possui o mapa
+
+	//invalidar a janela para o paint correr outra vez
+	InvalidateRect(hWndGlobal, NULL, FALSE);
+	Sleep(1);
+
+	return 0;
+
+}
+
+
 int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR lpCmdLine, int nCmdShow) {
 	HWND hWnd;		// hWnd é o handler da janela, gerado mais abaixo por CreateWindow()
 	MSG lpMsg;		// MSG é uma estrutura definida no Windows para as mensagens
 	WNDCLASSEX wcApp;	// WNDCLASSEX é uma estrutura cujos membros servem para
 	// definir as filleracterísticas da classe da janela
 
+	HANDLE hThreadMapPipe = CreateThread(
+		NULL,    // Thread attributes
+		0,       // Stack size (0 = use default)
+		mapPipe, // Thread start address
+		NULL,    // Parameter to pass to the thread
+		0,       // Creation flags
+		NULL);   // Thread id   // returns the thread identifier 
+	if (hThreadMapPipe == NULL)
+	{
+		_tprintf(TEXT("[ERRO] Thread pipe Map\n"));
+		return 1;
+	}
+
+	//esta parte tem de ser numa thread
 	int terminar = 0; // para acabar com tudo
 	TCHAR buf[256];
 	HANDLE hPipe;

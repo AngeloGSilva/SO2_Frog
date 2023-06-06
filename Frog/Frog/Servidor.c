@@ -31,6 +31,7 @@ DWORD WINAPI send(LPVOID lpParam)
 	int i;
 
 	do {
+		//criar e fazer set evento para a janela do cliente saber que tem dados novos
 		/*_tprintf(TEXT("[send] Frase: "));
 		_fgetts(buf, 256, stdin);*/
 		/*buf[_tcslen(buf) - 1] = '\0';*/
