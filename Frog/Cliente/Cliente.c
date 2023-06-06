@@ -100,6 +100,8 @@ HANDLE hMutex;
 HDC memDC = NULL; // copia do device context que esta em memoria, tem de ser inicializado a null
 HBITMAP hBitmapDB; // copia as filleracteristicas da janela original para a janela que vai estar em memoria
 GameData* AllGameData ;
+HANDLE hPipe;
+
 
 
 // Mexe na posição x da imagem de forma a que a imagem se vá movendo
@@ -142,29 +144,19 @@ DWORD WINAPI mapPipe(LPVOID lpParam)
 	//esta parte tem de ser numa thread
 	int terminar = 0; // para acabar com tudo
 	TCHAR buf[256];
-	HANDLE hPipe;
 	int i = 0;
 	BOOL ret;
 	DWORD n;
 	HANDLE heventmapread;
 
 	heventmapread = CreateEvent(NULL, TRUE, FALSE, TEXT("eventoPipeRead"));
-	/*if (heventmapread == NULL) {
-
-	}*/
-
-
-	if (!WaitNamedPipe(PIPE_NAME, NMPWAIT_WAIT_FOREVER)) {
-	}
-	hPipe = CreateFile(PIPE_NAME, GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
-	if (hPipe == NULL) {
-	}
-	
 
 	while (1) {
 		WaitForSingleObject(heventmapread, INFINITE);
+		WaitForSingleObject(hMutex, INFINITE);
 		ret = ReadFile(hPipe, AllGameData, sizeof(GameData), &n, NULL);
 		InvalidateRect(hWndGlobal, NULL, FALSE);
+		ReleaseMutex(hMutex);
 	}
 	//wait do evento de atualizacao do mapa
 	//e mutex para esperar pela vez de desenhar
@@ -186,6 +178,14 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR lpCmdLine, int nC
 	// definir as filleracterísticas da classe da janela
 	//mapa
 	AllGameData = (GameData*)malloc(sizeof(GameData));
+
+	if (!WaitNamedPipe(PIPE_NAME, NMPWAIT_WAIT_FOREVER)) {
+	}
+	hPipe = CreateFile(PIPE_NAME, GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+	if (hPipe == NULL) {
+		//tratar
+	}
+	hMutex = CreateMutex(NULL,FALSE,TEXT("MutexClientPipe"));
 
 	HANDLE hThreadMapPipe = CreateThread(
 		NULL,    // Thread attributes
@@ -290,7 +290,7 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR lpCmdLine, int nC
 	hWndGlobal = hWnd;
 
 	// Cria mutex
-	hMutex = CreateMutex(NULL, FALSE, NULL);
+	//hMutex = CreateMutex(NULL, FALSE, NULL);
 
 	// Cria a thread de movimentação
 	//CreateThread(NULL, 0, RefreshMap, NULL, 0, NULL);
@@ -372,6 +372,10 @@ LRESULT CALLBACK TrataEventos(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPara
 	RECT rect;
 	PAINTSTRUCT ps;
 	MINMAXINFO* mmi;
+	//keyup
+	HANDLE hcommand;
+	TCHAR* message;
+	DWORD n;
 
 	static HDC bmpDC = NULL;
 	static HDC bmpDC2 = NULL;
@@ -512,14 +516,29 @@ LRESULT CALLBACK TrataEventos(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPara
 		return TRUE;
 
 		// redimensiona e calcula novamente o centro
-	case WM_SIZE:
-		WaitForSingleObject(hMutex, INFINITE);
-		xBitmap = (LOWORD(lParam) / 2) - (bmp.bmWidth / 2);
-		yBitmap = (HIWORD(lParam) / 2) - (bmp.bmHeight / 2);
-		limDir = LOWORD(lParam) - bmp.bmWidth;
-		memDC = NULL; // metemos novamente a NULL para que caso haja um resize na janela no WM_PAINT a janela em memoria é sempre atualizada com o tamanho novo
-		ReleaseMutex(hMutex);
+	//case WM_SIZE:
+		//WaitForSingleObject(hMutex, INFINITE);
+		//xBitmap = (LOWORD(lParam) / 2) - (bmp.bmWidth / 2);
+		//yBitmap = (HIWORD(lParam) / 2) - (bmp.bmHeight / 2);
+		//limDir = LOWORD(lParam) - bmp.bmWidth;
+		//memDC = NULL; // metemos novamente a NULL para que caso haja um resize na janela no WM_PAINT a janela em memoria é sempre atualizada com o tamanho novo
+		//ReleaseMutex(hMutex);
+	case WM_KEYDOWN:
 
+		hcommand = CreateEvent(NULL, TRUE, FALSE, TEXT("eventoSapo"));
+		switch (wParam)
+		{
+			// caso seja duplo clique
+		case VK_UP:
+			message = TEXT("KEYUP");
+			DWORD messageSize = sizeof(TCHAR) * _tcslen(message);
+			WaitForSingleObject(hMutex, INFINITE);
+			WriteFile(hPipe, message, messageSize, &n, NULL);
+			ReleaseMutex(hMutex);
+			SetEvent(hcommand);
+			ResetEvent(hcommand);
+			break;
+		}
 		break;
 
 	case WM_CLOSE:

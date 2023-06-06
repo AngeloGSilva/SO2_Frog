@@ -30,9 +30,12 @@ DWORD WINAPI send(LPVOID lpParam)
 	DWORD n;
 	HANDLE heventmapwrite;
 	HANDLE heventmapread;
+	HANDLE hmutexhere;
 	int i;
 	heventmapwrite = CreateEvent(NULL, TRUE, FALSE, TEXT("eventoPipeWrite"));
 	heventmapread = CreateEvent(NULL, TRUE, FALSE, TEXT("eventoPipeRead"));
+	hmutexhere = CreateMutex(NULL, FALSE, TEXT("MutexServerPipe"));
+
 
 	while(1){
 		//criar e fazer set evento para a janela do cliente saber que tem dados novos
@@ -43,7 +46,7 @@ DWORD WINAPI send(LPVOID lpParam)
 		//WaitForSingleObject(dados->hMutex, INFINITE);
 		WaitForSingleObject(heventmapwrite,INFINITE);
 		Sleep(100);
-
+		WaitForSingleObject(hmutexhere, INFINITE);
 		for (i = 0; i < dados->numClientes; i++) {
 			if (!WriteFile(dados->hPipe[i], dados->gamedatatemp,sizeof(GameData), &n, NULL)) {
 				_tprintf(TEXT("[ERRO] Escrever no pipe! (WriteFile)\n"));
@@ -52,6 +55,7 @@ DWORD WINAPI send(LPVOID lpParam)
 
 			_tprintf(TEXT("[send] Enviei %d bytes ao leitor [%d]... (WriteFile)\n"), n, i);
 		}
+		ReleaseMutex(hmutexhere);
 		SetEvent(heventmapread);
 		ResetEvent(heventmapread);
 		ReleaseMutex(dados->hMutex);
@@ -68,14 +72,17 @@ DWORD WINAPI receive(LPVOID lpParam)
 	BOOL ret;
 	DWORD n;
 	int i;
+	HANDLE hcommand, hmutexhere;
+
+	hcommand = CreateEvent(NULL, TRUE, FALSE, TEXT("eventoSapo"));
+	hmutexhere = CreateMutex(NULL, FALSE, TEXT("MutexServerPipe"));
 
 	while (1) {
-		ret = ReadFile(dados->hPipe, buf, sizeof(buf), &n, NULL);
+		WaitForSingleObject(hcommand, INFINITE);
+		WaitForSingleObject(hmutexhere, INFINITE);
+		ret = ReadFile(dados->hPipe[0], buf, sizeof(buf), &n, NULL);
+		ReleaseMutex(hmutexhere);
 		buf[n / sizeof(TCHAR)] = '\0';
-		if (!ret || !n) {
-			_tprintf(TEXT("[receive] %d %d... (ReadFile)\n"), ret, n);
-			break;
-		}
 		_tprintf(TEXT("[receive] Recebi %d bytes: '%s'... (ReadFile)\n"), n, buf);
 	}
 
@@ -689,11 +696,11 @@ int _tmain(int argc, TCHAR* argv[]) {
 		return -1;
 	}
 
-	/*threadRPipe = CreateThread(NULL, 0, receive, &dadosPipe, 0, NULL);
+	threadRPipe = CreateThread(NULL, 0, receive, &dadosPipe, 0, NULL);
 	if (threadRPipe == NULL) {
 		_tprintf(TEXT("[Erro] ao criar thread receive!\n"));
 		return -1;
-	}*/
+	}
 
 	threadWPipe = CreateThread(NULL, 0, send, &dadosPipe, 0, NULL);
 	if (threadWPipe == NULL) {
