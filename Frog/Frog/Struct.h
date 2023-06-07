@@ -21,7 +21,7 @@ typedef struct {
 	int numRoads;
 	int num_frogs;
 	CarPos car_pos[MAX_CARS]; 
-	int frog_pos[MAX_FROGS][2];
+	FrogPos frog_pos[MAX_FROGS];
 	TCHAR map[MAX_ROWS + 4][MAX_COLS];
 }GameData, *pGameData;
 
@@ -50,6 +50,7 @@ typedef struct {
 	TCHAR* sharedMap;
 	HANDLE hEventRoads, hMutex;
 	int id;
+	pFrogPos frog_pos;
 } TRoads, *pTRoads;
 
 //Estrutura para BufferCircular Thread

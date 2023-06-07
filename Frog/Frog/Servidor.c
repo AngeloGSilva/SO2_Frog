@@ -76,13 +76,24 @@ DWORD WINAPI receive(LPVOID lpParam)
 
 	hcommand = CreateEvent(NULL, TRUE, FALSE, TEXT("eventoSapo"));
 	hmutexhere = CreateMutex(NULL, FALSE, TEXT("MutexServerPipe"));
+	HANDLE hmutexRoads = CreateMutex(NULL, FALSE, THREAD_ROADS_MUTEX);
+
 
 	while (1) {
 		WaitForSingleObject(hcommand, INFINITE);
+
 		WaitForSingleObject(hmutexhere, INFINITE);
+		//for nClientes
+		//for (dados->numClientes) {
 		ret = ReadFile(dados->hPipe[0], buf, sizeof(buf), &n, NULL);
+		//}
 		ReleaseMutex(hmutexhere);
+
 		buf[n / sizeof(TCHAR)] = '\0';
+		WaitForSingleObject(hmutexRoads, INFINITE);
+		dados->gamedatatemp->frog_pos[0].row = dados->gamedatatemp->frog_pos[0].row - 1;
+		ReleaseMutex(hmutexRoads);
+
 		_tprintf(TEXT("[receive] Recebi %d bytes: '%s'... (ReadFile)\n"), n, buf);
 	}
 
@@ -189,6 +200,17 @@ DWORD WINAPI ThreadRoads(LPVOID lpParam)
 				data->Map[data->id * MAX_COLS + i] = ROAD_ELEMENT;
 			}
 		}
+
+		//atualizar o sapo
+		//for (int i = 0; i < data->numCars; i++)
+		//{
+			int x = data->frog_pos[0].row;
+			if (x == data->id)
+			{
+				data->Map[data->frog_pos[0].row * MAX_COLS + data->frog_pos[0].col] = FROGGE_ELEMENT;
+			}
+		//}
+
 
 		// refazer linha
 		for (int i = 0; i < data->numCars; i++)
@@ -522,6 +544,8 @@ int _tmain(int argc, TCHAR* argv[]) {
 		do {
 			sapColRandom = (rand() % (MAX_COLS - 2)) + 1;
 		} while (data.map[sapRowRandom][sapColRandom] == 'S');
+		data.frog_pos[i].col = sapColRandom;
+		data.frog_pos[i].row = sapRowRandom;
 		data.map[sapRowRandom][sapColRandom] = FROGGE_ELEMENT;
 	}
 
@@ -580,6 +604,7 @@ int _tmain(int argc, TCHAR* argv[]) {
 			return 0;
 		}
 
+		RoadsData[i].frog_pos = &data.frog_pos;
 		RoadsData[i].Map = &data.map;
 		RoadsData[i].car_pos = &data.car_pos;
 		RoadsData[i].numCars = data.numCars;
