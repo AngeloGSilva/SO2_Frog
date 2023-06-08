@@ -12,21 +12,9 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define PIPE_NAME TEXT("\\\\.\\pipe\\teste")
-
-
-
-typedef struct {
-	HANDLE hPipe[3];
-	HANDLE hMutex; //para controlar o numClientes
-	GameData* gamedatatemp;
-	int numClientes;
-	int terminar;
-}TdadosPipe, * pTdadosPipe;
-
 DWORD WINAPI send(LPVOID lpParam)
 {
-	TdadosPipe* dados = (TdadosPipe*)lpParam;
+	TdadosPipeSendReceive* dados = (TdadosPipeSendReceive*)lpParam;
 	TCHAR buf[256];
 	DWORD n;
 	HANDLE heventmapwrite;
@@ -66,7 +54,7 @@ DWORD WINAPI send(LPVOID lpParam)
 
 }
 
-void HandleFroggeMovement(int frogge, froggeInput input, pFrogPos pos) {
+void HandleFroggeMovement(int frogge, PipeFroggeInput input, pFrogPos pos) {
 	//TODO nao sei se +e o sito certo para fazer o evento de atualizar o mapa com o sapo
 	HANDLE keyPress = CreateEvent(NULL, TRUE, FALSE, TEXT("eventoSapoMOVEMENT"));
 	switch (input.pressInput)
@@ -94,16 +82,9 @@ void HandleFroggeMovement(int frogge, froggeInput input, pFrogPos pos) {
 	ResetEvent(keyPress);
 }
 
-typedef struct {
-	HANDLE mutexRoads;
-	TCHAR* Map;
-	pFrogPos frog_pos;
-}TdadosUpdateSapo, * pTdadosUpdateSapo;
-
-
 DWORD WINAPI ThreadSapos(LPVOID lpParam)
 {
-	pTdadosUpdateSapo data = (pTdadosUpdateSapo)lpParam;
+	pTdadosUpdateSapoMapa data = (pTdadosUpdateSapoMapa)lpParam;
 	HANDLE hidk = CreateEvent(NULL, TRUE, FALSE, TEXT("eventoPipeWrite"));
 
 	HANDLE keyPress = CreateEvent(NULL, TRUE, FALSE, TEXT("eventoSapoMOVEMENT"));
@@ -120,13 +101,13 @@ DWORD WINAPI ThreadSapos(LPVOID lpParam)
 
 DWORD WINAPI receive(LPVOID lpParam)
 {
-	TdadosPipe* dados = (TdadosPipe*)lpParam;
+	TdadosPipeSendReceive* dados = (TdadosPipeSendReceive*)lpParam;
 	TCHAR buf[256];
 	BOOL ret;
 	DWORD n;
 	int i;
 	HANDLE hcommand, hmutexhere;
-	froggeInput receiveInfo;
+	PipeFroggeInput receiveInfo;
 	//pfroggeInput receiveInfoTemp;
 	//receiveInfoTemp = &receiveInfo;
 
@@ -141,7 +122,7 @@ DWORD WINAPI receive(LPVOID lpParam)
 		WaitForSingleObject(hmutexhere, INFINITE);
 		//for nClientes
 		//for (dados->numClientes) {
-		ret = ReadFile(dados->hPipe[0], &receiveInfo, sizeof(froggeInput), &n, NULL);
+		ret = ReadFile(dados->hPipe[0], &receiveInfo, sizeof(PipeFroggeInput), &n, NULL);
 		//}
 		_tprintf(TEXT("[receive] Recebi %d bytes: '%d'... (ReadFile)\n"), n, receiveInfo.pressInput);
 
@@ -689,7 +670,7 @@ int _tmain(int argc, TCHAR* argv[]) {
 		}
 	}
 
-	TdadosUpdateSapo TfroggeData;
+	TdadosUpdateSapoMapa TfroggeData;
 	TfroggeData.mutexRoads = CreateMutex(NULL, FALSE, THREAD_ROADS_MUTEX);
 	TfroggeData.frog_pos = &data.frog_pos;
 	TfroggeData.Map =&data.map;
@@ -789,7 +770,7 @@ int _tmain(int argc, TCHAR* argv[]) {
 	HANDLE hPipe;
 	HANDLE threadWPipe, threadRPipe;
 	TCHAR bufPipe[256];
-	TdadosPipe dadosPipe;
+	TdadosPipeSendReceive dadosPipe;
 
 	dadosPipe.numClientes = 0;
 	dadosPipe.terminar = 0;

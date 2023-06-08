@@ -1,14 +1,3 @@
-
-//
-//
-//int _tmain(int argc, TCHAR* argv[]) {
-//
-//	
-//
-
-//    Sleep(200);
-//    return 0;
-//}
 #include <windows.h>
 #include <windowsx.h>
 #include <tchar.h>
@@ -22,31 +11,6 @@
 #include "../Frog/Utils.h"
 #include "../Frog/Struct.h"
 #include "resource.h"
-
-
-
-//Pipe
-#define PIPE_NAME TEXT("\\\\.\\pipe\\teste")
-#define N 10
-
-//estrutura do named pipe
-typedef struct {
-	HANDLE hPipe;
-	OVERLAPPED overlap;//estrutura overlapped para uso asincrono
-	BOOL active;
-}PipeData;
-
-
-typedef struct {
-	PipeData hPipes[N];
-	HANDLE hEvent[N];
-	HANDLE hMutex;
-	int terminar;
-};
-
-
-
-
 
 /* ===================================================== */
 /* Programa base (esqueleto) para aplicações Windows     */
@@ -393,7 +357,7 @@ LRESULT CALLBACK TrataEventos(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPara
 
 
 	//send info struct
-	froggeInput sendInfo;
+	PipeFroggeInput sendInfo;
 
 
 	switch (messg)
@@ -539,7 +503,7 @@ LRESULT CALLBACK TrataEventos(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPara
 			sendInfo.y = -1;
 			//DWORD messageSize = sizeof(char) * _tcslen(wParam);
 			WaitForSingleObject(hMutex, INFINITE);
-			WriteFile(hPipe, &sendInfo, sizeof(froggeInput), &n, NULL);
+			WriteFile(hPipe, &sendInfo, sizeof(PipeFroggeInput), &n, NULL);
 			ReleaseMutex(hMutex);
 			SetEvent(hcommand);
 			ResetEvent(hcommand);
@@ -550,7 +514,7 @@ LRESULT CALLBACK TrataEventos(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPara
 			sendInfo.y = -1;
 			//DWORD messageSize = sizeof(char) * _tcslen(wParam);
 			WaitForSingleObject(hMutex, INFINITE);
-			WriteFile(hPipe, &sendInfo, sizeof(froggeInput), &n, NULL);
+			WriteFile(hPipe, &sendInfo, sizeof(PipeFroggeInput), &n, NULL);
 			ReleaseMutex(hMutex);
 			SetEvent(hcommand);
 			ResetEvent(hcommand);
@@ -561,7 +525,7 @@ LRESULT CALLBACK TrataEventos(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPara
 			sendInfo.y = -1;
 			//DWORD messageSize = sizeof(char) * _tcslen(wParam);
 			WaitForSingleObject(hMutex, INFINITE);
-			WriteFile(hPipe, &sendInfo, sizeof(froggeInput), &n, NULL);
+			WriteFile(hPipe, &sendInfo, sizeof(PipeFroggeInput), &n, NULL);
 			ReleaseMutex(hMutex);
 			SetEvent(hcommand);
 			ResetEvent(hcommand);
@@ -572,7 +536,7 @@ LRESULT CALLBACK TrataEventos(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPara
 			sendInfo.y = -1;
 			//DWORD messageSize = sizeof(char) * _tcslen(wParam);
 			WaitForSingleObject(hMutex, INFINITE);
-			WriteFile(hPipe, &sendInfo, sizeof(froggeInput), &n, NULL);
+			WriteFile(hPipe, &sendInfo, sizeof(PipeFroggeInput), &n, NULL);
 			ReleaseMutex(hMutex);
 			SetEvent(hcommand);
 			ResetEvent(hcommand);

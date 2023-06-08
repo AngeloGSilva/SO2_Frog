@@ -1,10 +1,13 @@
 ﻿#pragma once
+//geral
+#define MAX_ROADS_THREADS 50
 #define TAM 100
 #define MAX_CARS 64
 #define MAX_FROGS 10
 #define MAX_ROWS 8
 #define MAX_COLS 20
 
+//nomes para mutexs/eventos/file mapping/semaphores
 #define SEMAPHORE_UNIQUE_SERVER TEXT("SEM_UNIQUE_SERVE")
 
 #define FILE_MAPPING_GAME_DATA TEXT("FILE_MAPPING_GAME_DATA")
@@ -37,6 +40,7 @@
 
 #define GAMEDATA_EVENT TEXT("PONTUACAO")
 
+//Tchar elements para o mapa
 #define FROGGE_ELEMENT 83
 #define BLOCK_ELEMENT 124
 #define ROAD_ELEMENT 61
@@ -46,12 +50,16 @@
 #define SKIP_BEGINING_END 4
 #define SKIP_BEGINING 2
 
+//para direcao das roads
 #define ROAD_RIGHT 0
 #define ROAD_LEFT 1
 
-#define MAX_ROADS_THREADS 50
-
+//cliente input
 #define KEY_UP 38
 #define KEY_LEFT 37
 #define KEY_RIGHT 39
 #define KEY_DOWN 40
+
+//named pipe
+#define PIPE_NAME TEXT("\\\\.\\pipe\\teste")
+#define N 10

@@ -85,10 +85,25 @@ typedef struct {
 	int numRoads;
 } tStopGame, * pTStopGame;
 
+//Estrutura para Thread que atualiza a posicao do sapo no mapa
+typedef struct {
+	HANDLE mutexRoads;
+	TCHAR* Map;
+	pFrogPos frog_pos;
+}TdadosUpdateSapoMapa, * pTdadosUpdateSapoMapa;
 
+//estrutra para passar os dados para as threads relacionadas com o named pipe
+typedef struct {
+	HANDLE hPipe[3];
+	HANDLE hMutex; //para controlar o numClientes
+	GameData* gamedatatemp;
+	int numClientes;
+	int terminar;
+}TdadosPipeSendReceive, * pTdadosPipeSendReceive;
 
+//estrutura que é enviada do cliente para o server com o input
 typedef struct {
 	int x;
 	int y;
 	int pressInput;
-}froggeInput, *pfroggeInput;
+}PipeFroggeInput, *pPipeFroggeInput;
