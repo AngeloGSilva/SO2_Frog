@@ -6,7 +6,7 @@
 #include <io.h>
 #include "../Frog/Utils.h"
 #include "../Frog/Struct.h"
-#include "SharedMemory.h"
+#include "../SharedMemory/SharedMemory.h"
 #include <time.h>
 #include <stdlib.h>
 
@@ -239,7 +239,7 @@ int _tmain(int argc, TCHAR* argv[]) {
 	GameData data;
 
 	//data tem de sair e so ficar pbuf penso eu
-	HANDLE HMapFile = CreateFileMapping(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, sizeof(GameData), FILE_MAPPING_GAME_DATA);
+	HANDLE HMapFile = createMemoryMapping();
 	pGameData pBuf = (GameData*)MapViewOfFile(HMapFile, FILE_MAP_ALL_ACCESS, 0, 0, 0);
 	//data.event = OpenEvent(READ_CONTROL,TRUE, TEXT("TP_Evento"));
 	data.Serv_HEvent = CreateEvent(NULL, TRUE, FALSE, SHARED_MEMORY_EVENT);

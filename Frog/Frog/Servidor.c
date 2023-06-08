@@ -7,7 +7,7 @@
 #include "Utils.h"
 #include "Struct.h"
 #include "Registry.h"
-#include "SharedMemory.h"
+#include "../SharedMemory/SharedMemory.h"
 #include <time.h>
 #include <stdlib.h>
 #include <string.h>
