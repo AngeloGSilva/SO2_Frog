@@ -392,6 +392,10 @@ LRESULT CALLBACK TrataEventos(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPara
 	srand((unsigned)time(NULL));
 
 
+	//send info struct
+	froggeInput sendInfo;
+
+
 	switch (messg)
 	{
 
@@ -530,10 +534,45 @@ LRESULT CALLBACK TrataEventos(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPara
 		{
 			// caso seja duplo clique
 		case VK_UP:
-			message = TEXT("KEYUP");
-			DWORD messageSize = sizeof(TCHAR) * _tcslen(message);
+			sendInfo.pressInput = wParam;
+			sendInfo.x = -1;
+			sendInfo.y = -1;
+			//DWORD messageSize = sizeof(char) * _tcslen(wParam);
 			WaitForSingleObject(hMutex, INFINITE);
-			WriteFile(hPipe, message, messageSize, &n, NULL);
+			WriteFile(hPipe, &sendInfo, sizeof(froggeInput), &n, NULL);
+			ReleaseMutex(hMutex);
+			SetEvent(hcommand);
+			ResetEvent(hcommand);
+			break;
+		case VK_DOWN:
+			sendInfo.pressInput = wParam;
+			sendInfo.x = -1;
+			sendInfo.y = -1;
+			//DWORD messageSize = sizeof(char) * _tcslen(wParam);
+			WaitForSingleObject(hMutex, INFINITE);
+			WriteFile(hPipe, &sendInfo, sizeof(froggeInput), &n, NULL);
+			ReleaseMutex(hMutex);
+			SetEvent(hcommand);
+			ResetEvent(hcommand);
+			break;
+		case VK_LEFT:
+			sendInfo.pressInput = wParam;
+			sendInfo.x = -1;
+			sendInfo.y = -1;
+			//DWORD messageSize = sizeof(char) * _tcslen(wParam);
+			WaitForSingleObject(hMutex, INFINITE);
+			WriteFile(hPipe, &sendInfo, sizeof(froggeInput), &n, NULL);
+			ReleaseMutex(hMutex);
+			SetEvent(hcommand);
+			ResetEvent(hcommand);
+			break;
+		case VK_RIGHT:
+			sendInfo.pressInput = wParam;
+			sendInfo.x = -1;
+			sendInfo.y = -1;
+			//DWORD messageSize = sizeof(char) * _tcslen(wParam);
+			WaitForSingleObject(hMutex, INFINITE);
+			WriteFile(hPipe, &sendInfo, sizeof(froggeInput), &n, NULL);
 			ReleaseMutex(hMutex);
 			SetEvent(hcommand);
 			ResetEvent(hcommand);

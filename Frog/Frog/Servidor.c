@@ -15,6 +15,7 @@
 #define PIPE_NAME TEXT("\\\\.\\pipe\\teste")
 
 
+
 typedef struct {
 	HANDLE hPipe[3];
 	HANDLE hMutex; //para controlar o numClientes
@@ -65,6 +66,58 @@ DWORD WINAPI send(LPVOID lpParam)
 
 }
 
+void HandleFroggeMovement(int frogge, froggeInput input, pFrogPos pos) {
+	//TODO nao sei se +e o sito certo para fazer o evento de atualizar o mapa com o sapo
+	HANDLE keyPress = CreateEvent(NULL, TRUE, FALSE, TEXT("eventoSapoMOVEMENT"));
+	switch (input.pressInput)
+	{
+	case KEY_UP:
+		pos[frogge].row = pos[frogge].row - 1;
+		//dados->gamedatatemp->frog_pos[0].row = dados->gamedatatemp->frog_pos[0].row - 1;
+		break;
+	case KEY_DOWN:
+		pos[frogge].row = pos[frogge].row + 1;
+		//dados->gamedatatemp->frog_pos[0].row = dados->gamedatatemp->frog_pos[0].row - 1;
+		break;
+	case KEY_LEFT:
+		pos[frogge].col = pos[frogge].col - 1;
+		//dados->gamedatatemp->frog_pos[0].row = dados->gamedatatemp->frog_pos[0].row - 1;
+		break;
+	case KEY_RIGHT:
+		pos[frogge].col = pos[frogge].col + 1;
+		//dados->gamedatatemp->frog_pos[0].row = dados->gamedatatemp->frog_pos[0].row - 1;
+		break;
+	default:
+		break;
+	}
+	SetEvent(keyPress);
+	ResetEvent(keyPress);
+}
+
+typedef struct {
+	HANDLE mutexRoads;
+	TCHAR* Map;
+	pFrogPos frog_pos;
+}TdadosUpdateSapo, * pTdadosUpdateSapo;
+
+
+DWORD WINAPI ThreadSapos(LPVOID lpParam)
+{
+	pTdadosUpdateSapo data = (pTdadosUpdateSapo)lpParam;
+	HANDLE hidk = CreateEvent(NULL, TRUE, FALSE, TEXT("eventoPipeWrite"));
+
+	HANDLE keyPress = CreateEvent(NULL, TRUE, FALSE, TEXT("eventoSapoMOVEMENT"));
+	while (1) {
+		WaitForSingleObject(keyPress,INFINITE);
+		//wait por evento de q sapo se mexeu que vem do receive ou o caracas
+		//int x = data->frog_pos[0].row;
+		data->Map[data->frog_pos[0].row * MAX_COLS + data->frog_pos[0].col] = FROGGE_ELEMENT;
+		SetEvent(hidk, INFINITE);
+		ResetEvent(hidk);
+	}
+	return 1;
+}
+
 DWORD WINAPI receive(LPVOID lpParam)
 {
 	TdadosPipe* dados = (TdadosPipe*)lpParam;
@@ -73,28 +126,31 @@ DWORD WINAPI receive(LPVOID lpParam)
 	DWORD n;
 	int i;
 	HANDLE hcommand, hmutexhere;
+	froggeInput receiveInfo;
+	//pfroggeInput receiveInfoTemp;
+	//receiveInfoTemp = &receiveInfo;
 
 	hcommand = CreateEvent(NULL, TRUE, FALSE, TEXT("eventoSapo"));
 	hmutexhere = CreateMutex(NULL, FALSE, TEXT("MutexServerPipe"));
 	HANDLE hmutexRoads = CreateMutex(NULL, FALSE, THREAD_ROADS_MUTEX);
 
-
+	
 	while (1) {
 		WaitForSingleObject(hcommand, INFINITE);
 
 		WaitForSingleObject(hmutexhere, INFINITE);
 		//for nClientes
 		//for (dados->numClientes) {
-		ret = ReadFile(dados->hPipe[0], buf, sizeof(buf), &n, NULL);
+		ret = ReadFile(dados->hPipe[0], &receiveInfo, sizeof(froggeInput), &n, NULL);
 		//}
-		ReleaseMutex(hmutexhere);
+		_tprintf(TEXT("[receive] Recebi %d bytes: '%d'... (ReadFile)\n"), n, receiveInfo.pressInput);
 
-		buf[n / sizeof(TCHAR)] = '\0';
+		ReleaseMutex(hmutexhere);
 		WaitForSingleObject(hmutexRoads, INFINITE);
-		dados->gamedatatemp->frog_pos[0].row = dados->gamedatatemp->frog_pos[0].row - 1;
+		HandleFroggeMovement(0, receiveInfo, dados->gamedatatemp->frog_pos);
 		ReleaseMutex(hmutexRoads);
 
-		_tprintf(TEXT("[receive] Recebi %d bytes: '%s'... (ReadFile)\n"), n, buf);
+		_tprintf(TEXT("[receive] Recebi %d bytes: '%d'... (ReadFile)\n"), n, receiveInfo.pressInput);
 	}
 
 	dados->terminar = 1;
@@ -189,11 +245,17 @@ DWORD WINAPI ThreadRoads(LPVOID lpParam)
 				}
 			}
 		}
+
+		//TODO provavelmente tem de sair daqui.. (Reset do mapa antes de atualizar as posicoes dos carros)
 		for (int i = 1; i < MAX_COLS - 1; i++)
 		{
 			if (data->Map[data->id * MAX_COLS + i] == OBSTACLE_ELEMENT)
 			{
 				data->Map[data->id * MAX_COLS + i] = OBSTACLE_ELEMENT;
+			}
+			else if (data->Map[data->id * MAX_COLS + i] == FROGGE_ELEMENT)
+			{
+				data->Map[data->id * MAX_COLS + i] = FROGGE_ELEMENT;
 			}
 			else
 			{
@@ -204,11 +266,11 @@ DWORD WINAPI ThreadRoads(LPVOID lpParam)
 		//atualizar o sapo
 		//for (int i = 0; i < data->numCars; i++)
 		//{
-			int x = data->frog_pos[0].row;
-			if (x == data->id)
-			{
-				data->Map[data->frog_pos[0].row * MAX_COLS + data->frog_pos[0].col] = FROGGE_ELEMENT;
-			}
+			//int x = data->frog_pos[0].row;
+			//if (x == data->id)
+			//{
+			//	data->Map[data->frog_pos[0].row * MAX_COLS + data->frog_pos[0].col] = FROGGE_ELEMENT;
+			//}
 		//}
 
 
@@ -627,6 +689,24 @@ int _tmain(int argc, TCHAR* argv[]) {
 		}
 	}
 
+	TdadosUpdateSapo TfroggeData;
+	TfroggeData.mutexRoads = CreateMutex(NULL, FALSE, THREAD_ROADS_MUTEX);
+	TfroggeData.frog_pos = &data.frog_pos;
+	TfroggeData.Map =&data.map;
+
+	HANDLE FroggeThread = CreateThread(
+		NULL,    // Thread attributes
+		0,       // Stack size (0 = use default)
+		ThreadSapos, // Thread start address
+		&TfroggeData,    // Parameter to pass to the thread
+		0,       // Creation flags
+		NULL);   // Thread id   // returns the thread identifier 
+	if (FroggeThread == NULL) {
+		_tprintf(TEXT("[DEBUG] Thread sapo erro\n"));
+		return 1;
+	}
+
+
 	//BufferCircular
 	TDados dataThread;
 
@@ -758,7 +838,6 @@ int _tmain(int argc, TCHAR* argv[]) {
 		dadosPipe.numClientes++;
 
 		ReleaseMutex(dadosPipe.hMutex);
-
 	}
 
 	//criar thread de ler e escrever em cada programa

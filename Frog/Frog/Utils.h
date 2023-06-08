@@ -50,3 +50,8 @@
 #define ROAD_LEFT 1
 
 #define MAX_ROADS_THREADS 50
+
+#define KEY_UP 38
+#define KEY_LEFT 37
+#define KEY_RIGHT 39
+#define KEY_DOWN 40

@@ -84,3 +84,11 @@ typedef struct {
 	TCHAR* time;
 	int numRoads;
 } tStopGame, * pTStopGame;
+
+
+
+typedef struct {
+	int x;
+	int y;
+	int pressInput;
+}froggeInput, *pfroggeInput;
