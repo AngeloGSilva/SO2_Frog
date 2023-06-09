@@ -68,38 +68,38 @@ HANDLE hPipe;
 
 
 
-// Mexe na posição x da imagem de forma a que a imagem se vá movendo
-DWORD WINAPI RefreshMap(LPVOID lParam) {
-	int dir = 1; // 1 para a direita, -1 para a esquerda
-	int salto = 2; // quantidade de pixeis que a imagem salta de cada vez
-
-	while (1) {
-		// Aguarda que o mutex esteja livre
-		WaitForSingleObject(hMutex, INFINITE);
-
-		// movimentação
-		xBitmap = xBitmap + (dir * salto);
-
-		//fronteira À esquerda
-		if (xBitmap <= 0) {
-			xBitmap = 0;
-			dir = 1;
-		}
-		// limite direito
-		else if (xBitmap >= limDir) {
-			xBitmap = limDir;
-			dir = -1;
-		}
-		//liberta mutex
-		ReleaseMutex(hMutex);
-
-		// dizemos ao sistema que a posição da imagem mudou e temos entao de fazer o refresh da janela
-		InvalidateRect(hWndGlobal, NULL, FALSE);
-		Sleep(1);
-	}
-	return 0;
-
-}
+//// Mexe na posição x da imagem de forma a que a imagem se vá movendo
+//DWORD WINAPI RefreshMap(LPVOID lParam) {
+//	int dir = 1; // 1 para a direita, -1 para a esquerda
+//	int salto = 2; // quantidade de pixeis que a imagem salta de cada vez
+//
+//	while (1) {
+//		// Aguarda que o mutex esteja livre
+//		WaitForSingleObject(hMutex, INFINITE);
+//
+//		// movimentação
+//		xBitmap = xBitmap + (dir * salto);
+//
+//		//fronteira À esquerda
+//		if (xBitmap <= 0) {
+//			xBitmap = 0;
+//			dir = 1;
+//		}
+//		// limite direito
+//		else if (xBitmap >= limDir) {
+//			xBitmap = limDir;
+//			dir = -1;
+//		}
+//		//liberta mutex
+//		ReleaseMutex(hMutex);
+//
+//		// dizemos ao sistema que a posição da imagem mudou e temos entao de fazer o refresh da janela
+//		InvalidateRect(hWndGlobal, NULL, FALSE);
+//		Sleep(1);
+//	}
+//	return 0;
+//
+//}
 
 
 
@@ -131,7 +131,6 @@ DWORD WINAPI mapPipe(LPVOID lpParam)
 	Sleep(1);
 
 	return 0;
-
 }
 
 
@@ -402,14 +401,8 @@ LRESULT CALLBACK TrataEventos(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPara
 		// Set the brush color and style
 		HBRUSH hBrush = CreateSolidBrush(RGB(0, 0, 255));
 		SelectObject(hdc, hBrush);
-		// Draw the map
-		/*RECT rect;
-		rect.left = 100;
-		rect.top = 100;
-		rect.right = rect.left + 500;
-		rect.bottom = rect.top + 500;
-		FillRect(hdc, &rect, hBrush);*/
-		// Draw the road
+
+
 		RECT filler;
 		hBrush = CreateSolidBrush(RGB(255, 0, 0));
 		SelectObject(memDC, hBrush);
@@ -456,17 +449,6 @@ LRESULT CALLBACK TrataEventos(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPara
 					FillRect(memDC, &filler, hBrush);
 				}
 				else if (buffer == FROGGE_ELEMENT) {
-					//hBrush = CreateSolidBrush(RGB(
-					//	0, // red component of color
-					//	255, // green component of color
-					//	0 // blue component of color
-					//));
-					//filler.left = j * 16;
-					//filler.top = i * 16;
-					//filler.right = filler.left + 10;
-					//filler.bottom = filler.top + 10;
-
-					//FillRect(memDC, &filler, hBrush);
 					BitBlt(memDC, j * 16, i * 16, frog.bmWidth, frog.bmHeight, bmpDC2, 0, 0, SRCCOPY);
 					
 				}
@@ -483,7 +465,7 @@ LRESULT CALLBACK TrataEventos(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPara
 	case WM_ERASEBKGND:
 		return TRUE;
 
-		// redimensiona e calcula novamente o centro
+	// redimensiona e calcula novamente o centro
 	//case WM_SIZE:
 		//WaitForSingleObject(hMutex, INFINITE);
 		//xBitmap = (LOWORD(lParam) / 2) - (bmp.bmWidth / 2);

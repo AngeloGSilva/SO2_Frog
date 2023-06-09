@@ -60,19 +60,25 @@ void HandleFroggeMovement(int frogge, PipeFroggeInput input, pFrogPos pos) {
 	switch (input.pressInput)
 	{
 	case KEY_UP:
-		pos[frogge].row = pos[frogge].row - 1;
+		if(pos[frogge].row - 1 != 0)
+			pos[frogge].row = pos[frogge].row - 1;
 		//dados->gamedatatemp->frog_pos[0].row = dados->gamedatatemp->frog_pos[0].row - 1;
 		break;
 	case KEY_DOWN:
-		pos[frogge].row = pos[frogge].row + 1;
+		//passar as estradas para aqui
+		if (pos[frogge].row + 1 != 12)
+			pos[frogge].row = pos[frogge].row + 1;
 		//dados->gamedatatemp->frog_pos[0].row = dados->gamedatatemp->frog_pos[0].row - 1;
 		break;
 	case KEY_LEFT:
-		pos[frogge].col = pos[frogge].col - 1;
+		if (pos[frogge].col - 1 != 0)
+			pos[frogge].col = pos[frogge].col - 1;
 		//dados->gamedatatemp->frog_pos[0].row = dados->gamedatatemp->frog_pos[0].row - 1;
 		break;
 	case KEY_RIGHT:
-		pos[frogge].col = pos[frogge].col + 1;
+		//esta merda ta foda e nao sei pq
+		if (pos[frogge].col + 1 != MAX_COLS - 1)
+			pos[frogge].col = pos[frogge].col + 1;
 		//dados->gamedatatemp->frog_pos[0].row = dados->gamedatatemp->frog_pos[0].row - 1;
 		break;
 	default:
@@ -108,9 +114,6 @@ DWORD WINAPI receive(LPVOID lpParam)
 	int i;
 	HANDLE hcommand, hmutexhere;
 	PipeFroggeInput receiveInfo;
-	//pfroggeInput receiveInfoTemp;
-	//receiveInfoTemp = &receiveInfo;
-
 	hcommand = CreateEvent(NULL, TRUE, FALSE, TEXT("eventoSapo"));
 	hmutexhere = CreateMutex(NULL, FALSE, TEXT("MutexServerPipe"));
 	HANDLE hmutexRoads = CreateMutex(NULL, FALSE, THREAD_ROADS_MUTEX);
@@ -120,17 +123,13 @@ DWORD WINAPI receive(LPVOID lpParam)
 		WaitForSingleObject(hcommand, INFINITE);
 
 		WaitForSingleObject(hmutexhere, INFINITE);
-		//for nClientes
-		//for (dados->numClientes) {
 		ret = ReadFile(dados->hPipe[0], &receiveInfo, sizeof(PipeFroggeInput), &n, NULL);
-		//}
 		_tprintf(TEXT("[receive] Recebi %d bytes: '%d'... (ReadFile)\n"), n, receiveInfo.pressInput);
 
 		ReleaseMutex(hmutexhere);
 		WaitForSingleObject(hmutexRoads, INFINITE);
 		HandleFroggeMovement(0, receiveInfo, dados->gamedatatemp->frog_pos);
 		ReleaseMutex(hmutexRoads);
-
 		_tprintf(TEXT("[receive] Recebi %d bytes: '%d'... (ReadFile)\n"), n, receiveInfo.pressInput);
 	}
 
@@ -243,17 +242,6 @@ DWORD WINAPI ThreadRoads(LPVOID lpParam)
 				data->Map[data->id * MAX_COLS + i] = ROAD_ELEMENT;
 			}
 		}
-
-		//atualizar o sapo
-		//for (int i = 0; i < data->numCars; i++)
-		//{
-			//int x = data->frog_pos[0].row;
-			//if (x == data->id)
-			//{
-			//	data->Map[data->frog_pos[0].row * MAX_COLS + data->frog_pos[0].col] = FROGGE_ELEMENT;
-			//}
-		//}
-
 
 		// refazer linha
 		for (int i = 0; i < data->numCars; i++)
@@ -512,6 +500,7 @@ int _tmain(int argc, TCHAR* argv[]) {
 
 	DWORD arg1 = 0, arg2 = 0, parse_result = 0;
 
+	//estrutra com toda a info do jogo
 	GameData data;
 	if (argc != 3) {
 		_tprintf(TEXT("[ERRO] Parametros errados \n"));
@@ -528,7 +517,8 @@ int _tmain(int argc, TCHAR* argv[]) {
 		data = RegistryKeyValue(arg1, arg2);
 
 	}
-	//criar Semaf
+
+	//criar Semaf para apenas 1 server
 	HANDLE hSem = CreateSemaphore(NULL, 1, 1, SEMAPHORE_UNIQUE_SERVER);
 	if (hSem == NULL)
 	{
@@ -536,7 +526,7 @@ int _tmain(int argc, TCHAR* argv[]) {
 		return 1;
 	}
 
-
+	//server limit 1 (2 segundos max wait)
 	DWORD instanceServer = WaitForSingleObject(hSem, 2000);
 	if (instanceServer == WAIT_TIMEOUT) {
 		_tprintf(TEXT("[INFO] Ja existe um servidor a correr!\n"));
@@ -545,7 +535,7 @@ int _tmain(int argc, TCHAR* argv[]) {
 
 
 	data.numCars = 0;
-	//desenho do mapa
+	//desenho do mapa... limites do mapa e numero de estradas
 	for (int i = 0; i < data.numRoads + SKIP_BEGINING_END; i++)
 	{
 		for (int j = 0; j < MAX_COLS; j++)
@@ -579,7 +569,7 @@ int _tmain(int argc, TCHAR* argv[]) {
 	}
 	_tprintf(TEXT("[INFO] Numero total de carros %d\n"), data.numCars);
 
-	//Gerar sapos (Primeira meta....)
+	//Gerar sapos (Primeira meta....) // alterar para ser com opcao do menu
 	int sapRowRandom = data.numRoads + 2; //+3 para ficar na penultima estrada.
 	for (int i = 0; i < 2; i++)
 	{
@@ -592,6 +582,7 @@ int _tmain(int argc, TCHAR* argv[]) {
 		data.map[sapRowRandom][sapColRandom] = FROGGE_ELEMENT;
 	}
 
+	//memoria partilhada com operador com info total do jogo
 	HANDLE HMapFile = CreateFileMapping(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, sizeof(GameData), FILE_MAPPING_GAME_DATA);
 	if (HMapFile == NULL)
 	{
@@ -599,6 +590,7 @@ int _tmain(int argc, TCHAR* argv[]) {
 		return 0;
 	}
 
+	//criar mesmo a memoria
 	pGameData pBuf = (TCHAR*)MapViewOfFile(HMapFile, FILE_MAP_ALL_ACCESS, 0, 0, 0);
 	if (pBuf == NULL)
 	{
@@ -606,7 +598,7 @@ int _tmain(int argc, TCHAR* argv[]) {
 		return 0;
 	}
 
-	//criar mutex
+	//criar mutex para a partilha de memoria com o operador (acho q nem é necessario)
 	data.Serv_HMutex = CreateMutex(NULL, FALSE, SHARED_MEMORY_MUTEX);
 	if (data.Serv_HMutex == NULL)
 	{
@@ -622,8 +614,6 @@ int _tmain(int argc, TCHAR* argv[]) {
 	//libertat o mutex
 	ReleaseMutex(data.Serv_HMutex);
 
-	//criar a thread
-
 	//Gerar Threads das Roads
 	HANDLE mutex_ROADS;
 
@@ -632,6 +622,7 @@ int _tmain(int argc, TCHAR* argv[]) {
 
 	TRoads RoadsData[MAX_ROADS_THREADS];
 
+	//gerar thread por estrada para tratar do movimento do carro na estrada especifica
 	for (int i = 0; i < data.numRoads; i++)
 	{
 		HANDLE HMapFile = CreateFileMapping(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, sizeof(TCHAR) * (MAX_ROWS + SKIP_BEGINING_END) * MAX_COLS, FILE_MAPPING_THREAD_ROADS);
@@ -647,7 +638,9 @@ int _tmain(int argc, TCHAR* argv[]) {
 			return 0;
 		}
 
+		//este frog ja nao deve ser mais necessario
 		RoadsData[i].frog_pos = &data.frog_pos;
+
 		RoadsData[i].Map = &data.map;
 		RoadsData[i].car_pos = &data.car_pos;
 		RoadsData[i].numCars = data.numCars;
@@ -670,6 +663,7 @@ int _tmain(int argc, TCHAR* argv[]) {
 		}
 	}
 
+	//thread para tratar da atualizacao do sapo no mapa
 	TdadosUpdateSapoMapa TfroggeData;
 	TfroggeData.mutexRoads = CreateMutex(NULL, FALSE, THREAD_ROADS_MUTEX);
 	TfroggeData.frog_pos = &data.frog_pos;
@@ -688,7 +682,7 @@ int _tmain(int argc, TCHAR* argv[]) {
 	}
 
 
-	//BufferCircular
+	//BufferCircular e a thread
 	TDados dataThread;
 
 	dataThread.hMutex = CreateMutex(NULL, FALSE, BUFFER_CIRCULAR_MUTEX_LEITOR);
@@ -752,6 +746,7 @@ int _tmain(int argc, TCHAR* argv[]) {
 	_tprintf(TEXT("\n"));
 	_tprintf(TEXT("\n"));
 
+	//thread para verificar se existe operador novo para partilhar a info do mapa 
 	HANDLE tHCheckOpearators = CreateThread(
 		NULL,    // Thread attributes
 		0,       // Stack size (0 = use default)
@@ -764,6 +759,7 @@ int _tmain(int argc, TCHAR* argv[]) {
 		_tprintf(TEXT("[DEBUG] Thread CheckOperadores\n"));
 		return 1;
 	}
+
 
 	//Named pip com cliente
 	DWORD n;
@@ -798,7 +794,6 @@ int _tmain(int argc, TCHAR* argv[]) {
 	_tprintf(TEXT("[Servidor] Criar uma cópia do pipe '%s' ... (CreateNamedPipe)\n"), PIPE_NAME);
 
 	while (1) {
-
 		hPipe = CreateNamedPipe(PIPE_NAME, PIPE_ACCESS_DUPLEX | FILE_FLAG_OVERLAPPED, PIPE_WAIT | PIPE_TYPE_BYTE | PIPE_READMODE_BYTE, 3,sizeof(GameData),sizeof(GameData), 1000, NULL);
 
 		if (hPipe == INVALID_HANDLE_VALUE) {
@@ -817,7 +812,6 @@ int _tmain(int argc, TCHAR* argv[]) {
 
 		dadosPipe.hPipe[dadosPipe.numClientes] = hPipe;
 		dadosPipe.numClientes++;
-
 		ReleaseMutex(dadosPipe.hMutex);
 	}
 
@@ -833,6 +827,7 @@ int _tmain(int argc, TCHAR* argv[]) {
 
 	}
 		
+	//fechar tudo
 	_tprintf(TEXT("[INFO] SERVIDOR VAI TERMINAR\n"));
 	HANDLE ending_event = CreateEvent(NULL, TRUE, FALSE, ENDING_EVENT);
 	SetEvent(ending_event);
