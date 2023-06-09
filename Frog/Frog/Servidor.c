@@ -54,32 +54,54 @@ DWORD WINAPI send(LPVOID lpParam)
 
 }
 
-void HandleFroggeMovement(int frogge, PipeFroggeInput input, pFrogPos pos) {
+//nao sei se a logica de averificar se tem carro aqui é o melhor sitio mas pahh e falta o obstaculo
+//Falta ainda a parte de estar parado e o carro passar por ele.... esta parte  vai ser mais chata, talvez com uma flag ou algo assim na thread roads mas ja meti la para testar algo
+void HandleFroggeMovement(int frogge, PipeFroggeInput input, pFrogPos pos, TCHAR* map) {
 	//TODO nao sei se +e o sito certo para fazer o evento de atualizar o mapa com o sapo
 	HANDLE keyPress = CreateEvent(NULL, TRUE, FALSE, TEXT("eventoSapoMOVEMENT"));
 	switch (input.pressInput)
 	{
 	case KEY_UP:
 		if(pos[frogge].row - 1 != 0)
+		{
 			pos[frogge].row = pos[frogge].row - 1;
-		//dados->gamedatatemp->frog_pos[0].row = dados->gamedatatemp->frog_pos[0].row - 1;
+			if (map[pos[frogge].row * MAX_COLS + pos[frogge].col] == CAR_ELEMENT) {
+				//isto vai depois ser um flag q é atualizada para informar que o sapo perdeu ou no multiplayer tem de voltar para o inicio
+				_tprintf(TEXT("PERDEU PQ ESTA NUM CARRO\n"));
+			}
+		}
 		break;
 	case KEY_DOWN:
 		//passar as estradas para aqui
 		if (pos[frogge].row + 1 != 12)
+		{
 			pos[frogge].row = pos[frogge].row + 1;
-		//dados->gamedatatemp->frog_pos[0].row = dados->gamedatatemp->frog_pos[0].row - 1;
+			if (map[pos[frogge].row * MAX_COLS + pos[frogge].col] == CAR_ELEMENT) {
+				//isto vai depois ser um flag q é atualizada para informar que o sapo perdeu ou no multiplayer tem de voltar para o inicio
+				_tprintf(TEXT("PERDEU PQ ESTA NUM CARRO\n"));
+			}
+		}
 		break;
 	case KEY_LEFT:
 		if (pos[frogge].col - 1 != 0)
+		{
 			pos[frogge].col = pos[frogge].col - 1;
-		//dados->gamedatatemp->frog_pos[0].row = dados->gamedatatemp->frog_pos[0].row - 1;
+			if (map[pos[frogge].row * MAX_COLS + pos[frogge].col] == CAR_ELEMENT) {
+				//isto vai depois ser um flag q é atualizada para informar que o sapo perdeu ou no multiplayer tem de voltar para o inicio
+				_tprintf(TEXT("PERDEU PQ ESTA NUM CARRO\n"));
+			}
+		}
 		break;
 	case KEY_RIGHT:
 		//esta merda ta foda e nao sei pq
 		if (pos[frogge].col + 1 != MAX_COLS - 1)
+		{
 			pos[frogge].col = pos[frogge].col + 1;
-		//dados->gamedatatemp->frog_pos[0].row = dados->gamedatatemp->frog_pos[0].row - 1;
+			if (map[pos[frogge].row * MAX_COLS + pos[frogge].col] == CAR_ELEMENT) {
+				//isto vai depois ser um flag q é atualizada para informar que o sapo perdeu ou no multiplayer tem de voltar para o inicio
+				_tprintf(TEXT("PERDEU PQ ESTA NUM CARRO\n"));
+			}
+		}
 		break;
 	default:
 		break;
@@ -128,7 +150,7 @@ DWORD WINAPI receive(LPVOID lpParam)
 
 		ReleaseMutex(hmutexhere);
 		WaitForSingleObject(hmutexRoads, INFINITE);
-		HandleFroggeMovement(0, receiveInfo, dados->gamedatatemp->frog_pos);
+		HandleFroggeMovement(0, receiveInfo, dados->gamedatatemp->frog_pos,dados->gamedatatemp->map);
 		ReleaseMutex(hmutexRoads);
 		_tprintf(TEXT("[receive] Recebi %d bytes: '%d'... (ReadFile)\n"), n, receiveInfo.pressInput);
 	}
@@ -249,6 +271,11 @@ DWORD WINAPI ThreadRoads(LPVOID lpParam)
 			int x = temp[i].row;
 			if (x == data->id)
 			{
+				//isto meio q faz o programa ir com o caracas.. mas nao percebi bem pq
+				if (data->Map[temp[i].row * MAX_COLS + temp[i].col] == FROGGE_ELEMENT) {
+					//isto vai depois ser um flag q é atualizada para informar que o sapo perdeu ou no multiplayer tem de voltar para o inicio
+					_tprintf(TEXT("PERDEU PQ ESTA NUM CARRO\n"));
+				}
 				data->Map[temp[i].row * MAX_COLS + temp[i].col] = CAR_ELEMENT;
 			}
 		}
