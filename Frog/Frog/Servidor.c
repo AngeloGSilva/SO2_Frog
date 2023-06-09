@@ -128,13 +128,18 @@ DWORD WINAPI ThreadSapos(LPVOID lpParam)
 	HANDLE hidk = CreateEvent(NULL, TRUE, FALSE, TEXT("eventoPipeWrite"));
 
 	HANDLE keyPress = CreateEvent(NULL, TRUE, FALSE, TEXT("eventoSapoMOVEMENT"));
+
+	HANDLE hMutexEventoEnviarMapaCliente = CreateMutex(NULL, FALSE, TEXT("MutexServerPipeEsperarEnviarEventoParaEnviarMapaCliente"));
+
 	while (1) {
 		WaitForSingleObject(keyPress,INFINITE);
 		//wait por evento de q sapo se mexeu que vem do receive ou o caracas
 		//int x = data->frog_pos[0].row;
 		data->Map[data->frog_pos[0].row * MAX_COLS + data->frog_pos[0].col] = FROGGE_ELEMENT;
+		WaitForSingleObject(hMutexEventoEnviarMapaCliente, INFINITE);
 		SetEvent(hidk, INFINITE);
 		ResetEvent(hidk);
+		ReleaseMutex(hMutexEventoEnviarMapaCliente);
 	}
 	return 1;
 }
@@ -308,8 +313,11 @@ DWORD WINAPI ThreadRoads(LPVOID lpParam)
 		ResetEvent(data->hEventRoads);
 		Sleep(data->speed);
 		HANDLE hidk = CreateEvent(NULL, TRUE, FALSE, TEXT("eventoPipeWrite"));
+		HANDLE hMutexEventoEnviarMapaCliente = CreateMutex(NULL, FALSE, TEXT("MutexServerPipeEsperarEnviarEventoParaEnviarMapaCliente"));
+		WaitForSingleObject(hMutexEventoEnviarMapaCliente,INFINITE);
 		SetEvent(hidk, INFINITE);
 		ResetEvent(hidk);
+		ReleaseMutex(hMutexEventoEnviarMapaCliente);
 	}
 	return 0;
 }
