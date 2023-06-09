@@ -3,6 +3,13 @@
 #include "../Frog/Utils.h"
 #include "../Frog/Struct.h"
 
-HANDLE createMemoryMapping(){
-	return CreateFileMapping(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, sizeof(GameData), FILE_MAPPING_GAME_DATA);
+HANDLE createMemoryMapping(DWORD size,LPCSTR name){
+	return CreateFileMapping(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, size, name);
+}
+
+void copyMemoryOperation(PVOID destiny, VOID* source, SIZE_T Length) {
+	CopyMemory(destiny,source,Length);
+}
+void clearMemoryOperation(PVOID destination, SIZE_T Length) {
+	ZeroMemory(destination, Length);
 }

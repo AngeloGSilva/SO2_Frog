@@ -305,7 +305,8 @@ DWORD WINAPI ThreadRoads(LPVOID lpParam)
 				data->Map[temp[i].row * MAX_COLS + temp[i].col] = CAR_ELEMENT;
 			}
 		}
-		CopyMemory(data->sharedMap, data->Map, sizeof(TCHAR) * (MAX_ROWS + SKIP_BEGINING_END) * MAX_COLS);
+		copyMemoryOperation(data->sharedMap, data->Map, sizeof(TCHAR) * (MAX_ROWS + SKIP_BEGINING_END) * MAX_COLS);
+
 		ReleaseMutex(data->hMutex);
 
 		//Criamos evento para que as threads ja consiga ler
@@ -441,7 +442,7 @@ DWORD WINAPI ThreadBufferCircular(LPVOID lpParam)
 		WaitForSingleObject(dados->hSemLeitura, INFINITE);
 		WaitForSingleObject(dados->hMutex, INFINITE);
 		//copiar o conteudo para a memoria partilhada
-		CopyMemory(&space, &dados->BufferCircular->espacosDeBuffer[dados->BufferCircular->posLeitura], sizeof(EspacoBuffer));
+		copyMemoryOperation(&space, &dados->BufferCircular->espacosDeBuffer[dados->BufferCircular->posLeitura], sizeof(EspacoBuffer));
 		dados->BufferCircular->posLeitura++;
 		if (dados->BufferCircular->posLeitura == 10)
 		{
@@ -639,7 +640,7 @@ int _tmain(int argc, TCHAR* argv[]) {
 	}
 
 	//memoria partilhada com operador com info total do jogo
-	HANDLE HMapFile = CreateFileMapping(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, sizeof(GameData), FILE_MAPPING_GAME_DATA);
+	HANDLE HMapFile = createMemoryMapping(sizeof(GameData), FILE_MAPPING_GAME_DATA);
 	if (HMapFile == NULL)
 	{
 		_tprintf(TEXT("[ERRO] CreateFileMapping GameInfo\n"));
@@ -664,8 +665,8 @@ int _tmain(int argc, TCHAR* argv[]) {
 
 	WaitForSingleObject(data.Serv_HMutex, INFINITE);
 
-	ZeroMemory(pBuf, sizeof(GameData));
-	CopyMemory(pBuf, &data, sizeof(GameData));
+	clearMemoryOperation(pBuf, sizeof(GameData));
+	copyMemoryOperation(pBuf, &data, sizeof(GameData));
 
 	//libertat o mutex
 	ReleaseMutex(data.Serv_HMutex);
@@ -681,7 +682,7 @@ int _tmain(int argc, TCHAR* argv[]) {
 	//gerar thread por estrada para tratar do movimento do carro na estrada especifica
 	for (int i = 0; i < data.numRoads; i++)
 	{
-		HANDLE HMapFile = CreateFileMapping(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, sizeof(TCHAR) * (MAX_ROWS + SKIP_BEGINING_END) * MAX_COLS, FILE_MAPPING_THREAD_ROADS);
+		HANDLE HMapFile = createMemoryMapping(sizeof(TCHAR) * (MAX_ROWS + SKIP_BEGINING_END) * MAX_COLS, FILE_MAPPING_THREAD_ROADS);
 		if (HMapFile == NULL)
 		{
 			_tprintf(TEXT("[ERRO] CreateFileMapping Mapa\n"));
@@ -750,7 +751,7 @@ int _tmain(int argc, TCHAR* argv[]) {
 	HANDLE HMapFileBuffer = OpenFileMapping(FILE_MAP_ALL_ACCESS, FALSE, FILE_MAPPING_BUFFER_CIRCULAR);
 	if (HMapFileBuffer == NULL)
 	{
-		HMapFileBuffer = CreateFileMapping(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, sizeof(Buffer), FILE_MAPPING_BUFFER_CIRCULAR);
+		HMapFileBuffer = createMemoryMapping(sizeof(Buffer), FILE_MAPPING_BUFFER_CIRCULAR);
 		dataThread.BufferCircular = (pBuffer)MapViewOfFile(HMapFileBuffer, FILE_MAP_ALL_ACCESS, 0, 0, 0);
 		dataThread.BufferCircular->nConsumidores = 0;
 		dataThread.BufferCircular->nProdutores = 0;

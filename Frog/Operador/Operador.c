@@ -69,7 +69,7 @@ DWORD WINAPI ThreadRoads(LPVOID lpParam)
 	{
 		WaitForSingleObject(data->hEventRoads, INFINITE);
 		WaitForSingleObject(data->hMutex, INFINITE);
-		CopyMemory(&temp, &data->sharedMap, sizeof(TCHAR) * (MAX_ROWS + SKIP_BEGINING_END) * MAX_COLS);
+		copyMemoryOperation(&temp, &data->sharedMap, sizeof(TCHAR) * (MAX_ROWS + SKIP_BEGINING_END) * MAX_COLS);
 		HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
 		for (int i = 0; i < MAX_COLS; i++)
 		{
@@ -161,7 +161,7 @@ DWORD WINAPI ThreadBufferCircular(LPVOID lpParam)
 		WaitForSingleObject(dados->hMutex, INFINITE);
 
 		//copiar o conteudo para a memoria partilhada
-		CopyMemory(&dados->BufferCircular->espacosDeBuffer[dados->BufferCircular->posEscrita], &space, sizeof(EspacoBuffer));
+		copyMemoryOperation(&dados->BufferCircular->espacosDeBuffer[dados->BufferCircular->posEscrita], &space, sizeof(EspacoBuffer));
 		dados->BufferCircular->posEscrita++;
 		if (dados->BufferCircular->posEscrita == 10)
 		{
@@ -239,7 +239,7 @@ int _tmain(int argc, TCHAR* argv[]) {
 	GameData data;
 
 	//data tem de sair e so ficar pbuf penso eu
-	HANDLE HMapFile = createMemoryMapping();
+	HANDLE HMapFile = createMemoryMapping(sizeof(GameData), FILE_MAPPING_GAME_DATA);
 	pGameData pBuf = (GameData*)MapViewOfFile(HMapFile, FILE_MAP_ALL_ACCESS, 0, 0, 0);
 	//data.event = OpenEvent(READ_CONTROL,TRUE, TEXT("TP_Evento"));
 	data.Serv_HEvent = CreateEvent(NULL, TRUE, FALSE, SHARED_MEMORY_EVENT);
@@ -277,7 +277,7 @@ int _tmain(int argc, TCHAR* argv[]) {
 
 	TStartEnd StartEndData[1];
 
-	HANDLE HMapFileBeginEnd = CreateFileMapping(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, sizeof(TCHAR) * (MAX_ROWS + SKIP_BEGINING_END) * MAX_COLS, FILE_MAPPING_THREAD_ROADS);
+	HANDLE HMapFileBeginEnd = createMemoryMapping(sizeof(TCHAR) * (MAX_ROWS + SKIP_BEGINING_END) * MAX_COLS, FILE_MAPPING_THREAD_ROADS);
 	//_tprintf(TEXT("SO2_MAP_OLA") + (i + 2));
 	if (HMapFileBeginEnd == NULL)
 	{
@@ -314,7 +314,8 @@ int _tmain(int argc, TCHAR* argv[]) {
 	//criar Threads para lidar com os carros por estrada
 	for (int i = 0; i < pBuf->numRoads; i++)
 	{
-		HANDLE HMapFile = CreateFileMapping(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, sizeof(TCHAR) * (MAX_ROWS + SKIP_BEGINING_END) * MAX_COLS, FILE_MAPPING_THREAD_ROADS);
+		//TODO Nao me lembro o porque de isto ser preciso
+		HANDLE HMapFile = createMemoryMapping(sizeof(TCHAR) * (MAX_ROWS + SKIP_BEGINING_END) * MAX_COLS, FILE_MAPPING_THREAD_ROADS);
 		//_tprintf(TEXT("SO2_MAP_OLA") + (i + 2));
 		if (HMapFile == NULL)
 		{
@@ -359,7 +360,7 @@ int _tmain(int argc, TCHAR* argv[]) {
 	HANDLE HMapFileBuffer = OpenFileMapping(FILE_MAP_ALL_ACCESS, FALSE, FILE_MAPPING_BUFFER_CIRCULAR);
 	if (HMapFileBuffer == NULL)
 	{
-		HMapFileBuffer = CreateFileMapping(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, sizeof(Buffer), FILE_MAPPING_BUFFER_CIRCULAR);
+		HMapFileBuffer = createMemoryMapping(sizeof(Buffer), FILE_MAPPING_BUFFER_CIRCULAR);
 		dataThread.BufferCircular = (pBuffer)MapViewOfFile(HMapFileBuffer, FILE_MAP_ALL_ACCESS, 0, 0, 0);
 		dataThread.BufferCircular->nConsumidores = 0;
 		dataThread.BufferCircular->nProdutores = 0;
