@@ -56,7 +56,7 @@ DWORD WINAPI send(LPVOID lpParam)
 
 //nao sei se a logica de averificar se tem carro aqui é o melhor sitio mas pahh e falta o obstaculo
 //Falta ainda a parte de estar parado e o carro passar por ele.... esta parte  vai ser mais chata, talvez com uma flag ou algo assim na thread roads mas ja meti la para testar algo
-void HandleFroggeMovement(int frogge, PipeFroggeInput input, pFrogPos pos, TCHAR* map) {
+void HandleFroggeMovement(int frogge, PipeFroggeInput input, pFrogPos pos, TCHAR* map, int numRoads) {
 	//TODO nao sei se +e o sito certo para fazer o evento de atualizar o mapa com o sapo
 	HANDLE keyPress = CreateEvent(NULL, TRUE, FALSE, TEXT("eventoSapoMOVEMENT"));
 	switch (input.pressInput)
@@ -68,6 +68,9 @@ void HandleFroggeMovement(int frogge, PipeFroggeInput input, pFrogPos pos, TCHAR
 			if (map[pos[frogge].row * MAX_COLS + pos[frogge].col] == CAR_ELEMENT) {
 				//isto vai depois ser um flag q é atualizada para informar que o sapo perdeu ou no multiplayer tem de voltar para o inicio
 				_tprintf(TEXT("PERDEU PQ ESTA NUM CARRO\n"));
+				//ou simplemente fazer isto... podes ver a melhor maneira
+				pos[frogge].row = numRoads + 2;
+				pos[frogge].col = (rand() % (MAX_COLS - 2)) + 1;
 			}
 		}
 		break;
@@ -79,6 +82,9 @@ void HandleFroggeMovement(int frogge, PipeFroggeInput input, pFrogPos pos, TCHAR
 			if (map[pos[frogge].row * MAX_COLS + pos[frogge].col] == CAR_ELEMENT) {
 				//isto vai depois ser um flag q é atualizada para informar que o sapo perdeu ou no multiplayer tem de voltar para o inicio
 				_tprintf(TEXT("PERDEU PQ ESTA NUM CARRO\n"));
+				//ou simplemente fazer isto... podes ver a melhor maneira
+				pos[frogge].row = numRoads + 2;
+				pos[frogge].col = (rand() % (MAX_COLS - 2)) + 1;
 			}
 		}
 		break;
@@ -89,6 +95,9 @@ void HandleFroggeMovement(int frogge, PipeFroggeInput input, pFrogPos pos, TCHAR
 			if (map[pos[frogge].row * MAX_COLS + pos[frogge].col] == CAR_ELEMENT) {
 				//isto vai depois ser um flag q é atualizada para informar que o sapo perdeu ou no multiplayer tem de voltar para o inicio
 				_tprintf(TEXT("PERDEU PQ ESTA NUM CARRO\n"));
+				//ou simplemente fazer isto... podes ver a melhor maneira
+				pos[frogge].row = numRoads + 2;
+				pos[frogge].col = (rand() % (MAX_COLS - 2)) + 1;
 			}
 		}
 		break;
@@ -100,6 +109,9 @@ void HandleFroggeMovement(int frogge, PipeFroggeInput input, pFrogPos pos, TCHAR
 			if (map[pos[frogge].row * MAX_COLS + pos[frogge].col] == CAR_ELEMENT) {
 				//isto vai depois ser um flag q é atualizada para informar que o sapo perdeu ou no multiplayer tem de voltar para o inicio
 				_tprintf(TEXT("PERDEU PQ ESTA NUM CARRO\n"));
+				//ou simplemente fazer isto... podes ver a melhor maneira
+				pos[frogge].row = numRoads + 2;
+				pos[frogge].col = (rand() % (MAX_COLS - 2)) + 1;
 			}
 		}
 		break;
@@ -150,7 +162,7 @@ DWORD WINAPI receive(LPVOID lpParam)
 
 		ReleaseMutex(hmutexhere);
 		WaitForSingleObject(hmutexRoads, INFINITE);
-		HandleFroggeMovement(0, receiveInfo, dados->gamedatatemp->frog_pos,dados->gamedatatemp->map);
+		HandleFroggeMovement(0, receiveInfo, dados->gamedatatemp->frog_pos,dados->gamedatatemp->map,dados->gamedatatemp->numRoads);
 		ReleaseMutex(hmutexRoads);
 		_tprintf(TEXT("[receive] Recebi %d bytes: '%d'... (ReadFile)\n"), n, receiveInfo.pressInput);
 	}
@@ -257,7 +269,11 @@ DWORD WINAPI ThreadRoads(LPVOID lpParam)
 			}
 			else if (data->Map[data->id * MAX_COLS + i] == FROGGE_ELEMENT)
 			{
-				data->Map[data->id * MAX_COLS + i] = FROGGE_ELEMENT;
+				if (data->frog_pos[0].row == data->id && data->frog_pos[0].col == i)
+				{
+					data->Map[data->id * MAX_COLS + i] = FROGGE_ELEMENT;
+				}else
+					data->Map[data->id * MAX_COLS + i] = ROAD_ELEMENT;
 			}
 			else
 			{
@@ -275,6 +291,11 @@ DWORD WINAPI ThreadRoads(LPVOID lpParam)
 				if (data->Map[temp[i].row * MAX_COLS + temp[i].col] == FROGGE_ELEMENT) {
 					//isto vai depois ser um flag q é atualizada para informar que o sapo perdeu ou no multiplayer tem de voltar para o inicio
 					_tprintf(TEXT("PERDEU PQ ESTA NUM CARRO\n"));
+					//ou simplemente fazer isto... podes ver a melhor maneira
+					data->frog_pos[0].row = data->numRoads + 2;
+					data->frog_pos[0].col = (rand() % (MAX_COLS - 2)) + 1;
+					//isto nao pode ser assim pq deixa o 'corpo' do sapo para tras e nao o reseta... ou nao pq depois meto o carro.. ja nao sei bem
+					data->Map[data->frog_pos[0].row * MAX_COLS + data->frog_pos[0].col] = FROGGE_ELEMENT;
 				}
 				data->Map[temp[i].row * MAX_COLS + temp[i].col] = CAR_ELEMENT;
 			}
@@ -666,7 +687,9 @@ int _tmain(int argc, TCHAR* argv[]) {
 		}
 
 		//este frog ja nao deve ser mais necessario
+		//temporario acho
 		RoadsData[i].frog_pos = &data.frog_pos;
+		RoadsData[i].numRoads = data.numRoads;
 
 		RoadsData[i].Map = &data.map;
 		RoadsData[i].car_pos = &data.car_pos;

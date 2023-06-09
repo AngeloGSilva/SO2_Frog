@@ -42,6 +42,7 @@ typedef struct {
 typedef struct {
 	int *terminar;
 	int speed;
+	int numRoads; //so para reset do sapo.. temporario
 	int numCars;
 	pCarPos car_pos;
 	TCHAR* Map;
