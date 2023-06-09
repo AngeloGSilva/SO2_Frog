@@ -76,7 +76,7 @@ void HandleFroggeMovement(int frogge, PipeFroggeInput input, pFrogPos pos, TCHAR
 		break;
 	case KEY_DOWN:
 		//passar as estradas para aqui
-		if (pos[frogge].row + 1 != 12)
+		if (pos[frogge].row + 1 != numRoads + 3)
 		{
 			pos[frogge].row = pos[frogge].row + 1;
 			if (map[pos[frogge].row * MAX_COLS + pos[frogge].col] == CAR_ELEMENT) {
