@@ -357,7 +357,7 @@ int _tmain(int argc, TCHAR* argv[]) {
 	dataThread.hSemEscrita = CreateSemaphore(NULL, 10, 10, BUFFER_CIRCULAR_SEMAPHORE_ESCRITOR);
 	dataThread.hSemLeitura = CreateSemaphore(NULL, 0, 10, BUFFER_CIRCULAR_SEMAPHORE_LEITORE);
 
-	HANDLE HMapFileBuffer = OpenFileMapping(FILE_MAP_ALL_ACCESS, FALSE, FILE_MAPPING_BUFFER_CIRCULAR);
+	HANDLE HMapFileBuffer = openMemoryMapping(FILE_MAP_ALL_ACCESS,FILE_MAPPING_BUFFER_CIRCULAR);
 	if (HMapFileBuffer == NULL)
 	{
 		HMapFileBuffer = createMemoryMapping(sizeof(Buffer), FILE_MAPPING_BUFFER_CIRCULAR);
