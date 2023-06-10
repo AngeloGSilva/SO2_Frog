@@ -8,12 +8,16 @@ typedef struct {
 	int row;
 }CarPos, *pCarPos;
 
+//talvez trocar nome
 typedef struct {
+	int identificador;
 	int col;
 	int row;
+	int pontuacao;
 }FrogPos, *pFrogPos;
 
 typedef struct {
+	int nivel;
 	int *terminar;
 	HANDLE Serv_HMutex, Serv_HEvent;
 	DWORD carSpeed;
@@ -93,11 +97,19 @@ typedef struct {
 	pFrogPos frog_pos;
 }TdadosUpdateSapoMapa, * pTdadosUpdateSapoMapa;
 
+//estrutura para mandar para o cliente de cada vez
+typedef struct {
+	TCHAR map[MAX_ROWS + 4][MAX_COLS];
+	int numRoads;
+}PipeSendToClient, *pPipeSendToClient;
+
 //estrutra para passar os dados para as threads relacionadas com o named pipe
 typedef struct {
 	HANDLE hPipe[3];
 	HANDLE hMutex; //para controlar o numClientes
-	GameData* gamedatatemp;
+	PipeSendToClient structToSend;
+	pFrogPos frogPos;
+	TCHAR *mapToShare;
 	int numClientes;
 	int terminar;
 }TdadosPipeSendReceive, * pTdadosPipeSendReceive;
@@ -108,3 +120,4 @@ typedef struct {
 	int y;
 	int pressInput;
 }PipeFroggeInput, *pPipeFroggeInput;
+

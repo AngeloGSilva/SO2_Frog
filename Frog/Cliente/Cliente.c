@@ -63,7 +63,7 @@ HANDLE hMutex;
 
 HDC memDC = NULL; // copia do device context que esta em memoria, tem de ser inicializado a null
 HBITMAP hBitmapDB; // copia as filleracteristicas da janela original para a janela que vai estar em memoria
-GameData* AllGameData ;
+pPipeSendToClient AllGameData ;
 HANDLE hPipe;
 
 
@@ -118,7 +118,7 @@ DWORD WINAPI mapPipe(LPVOID lpParam)
 	while (1) {
 		WaitForSingleObject(heventmapread, INFINITE);
 		WaitForSingleObject(hMutex, INFINITE);
-		ret = ReadFile(hPipe, AllGameData, sizeof(GameData), &n, NULL);
+		ret = ReadFile(hPipe, AllGameData, sizeof(PipeSendToClient), &n, NULL);
 		InvalidateRect(hWndGlobal, NULL, FALSE);
 		ReleaseMutex(hMutex);
 	}
@@ -140,7 +140,7 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR lpCmdLine, int nC
 	WNDCLASSEX wcApp;	// WNDCLASSEX é uma estrutura cujos membros servem para
 	// definir as filleracterísticas da classe da janela
 	//mapa
-	AllGameData = (GameData*)malloc(sizeof(GameData));
+	AllGameData = (PipeSendToClient*)malloc(sizeof(PipeSendToClient));
 
 	if (!WaitNamedPipe(PIPE_NAME, NMPWAIT_WAIT_FOREVER)) {
 	}
@@ -363,9 +363,8 @@ LRESULT CALLBACK TrataEventos(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPara
 	{
 
 	case WM_CREATE:
-		hcar = (HBITMAP)LoadImage(NULL, TEXT("car.bmp"),
-			IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE);
-
+		hcar = (HBITMAP)LoadImage(NULL, TEXT("car.bmp"),IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE);
+		//hcar = LoadBitmap(GetModuleHandle(NULL), MAKEINTRESOURCE(IDB_PNG_CAR_RIGHT));
 		GetObject(hcar, sizeof(car), &car);
 
 		hfrog = LoadBitmap(GetModuleHandle(NULL), MAKEINTRESOURCE(IDB_BITMAP_SAPO));
@@ -407,7 +406,7 @@ LRESULT CALLBACK TrataEventos(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPara
 		hBrush = CreateSolidBrush(RGB(255, 0, 0));
 		SelectObject(memDC, hBrush);
 		for (int i = 0; i < AllGameData->numRoads + 4; i++) {
-			for (int j = 0; j < 20; j++) {
+			for (int j = 0; j < MAX_COLS; j++) {
 				TCHAR buffer = AllGameData->map[i][j];
 				if (buffer == CAR_ELEMENT)
 				{

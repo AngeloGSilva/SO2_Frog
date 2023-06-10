@@ -12,6 +12,53 @@
 #include <stdlib.h>
 #include <string.h>
 
+void resetMapCars(TCHAR* map, int numRoads, pCarPos car_pos, int* numCars) {
+	*numCars = 0;
+	//desenho do mapa... limites do mapa e numero de estradas
+	for (int i = 0; i < numRoads + SKIP_BEGINING_END; i++)
+	{
+		for (int j = 0; j < MAX_COLS; j++)
+		{
+			if (i == 0 || j == 0 || i == numRoads + 3 || j == MAX_COLS - 1)
+				map[i * MAX_COLS + j] = BLOCK_ELEMENT;
+			else if (i == 1 || i == numRoads + SKIP_BEGINING) {
+				map[i * MAX_COLS + j] = BEGIN_END_ELEMENT;
+			}
+			else
+				map[i * MAX_COLS + j] = ROAD_ELEMENT;
+
+		}
+	}
+
+	//Gerar carros
+	for (int i = 0; i < numRoads; i++)
+	{
+		int carsInRoad = (rand() % 8) + 1;
+		for (; carsInRoad > 0; carsInRoad--) {
+			car_pos[*numCars].row = i + SKIP_BEGINING; //X -> linha
+			int posInRoad = 0;
+			do {
+				posInRoad = (rand() % (MAX_COLS - 2)) + 1;
+			} while (map[(i + SKIP_BEGINING) * MAX_COLS + posInRoad] == 'H' || map[(i + SKIP_BEGINING) * MAX_COLS + posInRoad] == '#');
+			//_tprintf(TEXT("PUS AQUI %d %d\n"), posInRoad, i + SKIP_BEGINING);
+			car_pos[*numCars].col = posInRoad; //y -> coluna
+			map[(i + SKIP_BEGINING) * MAX_COLS + posInRoad] = CAR_ELEMENT;
+			*numCars = *numCars + 1;
+		}
+	}
+	_tprintf(TEXT("[INFO] Numero total de carros %d\n"), *numCars);
+}
+
+
+void copyMapArray(int numRoads, TCHAR *mapOriginal, TCHAR *mapSend) {
+	for (int i = 0; i < numRoads + 4; i++)
+	{
+		for (int j = 0; j < MAX_COLS; j++) {
+			mapSend[i * MAX_COLS + j] = mapOriginal[i * MAX_COLS + j];
+		}
+	}
+}
+
 DWORD WINAPI send(LPVOID lpParam)
 {
 	TdadosPipeSendReceive* dados = (TdadosPipeSendReceive*)lpParam;
@@ -36,8 +83,10 @@ DWORD WINAPI send(LPVOID lpParam)
 		WaitForSingleObject(heventmapwrite,INFINITE);
 		Sleep(100);
 		WaitForSingleObject(hmutexhere, INFINITE);
+		copyMapArray(dados->structToSend.numRoads,dados->mapToShare, dados->structToSend.map);
+		//CopyMemory(dados->structToSend.map, dados->mapToShare, sizeof(dados->mapToShare));
 		for (i = 0; i < dados->numClientes; i++) {
-			if (!WriteFile(dados->hPipe[i], dados->gamedatatemp,sizeof(GameData), &n, NULL)) {
+			if (!WriteFile(dados->hPipe[i], &dados->structToSend,sizeof(PipeSendToClient), &n, NULL)) {
 				_tprintf(TEXT("[ERRO] Escrever no pipe! (WriteFile)\n"));
 				exit(-1);
 			}
@@ -71,6 +120,11 @@ void HandleFroggeMovement(int frogge, PipeFroggeInput input, pFrogPos pos, TCHAR
 				//ou simplemente fazer isto... podes ver a melhor maneira
 				pos[frogge].row = numRoads + 2;
 				pos[frogge].col = (rand() % (MAX_COLS - 2)) + 1;
+			} else if(pos[frogge].row == 1)
+			{
+				_tprintf(TEXT("PASSOU DE NIVEL\n"));
+				pos[frogge].pontuacao += 1;
+				_tprintf(TEXT("Pontuacao passou a %d\n"), pos[frogge].pontuacao);
 			}
 		}
 		break;
@@ -167,7 +221,7 @@ DWORD WINAPI receive(LPVOID lpParam)
 
 		ReleaseMutex(hmutexhere);
 		WaitForSingleObject(hmutexRoads, INFINITE);
-		HandleFroggeMovement(0, receiveInfo, dados->gamedatatemp->frog_pos,dados->gamedatatemp->map,dados->gamedatatemp->numRoads);
+		HandleFroggeMovement(0, receiveInfo, dados->frogPos,dados->structToSend.map,dados->structToSend.numRoads);
 		ReleaseMutex(hmutexRoads);
 		_tprintf(TEXT("[receive] Recebi %d bytes: '%d'... (ReadFile)\n"), n, receiveInfo.pressInput);
 	}
@@ -590,41 +644,43 @@ int _tmain(int argc, TCHAR* argv[]) {
 		return 1;
 	}
 
-
+	data.nivel = 1;
 	data.numCars = 0;
-	//desenho do mapa... limites do mapa e numero de estradas
-	for (int i = 0; i < data.numRoads + SKIP_BEGINING_END; i++)
-	{
-		for (int j = 0; j < MAX_COLS; j++)
-		{
-			if (i == 0 || j == 0 || i == data.numRoads + 3 || j == MAX_COLS - 1)
-				data.map[i][j] = BLOCK_ELEMENT;
-			else if (i == 1 || i == data.numRoads + SKIP_BEGINING) {
-				data.map[i][j] = BEGIN_END_ELEMENT;
-			}
-			else
-				data.map[i][j] = ROAD_ELEMENT;
+	resetMapCars(data.map,data.numRoads,&data.car_pos,&data.numCars);
 
-		}
-	}
+	////desenho do mapa... limites do mapa e numero de estradas
+	//for (int i = 0; i < data.numRoads + SKIP_BEGINING_END; i++)
+	//{
+	//	for (int j = 0; j < MAX_COLS; j++)
+	//	{
+	//		if (i == 0 || j == 0 || i == data.numRoads + 3 || j == MAX_COLS - 1)
+	//			data.map[i][j] = BLOCK_ELEMENT;
+	//		else if (i == 1 || i == data.numRoads + SKIP_BEGINING) {
+	//			data.map[i][j] = BEGIN_END_ELEMENT;
+	//		}
+	//		else
+	//			data.map[i][j] = ROAD_ELEMENT;
 
-	//Gerar carros
-	for (int i = 0; i < data.numRoads; i++)
-	{
-		int carsInRoad = (rand() % 8) + 1;
-		for (; carsInRoad > 0; carsInRoad--) {
-			data.car_pos[data.numCars].row = i + SKIP_BEGINING; //X -> linha
-			int posInRoad = 0;
-			do {
-				posInRoad = (rand() % (MAX_COLS - 2)) + 1;
-			} while (data.map[i + SKIP_BEGINING][posInRoad] == 'H' || data.map[i + SKIP_BEGINING][posInRoad] == '#');
-			//_tprintf(TEXT("PUS AQUI %d %d\n"), posInRoad, i + SKIP_BEGINING);
-			data.car_pos[data.numCars].col = posInRoad; //y -> coluna
-			data.map[i + SKIP_BEGINING][posInRoad] = CAR_ELEMENT;
-			data.numCars++;
-		}
-	}
-	_tprintf(TEXT("[INFO] Numero total de carros %d\n"), data.numCars);
+	//	}
+	//}
+
+	////Gerar carros
+	//for (int i = 0; i < data.numRoads; i++)
+	//{
+	//	int carsInRoad = (rand() % 8) + 1;
+	//	for (; carsInRoad > 0; carsInRoad--) {
+	//		data.car_pos[data.numCars].row = i + SKIP_BEGINING; //X -> linha
+	//		int posInRoad = 0;
+	//		do {
+	//			posInRoad = (rand() % (MAX_COLS - 2)) + 1;
+	//		} while (data.map[i + SKIP_BEGINING][posInRoad] == 'H' || data.map[i + SKIP_BEGINING][posInRoad] == '#');
+	//		//_tprintf(TEXT("PUS AQUI %d %d\n"), posInRoad, i + SKIP_BEGINING);
+	//		data.car_pos[data.numCars].col = posInRoad; //y -> coluna
+	//		data.map[i + SKIP_BEGINING][posInRoad] = CAR_ELEMENT;
+	//		data.numCars++;
+	//	}
+	//}
+	//_tprintf(TEXT("[INFO] Numero total de carros %d\n"), data.numCars);
 
 	//Gerar sapos (Primeira meta....) // alterar para ser com opcao do menu
 	int sapRowRandom = data.numRoads + 2; //+3 para ficar na penultima estrada.
@@ -636,6 +692,8 @@ int _tmain(int argc, TCHAR* argv[]) {
 		} while (data.map[sapRowRandom][sapColRandom] == 'S');
 		data.frog_pos[i].col = sapColRandom;
 		data.frog_pos[i].row = sapRowRandom;
+		data.frog_pos[i].identificador = i;
+		data.frog_pos[i].pontuacao = 0;
 		data.map[sapRowRandom][sapColRandom] = FROGGE_ELEMENT;
 	}
 
@@ -829,7 +887,12 @@ int _tmain(int argc, TCHAR* argv[]) {
 
 	dadosPipe.numClientes = 0;
 	dadosPipe.terminar = 0;
-	dadosPipe.gamedatatemp = &data;
+	dadosPipe.mapToShare = &data.map;
+	dadosPipe.structToSend.numRoads = data.numRoads;
+	//dadosPipe.gamedatatemp = &data;
+	//dadosPipe.numRoads = data.numRoads;
+	//dadosPipe.mapToShare = &data.map;
+	dadosPipe.frogPos = &data.frog_pos;
 	dadosPipe.hMutex = CreateMutex(NULL, FALSE, NULL); //Criação do mutex
 
 	if (dadosPipe.hMutex == NULL) {
