@@ -140,29 +140,7 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR lpCmdLine, int nC
 	WNDCLASSEX wcApp;	// WNDCLASSEX é uma estrutura cujos membros servem para
 	// definir as filleracterísticas da classe da janela
 	//mapa
-	AllGameData = (PipeSendToClient*)malloc(sizeof(PipeSendToClient));
-
-	if (!WaitNamedPipe(PIPE_NAME, NMPWAIT_WAIT_FOREVER)) {
-	}
-	hPipe = CreateFile(PIPE_NAME, GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
-	if (hPipe == NULL) {
-		//tratar
-	}
-	hMutex = CreateMutex(NULL,FALSE,TEXT("MutexClientPipe"));
-
-	HANDLE hThreadMapPipe = CreateThread(
-		NULL,    // Thread attributes
-		0,       // Stack size (0 = use default)
-		mapPipe, // Thread start address
-		NULL,    // Parameter to pass to the thread
-		0,       // Creation flags
-		NULL);   // Thread id   // returns the thread identifier 
-	if (hThreadMapPipe == NULL)
-	{
-		_tprintf(TEXT("[ERRO] Thread pipe Map\n"));
-		return 1;
-	}
-
+	
 // ============================================================================
 // 1. Definição das filleracterísticas da janela "wcApp"
 //    (Valores dos elementos da estrutura "wcApp" do tipo WNDCLASSEX)
@@ -211,8 +189,8 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR lpCmdLine, int nC
 		WS_OVERLAPPEDWINDOW,	// Estilo da janela (WS_OVERLAPPED= normal)
 		CW_USEDEFAULT,		// Posição x pixels (default=à direita da última)
 		CW_USEDEFAULT,		// Posição y pixels (default=abaixo da última)
-		CW_USEDEFAULT,		// Largura da janela (em pixels)
-		CW_USEDEFAULT,		// Altura da janela (em pixels)
+		600,		// Largura da janela (em pixels)
+		300,		// Altura da janela (em pixels)
 		(HWND)HWND_DESKTOP,	// handle da janela pai (se se criar uma a partir de
 		// outra) ou HWND_DESKTOP se a janela for a primeira,
 		// criada a partir do "desktop"
@@ -221,20 +199,20 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR lpCmdLine, int nC
 		// passado num dos parâmetros de WinMain()
 		0);				// Não há parâmetros adicionais para a janela
 
-	HDC hdc; // representa a propria janela
-	RECT rect;
+	//HDC hdc; // representa a propria janela
+	//RECT rect;
 
-	// fillerregar o bitmap
-	hBmp = (HBITMAP)LoadImage(NULL, TEXT("filler.bmp"), IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE);
-	GetObject(hBmp, sizeof(bmp), &bmp); // vai busfiller info sobre o handle do bitmap
+	//// fillerregar o bitmap
+	//hBmp = (HBITMAP)LoadImage(NULL, TEXT("filler.bmp"), IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE);
+	//GetObject(hBmp, sizeof(bmp), &bmp); // vai busfiller info sobre o handle do bitmap
 
-	hdc = GetDC(hWnd);
-	// criamos copia do device context e colofiller em memoria
-	bmpDC = CreateCompatibleDC(hdc);
-	// aplicamos o bitmap ao device context
-	SelectObject(bmpDC, hBmp);
+	//hdc = GetDC(hWnd);
+	//// criamos copia do device context e colofiller em memoria
+	//bmpDC = CreateCompatibleDC(hdc);
+	//// aplicamos o bitmap ao device context
+	//SelectObject(bmpDC, hBmp);
 
-	ReleaseDC(hWnd, hdc);
+	//ReleaseDC(hWnd, hdc);
 
 
 	// EXEMPLO
@@ -243,14 +221,12 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR lpCmdLine, int nC
 	// imagem centrada, começar no 380px e acabar no 420 px
 	// (800/2) - (40/2) = 400 - 20 = 380px
 
-	// definir as posicoes inicias da imagem
-	GetClientRect(hWnd, &rect);
-	xBitmap = (rect.right / 2) - (bmp.bmWidth / 2);
-	yBitmap = (rect.bottom / 2) - (bmp.bmHeight / 2);
+	//// definir as posicoes inicias da imagem
+	//GetClientRect(hWnd, &rect);
 
-	// limite direito é a largura da janela - largura da imagem
-	limDir = rect.right - bmp.bmWidth;
-	hWndGlobal = hWnd;
+	//// limite direito é a largura da janela - largura da imagem
+	//limDir = rect.right - bmp.bmWidth;
+	//hWndGlobal = hWnd;
 
 	// Cria mutex
 	//hMutex = CreateMutex(NULL, FALSE, NULL);
@@ -336,18 +312,30 @@ LRESULT CALLBACK TrataEventos(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPara
 	PAINTSTRUCT ps;
 	MINMAXINFO* mmi;
 	//keyup
-	HANDLE hcommand;
+	HANDLE hcommand = CreateEvent(NULL, TRUE, FALSE, TEXT("eventoSapo"));
 	TCHAR* message;
 	DWORD n;
 
 	static HDC bmpDC = NULL;
 	static HDC bmpDC2 = NULL;
+	static HDC bmpDC3 = NULL;
+	static HDC bpmDC4 = NULL;
+	static HDC bpmDC5 = NULL;
+
 	HBITMAP hBmp = NULL;
 	HBITMAP hcar = NULL;
+	HBITMAP hroad = NULL;
 	HBITMAP hfrog = NULL;
+	HBITMAP hlimit = NULL;
+	HBITMAP hbeginend = NULL;
+
 	static BITMAP bmp;
 	static BITMAP car;
 	static BITMAP frog;
+	static BITMAP road;
+	static BITMAP limit;
+	static BITMAP beginend;
+
 
 	//buffer
 	static HDC memDC = NULL;
@@ -363,6 +351,30 @@ LRESULT CALLBACK TrataEventos(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPara
 	{
 
 	case WM_CREATE:
+		
+		AllGameData = (PipeSendToClient*)malloc(sizeof(PipeSendToClient));
+
+		if (!WaitNamedPipe(PIPE_NAME, NMPWAIT_WAIT_FOREVER)) {
+		}
+		hPipe = CreateFile(PIPE_NAME, GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+		if (hPipe == NULL) {
+			//tratar
+		}
+		hMutex = CreateMutex(NULL, FALSE, TEXT("MutexClientPipe"));
+
+		HANDLE hThreadMapPipe = CreateThread(
+			NULL,    // Thread attributes
+			0,       // Stack size (0 = use default)
+			mapPipe, // Thread start address
+			NULL,    // Parameter to pass to the thread
+			0,       // Creation flags
+			NULL);   // Thread id   // returns the thread identifier 
+		if (hThreadMapPipe == NULL)
+		{
+			_tprintf(TEXT("[ERRO] Thread pipe Map\n"));
+			return 1;
+		}
+
 		hcar = (HBITMAP)LoadImage(NULL, TEXT("car.bmp"),IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE);
 		//hcar = LoadBitmap(GetModuleHandle(NULL), MAKEINTRESOURCE(IDB_PNG_CAR_RIGHT));
 		GetObject(hcar, sizeof(car), &car);
@@ -371,12 +383,34 @@ LRESULT CALLBACK TrataEventos(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPara
 
 		GetObject(hfrog, sizeof(frog), &frog);
 
+		hroad = LoadBitmap(GetModuleHandle(NULL), MAKEINTRESOURCE(IDB_BITMAP_ROAD));
+
+		GetObject(hroad, sizeof(road), &road);
+
+		hlimit = LoadBitmap(GetModuleHandle(NULL), MAKEINTRESOURCE(IDB_BITMAP_LIMIT));
+
+		GetObject(hlimit, sizeof(limit), &limit);
+
+		hbeginend = LoadBitmap(GetModuleHandle(NULL), MAKEINTRESOURCE(IDB_BITMAP_BEGINEND));
+
+		GetObject(hbeginend, sizeof(beginend), &beginend);
+
 		hdc = GetDC(hWnd);
 		bmpDC = CreateCompatibleDC(hdc);
 		SelectObject(bmpDC, hcar);
 
 		bmpDC2 = CreateCompatibleDC(hdc);
 		SelectObject(bmpDC2, hfrog);
+
+		bmpDC3 = CreateCompatibleDC(hdc);
+		SelectObject(bmpDC3, hroad);
+
+		bpmDC4 = CreateCompatibleDC(hdc);
+		SelectObject(bpmDC4, hlimit);
+
+		bpmDC5 = CreateCompatibleDC(hdc);
+		SelectObject(bpmDC5, hbeginend);
+
 		ReleaseDC(hWnd, hdc);
 		break;
 
@@ -396,68 +430,31 @@ LRESULT CALLBACK TrataEventos(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPara
 			// Cleanup
 		}
 		FillRect(memDC, &rect, CreateSolidBrush(RGB(0, 0, 255)));
-		PAINTSTRUCT ps;
 		// Set the brush color and style
-		HBRUSH hBrush = CreateSolidBrush(RGB(0, 0, 255));
-		SelectObject(hdc, hBrush);
 
-
-		RECT filler;
-		hBrush = CreateSolidBrush(RGB(255, 0, 0));
-		SelectObject(memDC, hBrush);
 		for (int i = 0; i < AllGameData->numRoads + 4; i++) {
 			for (int j = 0; j < MAX_COLS; j++) {
 				TCHAR buffer = AllGameData->map[i][j];
 				if (buffer == CAR_ELEMENT)
 				{
-					/*hBrush = CreateSolidBrush(RGB(255, 0, 0));
-					   filler.left = j * 16;
-					   filler.top = i * 16;
-					   filler.right = filler.left + 10;
-					   filler.bottom = filler.top +10;
-
-					   FillRect(memDC, &filler, hBrush);*/
-					BitBlt(memDC, j * 16, i * 16, car.bmWidth, car.bmHeight, bmpDC, 0, 0, SRCCOPY);
+					BitBlt(memDC, j * 20, i * 20, car.bmWidth, car.bmHeight, bmpDC, 0, 0, SRCCOPY);
 				}
 				else if (buffer == ROAD_ELEMENT) {
-					hBrush = CreateSolidBrush(RGB(128, 128, 128));
-					filler.left = j * 16;
-					filler.top = i * 16;
-					filler.right = filler.left + 10;
-					filler.bottom = filler.top + 10;
-
-					FillRect(memDC, &filler, hBrush);
+					BitBlt(memDC, j * 20, i * 20, road.bmWidth, road.bmHeight, bmpDC3, 0, 0, SRCCOPY);
 				}
 				else if (buffer == BEGIN_END_ELEMENT) {
-					hBrush = CreateSolidBrush(RGB(
-						0, 0, 0));
-					filler.left = j * 16;
-					filler.top = i * 16;
-					filler.right = filler.left + 10;
-					filler.bottom = filler.top + 10;
-
-					FillRect(memDC, &filler, hBrush);
+					BitBlt(memDC, j * 20 ,i * 20, beginend.bmWidth, beginend.bmHeight, bpmDC5, 0, 0, SRCCOPY);
 				}
 				else if (buffer == BLOCK_ELEMENT) {
-					hBrush = CreateSolidBrush(RGB(139, 69, 19));
-					filler.left = j * 16;
-					filler.top = i * 16;
-					filler.right = filler.left + 10;
-					filler.bottom = filler.top + 10;
-
-					FillRect(memDC, &filler, hBrush);
+					BitBlt(memDC, j * 20, i * 20, limit.bmWidth, limit.bmHeight, bpmDC4, 0, 0, SRCCOPY);
 				}
 				else if (buffer == FROGGE_ELEMENT) {
-					BitBlt(memDC, j * 16, i * 16, frog.bmWidth, frog.bmHeight, bmpDC2, 0, 0, SRCCOPY);
-					
+					BitBlt(memDC, j * 20, i * 20 ,frog.bmWidth, frog.bmHeight, bmpDC2, 0, 0, SRCCOPY);
 				}
-
 			}
-			DeleteObject(hBrush);
 		}
 
-		BitBlt(hdc, 0, 0, rect.right, rect.bottom,
-			memDC, 0, 0, SRCCOPY);
+		BitBlt(hdc, 0, 0, rect.right, rect.bottom,memDC, 0, 0, SRCCOPY);
 		EndPaint(hWnd, &ps);
 		break;
 
@@ -466,15 +463,10 @@ LRESULT CALLBACK TrataEventos(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPara
 
 	// redimensiona e calcula novamente o centro
 	//case WM_SIZE:
-		//WaitForSingleObject(hMutex, INFINITE);
-		//xBitmap = (LOWORD(lParam) / 2) - (bmp.bmWidth / 2);
-		//yBitmap = (HIWORD(lParam) / 2) - (bmp.bmHeight / 2);
-		//limDir = LOWORD(lParam) - bmp.bmWidth;
-		//memDC = NULL; // metemos novamente a NULL para que caso haja um resize na janela no WM_PAINT a janela em memoria é sempre atualizada com o tamanho novo
-		//ReleaseMutex(hMutex);
+	//	memDC = NULL; // metemos novamente a NULL para que caso haja um resize na janela no WM_PAINT a janela em memoria é sempre atualizada com o tamanho novo
+	//	break;
 	case WM_KEYDOWN:
-
-		hcommand = CreateEvent(NULL, TRUE, FALSE, TEXT("eventoSapo"));
+		
 		switch (wParam)
 		{
 			// caso seja duplo clique
@@ -523,6 +515,9 @@ LRESULT CALLBACK TrataEventos(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPara
 			ResetEvent(hcommand);
 			break;
 		}
+
+		MSG msg;
+		while (PeekMessage(&msg, NULL, WM_KEYDOWN, WM_KEYUP, PM_REMOVE));
 		break;
 
 	case WM_CLOSE:

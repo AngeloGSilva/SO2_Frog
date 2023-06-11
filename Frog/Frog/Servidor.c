@@ -49,7 +49,6 @@ void resetMapCars(TCHAR* map, int numRoads, pCarPos car_pos, int* numCars) {
 	_tprintf(TEXT("[INFO] Numero total de carros %d\n"), *numCars);
 }
 
-
 void copyMapArray(int numRoads, TCHAR *mapOriginal, TCHAR *mapSend) {
 	for (int i = 0; i < numRoads + 4; i++)
 	{
@@ -71,7 +70,6 @@ DWORD WINAPI send(LPVOID lpParam)
 	heventmapwrite = CreateEvent(NULL, TRUE, FALSE, TEXT("eventoPipeWrite"));
 	heventmapread = CreateEvent(NULL, TRUE, FALSE, TEXT("eventoPipeRead"));
 	hmutexhere = CreateMutex(NULL, FALSE, TEXT("MutexServerPipe"));
-
 
 	while(1){
 		//criar e fazer set evento para a janela do cliente saber que tem dados novos
@@ -113,12 +111,16 @@ void HandleFroggeMovement(int frogge, PipeFroggeInput input, pFrogPos pos, TCHAR
 	case KEY_UP:
 		if(pos[frogge].row - 1 != 0)
 		{
+			if(pos[frogge].row == 1 || pos[frogge].row == numRoads + 2)
+				map[pos[frogge].row * MAX_COLS + pos[frogge].col] = BEGIN_END_ELEMENT;
+			else
+				map[pos[frogge].row * MAX_COLS + pos[frogge].col] = ROAD_ELEMENT;
 			pos[frogge].row = pos[frogge].row - 1;
 			if (map[pos[frogge].row * MAX_COLS + pos[frogge].col] == CAR_ELEMENT) {
 				//isto vai depois ser um flag q é atualizada para informar que o sapo perdeu ou no multiplayer tem de voltar para o inicio
 				_tprintf(TEXT("PERDEU PQ ESTA NUM CARRO\n"));
 				//ou simplemente fazer isto... podes ver a melhor maneira
-				pos[frogge].row = numRoads + 2;
+				pos[frogge].row = numRoads + 1;
 				pos[frogge].col = (rand() % (MAX_COLS - 2)) + 1;
 			} else if(pos[frogge].row == 1)
 			{
@@ -132,6 +134,10 @@ void HandleFroggeMovement(int frogge, PipeFroggeInput input, pFrogPos pos, TCHAR
 		//passar as estradas para aqui
 		if (pos[frogge].row + 1 != numRoads + 3)
 		{
+			if (pos[frogge].row == 1 || pos[frogge].row == numRoads + 2)
+				map[pos[frogge].row * MAX_COLS + pos[frogge].col] = BEGIN_END_ELEMENT;
+			else
+				map[pos[frogge].row * MAX_COLS + pos[frogge].col] = ROAD_ELEMENT;
 			pos[frogge].row = pos[frogge].row + 1;
 			if (map[pos[frogge].row * MAX_COLS + pos[frogge].col] == CAR_ELEMENT) {
 				//isto vai depois ser um flag q é atualizada para informar que o sapo perdeu ou no multiplayer tem de voltar para o inicio
@@ -145,6 +151,10 @@ void HandleFroggeMovement(int frogge, PipeFroggeInput input, pFrogPos pos, TCHAR
 	case KEY_LEFT:
 		if (pos[frogge].col - 1 != 0)
 		{
+			if (pos[frogge].row == 1 || pos[frogge].row == numRoads + 2)
+				map[pos[frogge].row * MAX_COLS + pos[frogge].col] = BEGIN_END_ELEMENT;
+			else
+				map[pos[frogge].row * MAX_COLS + pos[frogge].col] = ROAD_ELEMENT;
 			pos[frogge].col = pos[frogge].col - 1;
 			if (map[pos[frogge].row * MAX_COLS + pos[frogge].col] == CAR_ELEMENT) {
 				//isto vai depois ser um flag q é atualizada para informar que o sapo perdeu ou no multiplayer tem de voltar para o inicio
@@ -159,6 +169,10 @@ void HandleFroggeMovement(int frogge, PipeFroggeInput input, pFrogPos pos, TCHAR
 		//esta merda ta foda e nao sei pq
 		if (pos[frogge].col + 1 != MAX_COLS - 1)
 		{
+			if (pos[frogge].row == 1 || pos[frogge].row == numRoads + 2)
+				map[pos[frogge].row * MAX_COLS + pos[frogge].col] = BEGIN_END_ELEMENT;
+			else
+				map[pos[frogge].row * MAX_COLS + pos[frogge].col] = ROAD_ELEMENT;
 			pos[frogge].col = pos[frogge].col + 1;
 			if (map[pos[frogge].row * MAX_COLS + pos[frogge].col] == CAR_ELEMENT) {
 				//isto vai depois ser um flag q é atualizada para informar que o sapo perdeu ou no multiplayer tem de voltar para o inicio
@@ -221,9 +235,8 @@ DWORD WINAPI receive(LPVOID lpParam)
 
 		ReleaseMutex(hmutexhere);
 		WaitForSingleObject(hmutexRoads, INFINITE);
-		HandleFroggeMovement(0, receiveInfo, dados->frogPos,dados->structToSend.map,dados->structToSend.numRoads);
+		HandleFroggeMovement(0, receiveInfo, dados->frogPos,dados->mapToShare,dados->structToSend.numRoads);
 		ReleaseMutex(hmutexRoads);
-		_tprintf(TEXT("[receive] Recebi %d bytes: '%d'... (ReadFile)\n"), n, receiveInfo.pressInput);
 	}
 
 	dados->terminar = 1;
