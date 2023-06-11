@@ -123,7 +123,6 @@ DWORD WINAPI ThreadBufferCircular(LPVOID lpParam)
 	// Get the current console information
 	GetConsoleScreenBufferInfo(hConsole, &consoleInfo);
 
-
 	while (*dados->terminar == 0)
 	{
 		HANDLE HTKeyHook = CreateThread(

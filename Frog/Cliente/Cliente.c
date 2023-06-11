@@ -28,6 +28,9 @@
 // Função de callback que será chamada pelo Windows sempre que acontece alguma coisa
 LRESULT CALLBACK TrataEventos(HWND, UINT, WPARAM, LPARAM);
 
+LRESULT CALLBACK TrataEventosInicial(HWND, UINT, WPARAM, LPARAM);
+
+
 // Nome da classe da janela (para programas de uma só janela, normalmente este nome é 
 // igual ao do próprio programa) "szprogName" é usado mais abaixo na definição das 
 // propriedades do objecto janela
@@ -66,41 +69,7 @@ HBITMAP hBitmapDB; // copia as filleracteristicas da janela original para a jane
 pPipeSendToClient AllGameData ;
 HANDLE hPipe;
 
-
-
-//// Mexe na posição x da imagem de forma a que a imagem se vá movendo
-//DWORD WINAPI RefreshMap(LPVOID lParam) {
-//	int dir = 1; // 1 para a direita, -1 para a esquerda
-//	int salto = 2; // quantidade de pixeis que a imagem salta de cada vez
-//
-//	while (1) {
-//		// Aguarda que o mutex esteja livre
-//		WaitForSingleObject(hMutex, INFINITE);
-//
-//		// movimentação
-//		xBitmap = xBitmap + (dir * salto);
-//
-//		//fronteira À esquerda
-//		if (xBitmap <= 0) {
-//			xBitmap = 0;
-//			dir = 1;
-//		}
-//		// limite direito
-//		else if (xBitmap >= limDir) {
-//			xBitmap = limDir;
-//			dir = -1;
-//		}
-//		//liberta mutex
-//		ReleaseMutex(hMutex);
-//
-//		// dizemos ao sistema que a posição da imagem mudou e temos entao de fazer o refresh da janela
-//		InvalidateRect(hWndGlobal, NULL, FALSE);
-//		Sleep(1);
-//	}
-//	return 0;
-//
-//}
-
+TCHAR username[16];
 
 
 DWORD WINAPI mapPipe(LPVOID lpParam)
@@ -199,27 +168,8 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR lpCmdLine, int nC
 		// passado num dos parâmetros de WinMain()
 		0);				// Não há parâmetros adicionais para a janela
 
-	//HDC hdc; // representa a propria janela
-	//RECT rect;
-
-	//// fillerregar o bitmap
-	//hBmp = (HBITMAP)LoadImage(NULL, TEXT("filler.bmp"), IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE);
-	//GetObject(hBmp, sizeof(bmp), &bmp); // vai busfiller info sobre o handle do bitmap
-
-	//hdc = GetDC(hWnd);
-	//// criamos copia do device context e colofiller em memoria
-	//bmpDC = CreateCompatibleDC(hdc);
-	//// aplicamos o bitmap ao device context
-	//SelectObject(bmpDC, hBmp);
-
-	//ReleaseDC(hWnd, hdc);
-
-
-	// EXEMPLO
-	// 800 px de largura, imagem 40px de largura
-	// ponto central da janela 400 px(800/2)
-	// imagem centrada, começar no 380px e acabar no 420 px
-	// (800/2) - (40/2) = 400 - 20 = 380px
+	HWND hDialog = CreateDialogParam(hInst, MAKEINTRESOURCE(IDD_INICIAL), hWnd, 0, 0);
+	ShowWindow(hDialog, SW_SHOW);
 
 	//// definir as posicoes inicias da imagem
 	//GetClientRect(hWnd, &rect);
@@ -539,4 +489,30 @@ LRESULT CALLBACK TrataEventos(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPara
 		break;  // break tecnicamente desnecessário por causa do return
 	}
 	return(0);
+}
+
+LRESULT CALLBACK TrataEventosInicial(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
+{
+
+	switch (messg)
+	{
+	case WM_COMMAND:
+
+		if (LOWORD(wParam) == IDOK)
+		{
+			//GetDlgItemText(hWnd, IDC_EDIT_LOGIN, username, 16);
+			MessageBox(hWnd, username, TEXT("Username"), MB_OK | MB_ICONINFORMATION);
+			EndDialog(hWnd, 0);
+			return TRUE;
+		}
+
+		break;
+
+	case WM_CLOSE:
+
+		EndDialog(hWnd, 0);
+		return TRUE;
+	}
+
+	return FALSE;
 }
