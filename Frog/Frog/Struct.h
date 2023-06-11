@@ -121,3 +121,9 @@ typedef struct {
 	int pressInput;
 }PipeFroggeInput, *pPipeFroggeInput;
 
+//estrutura que é enviada do cliente para o server com o input
+typedef struct {
+	int Gamemode;
+	TCHAR Username[16];
+}FrogInitialdata, * pFrogInitialdata;
+

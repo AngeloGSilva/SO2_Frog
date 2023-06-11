@@ -7,11 +7,11 @@
 #define IDB_BITMAP_ROAD                 104
 #define IDB_BITMAP_LIMIT                105
 #define IDB_BITMAP_BEGINEND             106
-#define IDD_DIALOG1                     107
 #define IDD_INICIAL                     107
-#define IDC_EDIT1                       1001
-#define IDC_RADIO1                      1002
-#define IDC_RADIO2                      1003
+#define IDC_EDIT_USERNAME               1001
+#define IDC_RADIO_MULTIPLAYER           1002
+#define IDC_RADIO_SINGLELAYER           1003
+#define IDC_RADIO_SINGLEPLAYER          1003
 
 // Next default values for new objects
 // 

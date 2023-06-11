@@ -70,7 +70,7 @@ pPipeSendToClient AllGameData ;
 HANDLE hPipe;
 
 TCHAR username[16];
-
+BOOL GameOption;
 
 DWORD WINAPI mapPipe(LPVOID lpParam)
 {
@@ -168,7 +168,7 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR lpCmdLine, int nC
 		// passado num dos parâmetros de WinMain()
 		0);				// Não há parâmetros adicionais para a janela
 
-	HWND hDialog = CreateDialogParam(hInst, MAKEINTRESOURCE(IDD_INICIAL), hWnd, 0, 0);
+	HWND hDialog = CreateDialogParam(hInst, MAKEINTRESOURCE(IDD_INICIAL), hWnd, TrataEventosInicial,0);
 	ShowWindow(hDialog, SW_SHOW);
 
 	//// definir as posicoes inicias da imagem
@@ -493,25 +493,65 @@ LRESULT CALLBACK TrataEventos(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPara
 
 LRESULT CALLBACK TrataEventosInicial(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
 {
+	BOOL result;
+	TCHAR message[256];
+	HANDLE hcommand = CreateEvent(NULL, TRUE, FALSE, TEXT("eventoSapo"));
+	FrogInitialdata froginitialdata;
 
 	switch (messg)
 	{
 	case WM_COMMAND:
 
-		if (LOWORD(wParam) == IDOK)
+		switch(LOWORD(wParam))
 		{
-			//GetDlgItemText(hWnd, IDC_EDIT_LOGIN, username, 16);
-			MessageBox(hWnd, username, TEXT("Username"), MB_OK | MB_ICONINFORMATION);
-			EndDialog(hWnd, 0);
-			return TRUE;
-		}
+			case IDOK:
+			result = GetDlgItemText(hWnd, IDC_EDIT_USERNAME, username, 16);
+			wsprintf(message, TEXT("[S] Hi %s"), username);
+			if (SendMessage(GetDlgItem(hWnd, IDC_RADIO_SINGLEPLAYER), BM_GETCHECK, 0, 0) == BST_CHECKED && result>0)
+			{
+				GameOption = 0;
+				MessageBox(hWnd, message, TEXT("Singleplayer"), MB_OK | MB_ICONINFORMATION);
+			}
+			else if (SendMessage(GetDlgItem(hWnd, IDC_RADIO_MULTIPLAYER), BM_GETCHECK, 0, 0) == BST_CHECKED && result > 0)
+			{
+				GameOption = 1;
+				MessageBox(hWnd, message, TEXT("Multiplayer"), MB_OK | MB_ICONINFORMATION);
+			}
+			else
+			{
+				GameOption = -1;
+				MessageBox(hWnd, TEXT("Please fill both name and gamemode"), TEXT("OOPS!"), MB_OK | MB_ICONINFORMATION);
+				break;
+			}
+				EndDialog(hWnd, 0);
+				//Avisar para começar
+				froginitialdata.Gamemode = GameOption;
+				_tcscpy_s(froginitialdata.Username,sizeof(username), username);
+				WriteFile(hPipe, &froginitialdata, sizeof(FrogInitialdata), 0, NULL);
 
+				SetEvent(hcommand);
+				ResetEvent(hcommand);
+
+			break;
+			
+			case IDCANCEL:
+				if (MessageBox(hWnd, TEXT("Tem a certeza que quer sair?"), TEXT("Confirmação"), MB_YESNO | MB_ICONQUESTION) == IDYES) {
+					// o utilizador disse que queria sair da aplicação
+					DestroyWindow(hWnd);
+				}
+				break;
+		}
 		break;
 
 	case WM_CLOSE:
-
-		EndDialog(hWnd, 0);
-		return TRUE;
+		if (MessageBox(hWnd, TEXT("Tem a certeza que quer sair?"), TEXT("Confirmação"), MB_YESNO | MB_ICONQUESTION) == IDYES) {
+			// o utilizador disse que queria sair da aplicação
+			DestroyWindow(hWnd);
+		}
+	case WM_DESTROY:	// Destruir a janela e terminar o programa
+		// "PostQuitMessage(Exit Status)"
+		PostQuitMessage(0);
+		break;
 	}
 
 	return FALSE;

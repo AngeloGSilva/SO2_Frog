@@ -221,9 +221,14 @@ DWORD WINAPI receive(LPVOID lpParam)
 	int i;
 	HANDLE hcommand, hmutexhere;
 	PipeFroggeInput receiveInfo;
+	FrogInitialdata froginitialdata;
 	hcommand = CreateEvent(NULL, TRUE, FALSE, TEXT("eventoSapo"));
 	hmutexhere = CreateMutex(NULL, FALSE, TEXT("MutexServerPipe"));
 	HANDLE hmutexRoads = CreateMutex(NULL, FALSE, THREAD_ROADS_MUTEX);
+
+	WaitForSingleObject(hcommand, INFINITE);
+	ReadFile(dados->hPipe[0], &froginitialdata, sizeof(FrogInitialdata), &n, NULL);
+	_tprintf(TEXT("CONEXÂO POR %s com o modo de jogo %d\n"), froginitialdata.Username,froginitialdata.Gamemode);
 
 	
 	while (1) {
@@ -660,41 +665,6 @@ int _tmain(int argc, TCHAR* argv[]) {
 	data.nivel = 1;
 	data.numCars = 0;
 	resetMapCars(data.map,data.numRoads,&data.car_pos,&data.numCars);
-
-	////desenho do mapa... limites do mapa e numero de estradas
-	//for (int i = 0; i < data.numRoads + SKIP_BEGINING_END; i++)
-	//{
-	//	for (int j = 0; j < MAX_COLS; j++)
-	//	{
-	//		if (i == 0 || j == 0 || i == data.numRoads + 3 || j == MAX_COLS - 1)
-	//			data.map[i][j] = BLOCK_ELEMENT;
-	//		else if (i == 1 || i == data.numRoads + SKIP_BEGINING) {
-	//			data.map[i][j] = BEGIN_END_ELEMENT;
-	//		}
-	//		else
-	//			data.map[i][j] = ROAD_ELEMENT;
-
-	//	}
-	//}
-
-	////Gerar carros
-	//for (int i = 0; i < data.numRoads; i++)
-	//{
-	//	int carsInRoad = (rand() % 8) + 1;
-	//	for (; carsInRoad > 0; carsInRoad--) {
-	//		data.car_pos[data.numCars].row = i + SKIP_BEGINING; //X -> linha
-	//		int posInRoad = 0;
-	//		do {
-	//			posInRoad = (rand() % (MAX_COLS - 2)) + 1;
-	//		} while (data.map[i + SKIP_BEGINING][posInRoad] == 'H' || data.map[i + SKIP_BEGINING][posInRoad] == '#');
-	//		//_tprintf(TEXT("PUS AQUI %d %d\n"), posInRoad, i + SKIP_BEGINING);
-	//		data.car_pos[data.numCars].col = posInRoad; //y -> coluna
-	//		data.map[i + SKIP_BEGINING][posInRoad] = CAR_ELEMENT;
-	//		data.numCars++;
-	//	}
-	//}
-	//_tprintf(TEXT("[INFO] Numero total de carros %d\n"), data.numCars);
-
 	//Gerar sapos (Primeira meta....) // alterar para ser com opcao do menu
 	int sapRowRandom = data.numRoads + 2; //+3 para ficar na penultima estrada.
 	for (int i = 0; i < 2; i++)
@@ -929,6 +899,7 @@ int _tmain(int argc, TCHAR* argv[]) {
 	_tprintf(TEXT("[Servidor] Criar uma cópia do pipe '%s' ... (CreateNamedPipe)\n"), PIPE_NAME);
 
 	while (1) {
+
 		hPipe = CreateNamedPipe(PIPE_NAME, PIPE_ACCESS_DUPLEX | FILE_FLAG_OVERLAPPED, PIPE_WAIT | PIPE_TYPE_BYTE | PIPE_READMODE_BYTE, 3,sizeof(GameData),sizeof(GameData), 1000, NULL);
 
 		if (hPipe == INVALID_HANDLE_VALUE) {
@@ -943,7 +914,7 @@ int _tmain(int argc, TCHAR* argv[]) {
 			exit(-1);
 		}
 
-		//WaitForSingleObject(dados.hMutex, INFINITE);
+		WaitForSingleObject(dadosPipe.hMutex, INFINITE);
 
 		dadosPipe.hPipe[dadosPipe.numClientes] = hPipe;
 		dadosPipe.numClientes++;
