@@ -66,6 +66,6 @@
 
 //Orientação sapos Grafico
 #define POSUP 1001
-#define	POSDOWN 1001
-#define POSLEFT 1001
-#define POSRIGHT 1001
+#define	POSDOWN 1002
+#define POSLEFT 1003
+#define POSRIGHT 1004

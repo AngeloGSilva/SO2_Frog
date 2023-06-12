@@ -55,6 +55,15 @@ BOOL GameOption;
 int currentFrogpos = POSUP; // 1 up 2 left 3 right 5 down
 
 
+struct GameData {
+	char name[100];
+	int time;
+	int score;
+	int level;
+} gameData;
+
+
+
 DWORD WINAPI mapPipe(LPVOID lpParam)
 {
 	//esta parte tem de ser numa thread
@@ -142,8 +151,8 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR lpCmdLine, int nC
 		WS_OVERLAPPEDWINDOW,	// Estilo da janela (WS_OVERLAPPED= normal)
 		CW_USEDEFAULT,		// Posição x pixels (default=à direita da última)
 		CW_USEDEFAULT,		// Posição y pixels (default=abaixo da última)
-		600,		// Largura da janela (em pixels)
-		300,		// Altura da janela (em pixels)
+		1000,		// Largura da janela (em pixels)
+		500,		// Altura da janela (em pixels)
 		(HWND)HWND_DESKTOP,	// handle da janela pai (se se criar uma a partir de
 		// outra) ou HWND_DESKTOP se a janela for a primeira,
 		// criada a partir do "desktop"
@@ -362,6 +371,10 @@ LRESULT CALLBACK TrataEventos(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPara
 		hdc = BeginPaint(hWnd, &ps);
 		GetClientRect(hWnd, &rect);
 
+		// Calculate the center position
+		int centerX = (rect.right - rect.left) / 2;
+		int centerY = (rect.bottom - rect.top) / 2;
+
 		// se a copia estiver a NULL, significa que é a 1ª vez que estamos a passar no WM_PAINT e estamos a trabalhar com a copia em memoria
 		if (memDC == NULL) {
 			memDC = CreateCompatibleDC(hdc);
@@ -371,45 +384,77 @@ LRESULT CALLBACK TrataEventos(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPara
 			
 			// Cleanup
 		}
-		FillRect(memDC, &rect, CreateSolidBrush(RGB(0, 0, 255)));
+		int contentWidth = MAX_COLS * 20; // Width of the content
+		int contentHeight = (AllGameData->numRoads + 4) * 20; // Height of the content
+
+		// Calculate the top-left position of the content to be centered
+		int contentX = centerX - (contentWidth / 2);
+		int contentY = centerY - (contentHeight / 2);
+
+		FillRect(memDC, &rect, CreateSolidBrush(RGB(0, 0, 0)));
 		// Set the brush color and style
+		//Ciclo do tabuleiro de Jogo
 
 		for (int i = 0; i < AllGameData->numRoads + 4; i++) {
 			for (int j = 0; j < MAX_COLS; j++) {
 				TCHAR buffer = AllGameData->map[i][j];
+				int posX = contentX + (j * 20);
+				int posY = contentY + (i * 20);
 				if (buffer == CAR_ELEMENT)
 				{
 					/*if(AllGameData->directions[i] == ROAD_RIGHT) //Resolver ele apagar obstaculo quando passa por cima
 
 					else*/
 
-					BitBlt(memDC, j * 20, i * 20, car.bmWidth, car.bmHeight, bmpDC, 0, 0, SRCCOPY);
+					BitBlt(memDC, posX, posY, car.bmWidth, car.bmHeight, bmpDC, 0, 0, SRCCOPY);
 				}
 				else if (buffer == ROAD_ELEMENT) {
-					BitBlt(memDC, j * 20, i * 20, road.bmWidth, road.bmHeight, bmpDC3, 0, 0, SRCCOPY);
+					BitBlt(memDC, posX, posY, road.bmWidth, road.bmHeight, bmpDC3, 0, 0, SRCCOPY);
 				}
 				else if (buffer == BEGIN_END_ELEMENT) {
-					BitBlt(memDC, j * 20 ,i * 20, beginend.bmWidth, beginend.bmHeight, bpmDC5, 0, 0, SRCCOPY);
+					BitBlt(memDC, posX, posY, beginend.bmWidth, beginend.bmHeight, bpmDC5, 0, 0, SRCCOPY);
 				}
 				else if (buffer == BLOCK_ELEMENT) {
-					BitBlt(memDC, j * 20, i * 20, limit.bmWidth, limit.bmHeight, bpmDC4, 0, 0, SRCCOPY);
+					BitBlt(memDC, posX, posY, limit.bmWidth, limit.bmHeight, bpmDC4, 0, 0, SRCCOPY);
 				}
 				else if (buffer == FROGGE_ELEMENT) {
 					if(currentFrogpos == POSUP)
-						BitBlt(memDC, j * 20, i * 20 ,frog.bmWidth, frog.bmHeight, bmpDC2, 0, 0, SRCCOPY);
+						BitBlt(memDC, posX, posY,frog.bmWidth, frog.bmHeight, bmpDC2, 0, 0, SRCCOPY);
 					else if (currentFrogpos == POSLEFT)
-						BitBlt(memDC, j * 20, i * 20, frogLeft.bmWidth, frogLeft.bmHeight, bpmDC7, 0, 0, SRCCOPY);
+						BitBlt(memDC, posX, posY, frogLeft.bmWidth, frogLeft.bmHeight, bpmDC7, 0, 0, SRCCOPY);
 					else if (currentFrogpos == POSRIGHT)
-						BitBlt(memDC, j * 20, i * 20, frogRight.bmWidth, frogRight.bmHeight, bpmDC8, 0, 0, SRCCOPY);
+						BitBlt(memDC, posX, posY, frogRight.bmWidth, frogRight.bmHeight, bpmDC8, 0, 0, SRCCOPY);
 					else if (currentFrogpos == POSDOWN)
-						BitBlt(memDC, j * 20, i * 20, frogDown.bmWidth, frogDown.bmHeight, bpmDC9, 0, 0, SRCCOPY);
+						BitBlt(memDC, posX, posY, frogDown.bmWidth, frogDown.bmHeight, bpmDC9, 0, 0, SRCCOPY);
 
 				}
 				else if (buffer == OBSTACLE_ELEMENT) {
-					BitBlt(memDC, j * 20, i * 20, obstacle.bmWidth, obstacle.bmHeight, bpmDC6, 0, 0, SRCCOPY);
+					BitBlt(memDC, posX, posY, obstacle.bmWidth, obstacle.bmHeight, bpmDC6, 0, 0, SRCCOPY);
 				}
 			}
 		}
+
+		//Ciclo do nome, Pontuação tempo e nivel
+		// Falta fazera s contas certinhas
+		RECT rcGameInfo;
+		rcGameInfo.left = 20;
+		rcGameInfo.top = 20;
+		rcGameInfo.right = rect.right - 20;
+		rcGameInfo.bottom = rcGameInfo.top + 40;
+
+		char gameInfoText[200];
+		gameData.level = 69;
+		gameData.score = 420;
+		gameData.time = 404;
+		_tcscpy_s(gameData.name, sizeof(TEXT("WORKING")), TEXT("WORKING"));
+		wsprintf(gameInfoText, TEXT("Name: %s  Time: %d   Score: %d  Level: %d"), gameData.name, gameData.time, gameData.score, gameData.level);
+		SetTextColor(memDC, RGB(255, 255, 255));
+		SetBkMode(memDC, TRANSPARENT);
+		DrawText(memDC, gameInfoText, -1, &rcGameInfo, DT_CENTER);
+
+		// Copy the content from the memory DC to the actual DC
+		BitBlt(hdc, 0, 0, rect.right, rect.bottom, memDC, 0, 0, SRCCOPY);
+
 
 		BitBlt(hdc, 0, 0, rect.right, rect.bottom,memDC, 0, 0, SRCCOPY);
 		EndPaint(hWnd, &ps);
