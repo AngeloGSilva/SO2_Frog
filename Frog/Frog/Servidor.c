@@ -24,6 +24,9 @@ void resetMapCars(TCHAR* map, int numRoads, pCarPos car_pos, int* numCars) {
 			else if (i == 1 || i == numRoads + SKIP_BEGINING) {
 				map[i * MAX_COLS + j] = BEGIN_END_ELEMENT;
 			}
+			else if (i == 4 && j == 10) {
+				map[i * MAX_COLS + j] = OBSTACLE_ELEMENT;
+			}
 			else
 				map[i * MAX_COLS + j] = ROAD_ELEMENT;
 
@@ -749,7 +752,7 @@ int _tmain(int argc, TCHAR* argv[]) {
 		RoadsData[i].id = i + SKIP_BEGINING; //o numero do id é a estrada q elas estao encarregues
 		RoadsData[i].speed = data.carSpeed;//((rand() % 8) + 1) * 1000
 		RoadsData[i].terminar = &terminar;
-		RoadsData[i].direction = (rand() % 2);
+		RoadsData[i].direction = (rand() % 2); // Isto tem de estar na data, o toggle da velocidade tem de alterar da data depois .-.
 		RoadThreads[i] = CreateThread(
 			NULL,    // Thread attributes
 			0,       // Stack size (0 = use default)

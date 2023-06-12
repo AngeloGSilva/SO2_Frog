@@ -71,6 +71,8 @@ HANDLE hPipe;
 
 TCHAR username[16];
 BOOL GameOption;
+int currentFrogpos = 1; // 1 up 2 left 3 right 5 down
+
 
 DWORD WINAPI mapPipe(LPVOID lpParam)
 {
@@ -168,8 +170,10 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR lpCmdLine, int nC
 		// passado num dos parâmetros de WinMain()
 		0);				// Não há parâmetros adicionais para a janela
 
-	HWND hDialog = CreateDialogParam(hInst, MAKEINTRESOURCE(IDD_INICIAL), hWnd, TrataEventosInicial,0);
-	ShowWindow(hDialog, SW_SHOW);
+
+	//Janela de Inicio :D
+	/*HWND hDialog = CreateDialogParam(hInst, MAKEINTRESOURCE(IDD_INICIAL), hWnd, TrataEventosInicial,0);
+	ShowWindow(hDialog, SW_SHOW);*/
 
 	//// definir as posicoes inicias da imagem
 	//GetClientRect(hWnd, &rect);
@@ -261,6 +265,8 @@ LRESULT CALLBACK TrataEventos(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPara
 	RECT rect;
 	PAINTSTRUCT ps;
 	MINMAXINFO* mmi;
+
+
 	//keyup
 	HANDLE hcommand = CreateEvent(NULL, TRUE, FALSE, TEXT("eventoSapo"));
 	TCHAR* message;
@@ -271,20 +277,36 @@ LRESULT CALLBACK TrataEventos(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPara
 	static HDC bmpDC3 = NULL;
 	static HDC bpmDC4 = NULL;
 	static HDC bpmDC5 = NULL;
+	static HDC bpmDC6 = NULL;
+	static HDC bpmDC7 = NULL;
+	static HDC bpmDC8 = NULL;
+	static HDC bpmDC9 = NULL;
+	static HDC bpmDC10 = NULL;
 
 	HBITMAP hBmp = NULL;
 	HBITMAP hcar = NULL;
+	HBITMAP hcarRight = NULL; //NEED
 	HBITMAP hroad = NULL;
 	HBITMAP hfrog = NULL;
+	HBITMAP hfrogLeft = NULL; //NEED
+	HBITMAP hfrogRight = NULL; //NEED
+	HBITMAP hfrogDown = NULL; //NEED
 	HBITMAP hlimit = NULL;
 	HBITMAP hbeginend = NULL;
+	HBITMAP hObstacle = NULL; //NEED
+
 
 	static BITMAP bmp;
 	static BITMAP car;
+	static BITMAP carRight;//NEED
 	static BITMAP frog;
+	static BITMAP frogLeft; //NEED
+	static BITMAP frogRight; //NEED
+	static BITMAP frogDown; //NEED
 	static BITMAP road;
 	static BITMAP limit;
 	static BITMAP beginend;
+	static BITMAP obstacle; //NEED
 
 
 	//buffer
@@ -325,25 +347,53 @@ LRESULT CALLBACK TrataEventos(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPara
 			return 1;
 		}
 
+		//CAR BITMAPS
+
 		hcar = (HBITMAP)LoadImage(NULL, TEXT("car.bmp"),IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE);
-		//hcar = LoadBitmap(GetModuleHandle(NULL), MAKEINTRESOURCE(IDB_PNG_CAR_RIGHT));
 		GetObject(hcar, sizeof(car), &car);
+		
+		hcarRight = (HBITMAP)LoadImage(NULL, TEXT("carRight.bmp"), IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE);
+		GetObject(hcarRight, sizeof(carRight), &carRight);
+
+		//FROG BITMAPS
 
 		hfrog = LoadBitmap(GetModuleHandle(NULL), MAKEINTRESOURCE(IDB_BITMAP_SAPO));
 
 		GetObject(hfrog, sizeof(frog), &frog);
 
+		hfrogLeft = LoadBitmap(GetModuleHandle(NULL), MAKEINTRESOURCE(IDB_BITMAP_SAPO_LEFT));
+
+		GetObject(hfrogLeft, sizeof(frogLeft), &frogLeft);
+
+		hfrogRight = LoadBitmap(GetModuleHandle(NULL), MAKEINTRESOURCE(IDB_BITMAP_SAPO_RIGHT));
+
+		GetObject(hfrogRight, sizeof(frogRight), &frogRight);
+
+		hfrogDown = LoadBitmap(GetModuleHandle(NULL), MAKEINTRESOURCE(IDB_BITMAP_SAPO_DOWN));
+
+		GetObject(hfrogDown, sizeof(frogDown), &frogDown);
+
+		//ROAD BITMAPS
 		hroad = LoadBitmap(GetModuleHandle(NULL), MAKEINTRESOURCE(IDB_BITMAP_ROAD));
 
 		GetObject(hroad, sizeof(road), &road);
 
+		//LIMIT BITMAPS
 		hlimit = LoadBitmap(GetModuleHandle(NULL), MAKEINTRESOURCE(IDB_BITMAP_LIMIT));
 
 		GetObject(hlimit, sizeof(limit), &limit);
 
+		//BEGIN AND END AREA BITMAPS
+
 		hbeginend = LoadBitmap(GetModuleHandle(NULL), MAKEINTRESOURCE(IDB_BITMAP_BEGINEND));
 
 		GetObject(hbeginend, sizeof(beginend), &beginend);
+
+		//OBSTACLE ELEMENT
+
+		hObstacle = LoadBitmap(GetModuleHandle(NULL), MAKEINTRESOURCE(IDB_BITMAP_OBSTACLE));
+
+		GetObject(hObstacle, sizeof(obstacle), &obstacle);
 
 		hdc = GetDC(hWnd);
 		bmpDC = CreateCompatibleDC(hdc);
@@ -360,6 +410,19 @@ LRESULT CALLBACK TrataEventos(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPara
 
 		bpmDC5 = CreateCompatibleDC(hdc);
 		SelectObject(bpmDC5, hbeginend);
+
+		bpmDC6 = CreateCompatibleDC(hdc);
+		SelectObject(bpmDC6, hObstacle);
+
+		bpmDC7 = CreateCompatibleDC(hdc);
+		SelectObject(bpmDC7, hfrogLeft);
+
+		bpmDC8 = CreateCompatibleDC(hdc);
+		SelectObject(bpmDC8, hfrogRight);
+
+		bpmDC9 = CreateCompatibleDC(hdc);
+		SelectObject(bpmDC9, hfrogDown);
+
 
 		ReleaseDC(hWnd, hdc);
 		break;
@@ -387,6 +450,10 @@ LRESULT CALLBACK TrataEventos(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPara
 				TCHAR buffer = AllGameData->map[i][j];
 				if (buffer == CAR_ELEMENT)
 				{
+					/*if(AllGameData->directions[i] == ROAD_RIGHT) //Resolver ele apagar obstaculo quando passa por cima
+
+					else*/
+
 					BitBlt(memDC, j * 20, i * 20, car.bmWidth, car.bmHeight, bmpDC, 0, 0, SRCCOPY);
 				}
 				else if (buffer == ROAD_ELEMENT) {
@@ -399,7 +466,18 @@ LRESULT CALLBACK TrataEventos(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPara
 					BitBlt(memDC, j * 20, i * 20, limit.bmWidth, limit.bmHeight, bpmDC4, 0, 0, SRCCOPY);
 				}
 				else if (buffer == FROGGE_ELEMENT) {
-					BitBlt(memDC, j * 20, i * 20 ,frog.bmWidth, frog.bmHeight, bmpDC2, 0, 0, SRCCOPY);
+					if(currentFrogpos == 1)
+						BitBlt(memDC, j * 20, i * 20 ,frog.bmWidth, frog.bmHeight, bmpDC2, 0, 0, SRCCOPY);
+					else if (currentFrogpos == 2)
+						BitBlt(memDC, j * 20, i * 20, frogLeft.bmWidth, frogLeft.bmHeight, bpmDC7, 0, 0, SRCCOPY);
+					else if (currentFrogpos == 3)
+						BitBlt(memDC, j * 20, i * 20, frogRight.bmWidth, frogRight.bmHeight, bpmDC8, 0, 0, SRCCOPY);
+					else if (currentFrogpos == 4)
+						BitBlt(memDC, j * 20, i * 20, frogDown.bmWidth, frogDown.bmHeight, bpmDC9, 0, 0, SRCCOPY);
+
+				}
+				else if (buffer == OBSTACLE_ELEMENT) {
+					BitBlt(memDC, j * 20, i * 20, obstacle.bmWidth, obstacle.bmHeight, bpmDC6, 0, 0, SRCCOPY);
 				}
 			}
 		}
@@ -421,6 +499,7 @@ LRESULT CALLBACK TrataEventos(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPara
 		{
 			// caso seja duplo clique
 		case VK_UP:
+			currentFrogpos = 1;
 			sendInfo.pressInput = wParam;
 			sendInfo.x = -1;
 			sendInfo.y = -1;
@@ -432,6 +511,7 @@ LRESULT CALLBACK TrataEventos(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPara
 			ResetEvent(hcommand);
 			break;
 		case VK_DOWN:
+			currentFrogpos = 4;
 			sendInfo.pressInput = wParam;
 			sendInfo.x = -1;
 			sendInfo.y = -1;
@@ -443,6 +523,7 @@ LRESULT CALLBACK TrataEventos(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPara
 			ResetEvent(hcommand);
 			break;
 		case VK_LEFT:
+			currentFrogpos = 2;
 			sendInfo.pressInput = wParam;
 			sendInfo.x = -1;
 			sendInfo.y = -1;
@@ -454,6 +535,7 @@ LRESULT CALLBACK TrataEventos(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPara
 			ResetEvent(hcommand);
 			break;
 		case VK_RIGHT:
+			currentFrogpos = 3;
 			sendInfo.pressInput = wParam;
 			sendInfo.x = -1;
 			sendInfo.y = -1;
