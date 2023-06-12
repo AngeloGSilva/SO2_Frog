@@ -137,7 +137,7 @@ DWORD WINAPI ThreadBufferCircular(LPVOID lpParam)
 			_tprintf(TEXT("[ERRO] Thread KeyHook\n"));
 			return 0;
 		}
-		space.id = dados->id;
+		//space.id = dados->id;
 
 		WaitForSingleObject(eventKeyBoard, INFINITE);
 
@@ -152,23 +152,27 @@ DWORD WINAPI ThreadBufferCircular(LPVOID lpParam)
 		_tprintf(TEXT("COMANDO:"));
 		_getts_s(space.val,20);
 
-		/*if (lstrcmp(space.val, TEXT("terminar")) == 0)
+		if (lstrcmp(space.val, TEXT("terminar")) == 0)
 		{
 			*dados->terminar = 1;
-		}*/
-		WaitForSingleObject(dados->hSemEscrita, INFINITE);
-		WaitForSingleObject(dados->hMutex, INFINITE);
-
-		//copiar o conteudo para a memoria partilhada
-		copyMemoryOperation(&dados->BufferCircular->espacosDeBuffer[dados->BufferCircular->posEscrita], &space, sizeof(EspacoBuffer));
-		dados->BufferCircular->posEscrita++;
-		if (dados->BufferCircular->posEscrita == 10)
-		{
-			dados->BufferCircular->posEscrita = 0;
 		}
+		//WaitForSingleObject(dados->hSemEscrita, INFINITE);
+		//WaitForSingleObject(dados->hMutex, INFINITE);
 
-		ReleaseMutex(dados->hMutex);
-		ReleaseSemaphore(dados->hSemLeitura, 1, NULL);
+		////copiar o conteudo para a memoria partilhada
+		//copyMemoryOperation(&dados->BufferCircular->espacosDeBuffer[dados->BufferCircular->posEscrita], &space, sizeof(EspacoBuffer));
+		//dados->BufferCircular->posEscrita++;
+		//if (dados->BufferCircular->posEscrita == 10)
+		//{
+		//	dados->BufferCircular->posEscrita = 0;
+		//}
+
+		//ReleaseMutex(dados->hMutex);
+		//ReleaseSemaphore(dados->hSemLeitura, 1, NULL);
+
+		ReadSharedMemoryOperador(dados->BufferCircular, space);
+
+
 		Sleep(((rand() % 4) + 1) * 1000);
 
 		for (int i = 0; i < dados->numRoads; i++) {
@@ -356,7 +360,7 @@ int _tmain(int argc, TCHAR* argv[]) {
 	dataThread.hSemEscrita = CreateSemaphore(NULL, 10, 10, BUFFER_CIRCULAR_SEMAPHORE_ESCRITOR);
 	dataThread.hSemLeitura = CreateSemaphore(NULL, 0, 10, BUFFER_CIRCULAR_SEMAPHORE_LEITORE);
 
-	HANDLE HMapFileBuffer = openMemoryMapping(FILE_MAP_ALL_ACCESS,FILE_MAPPING_BUFFER_CIRCULAR);
+	/*HANDLE HMapFileBuffer = openMemoryMapping(FILE_MAP_ALL_ACCESS,FILE_MAPPING_BUFFER_CIRCULAR);
 	if (HMapFileBuffer == NULL)
 	{
 		HMapFileBuffer = createMemoryMapping(sizeof(Buffer), FILE_MAPPING_BUFFER_CIRCULAR);
@@ -382,7 +386,10 @@ int _tmain(int argc, TCHAR* argv[]) {
 		dataThread.threadsHandles = &RoadThreads;
 		dataThread.numRoads = pBuf->numRoads;
 	}
-	dataThread.id = dataThread.BufferCircular->nProdutores++;
+	dataThread.id = dataThread.BufferCircular->nProdutores++;*/
+	dataThread.threadsHandles = &RoadThreads;
+	dataThread.numRoads = pBuf->numRoads;
+	dataThread.BufferCircular = InitSharedMemory();
 	dataThread.terminar = &terminar;
 
 
@@ -418,8 +425,8 @@ int _tmain(int argc, TCHAR* argv[]) {
 	}
 	_tprintf(TEXT("[INFO] OPERADOR VAI TERMINAR\n"));
 
-	UnmapViewOfFile(HMapFile);
-	UnmapViewOfFile(HMapFileBuffer);
+	//UnmapViewOfFile(HMapFile);
+	//UnmapViewOfFile(HMapFileBuffer);
 	for (int i = 0; i < pBuf->numRoads; i++) {
 		CloseHandle(RoadThreads[i]);
 	}

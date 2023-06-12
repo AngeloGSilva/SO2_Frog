@@ -514,15 +514,17 @@ DWORD WINAPI ThreadBufferCircular(LPVOID lpParam)
 	HANDLE hThreadStopGame = NULL;
 	while (*dados->terminar == 0)
 	{
-		WaitForSingleObject(dados->hSemLeitura, INFINITE);
-		WaitForSingleObject(dados->hMutex, INFINITE);
-		//copiar o conteudo para a memoria partilhada
-		copyMemoryOperation(&space, &dados->BufferCircular->espacosDeBuffer[dados->BufferCircular->posLeitura], sizeof(EspacoBuffer));
-		dados->BufferCircular->posLeitura++;
-		if (dados->BufferCircular->posLeitura == 10)
-		{
-			dados->BufferCircular->posLeitura = 0;
-		}
+		//WaitForSingleObject(dados->hSemLeitura, INFINITE);
+		//WaitForSingleObject(dados->hMutex, INFINITE);
+		////copiar o conteudo para a memoria partilhada
+		//CopyMemory(&space, &dados->BufferCircular->espacosDeBuffer[dados->BufferCircular->posLeitura], sizeof(EspacoBuffer));
+		//dados->BufferCircular->posLeitura++;
+		//if (dados->BufferCircular->posLeitura == 10)
+		//{
+		//	dados->BufferCircular->posLeitura = 0;
+		//}
+
+		space = ReadSharedMemoryServer(dados->BufferCircular);
 
 		TCHAR* token;
 		TCHAR* token2;
@@ -596,8 +598,8 @@ DWORD WINAPI ThreadBufferCircular(LPVOID lpParam)
 			if (token2 != NULL && token != NULL && lstrcmp(firstNumber, TEXT("empty")) != 0 && lstrcmp(secondNumber, TEXT("empty")) != 0)
 			HandleDeleteCommand(dados, firstNumber, secondNumber);
 		}
-		ReleaseMutex(dados->hMutex);
-		ReleaseSemaphore(dados->hSemEscrita, 1, NULL);
+		//ReleaseMutex(dados->hMutex);
+		//ReleaseSemaphore(dados->hSemEscrita, 1, NULL);
 	}
 	CloseHandle(hThreadStopGame);
 	return 0;
@@ -792,32 +794,35 @@ int _tmain(int argc, TCHAR* argv[]) {
 	dataThread.hSemEscrita = CreateSemaphore(NULL, 10, 10, BUFFER_CIRCULAR_SEMAPHORE_ESCRITOR);
 	dataThread.hSemLeitura = CreateSemaphore(NULL, 0, 10, BUFFER_CIRCULAR_SEMAPHORE_LEITORE);
 
-	HANDLE HMapFileBuffer = openMemoryMapping(FILE_MAP_ALL_ACCESS, FILE_MAPPING_BUFFER_CIRCULAR);
-	if (HMapFileBuffer == NULL)
-	{
-		HMapFileBuffer = createMemoryMapping(sizeof(Buffer), FILE_MAPPING_BUFFER_CIRCULAR);
-		dataThread.BufferCircular = (pBuffer)MapViewOfFile(HMapFileBuffer, FILE_MAP_ALL_ACCESS, 0, 0, 0);
-		dataThread.BufferCircular->nConsumidores = 0;
-		dataThread.BufferCircular->nProdutores = 0;
-		dataThread.BufferCircular->posEscrita = 0;
-		dataThread.BufferCircular->posLeitura = 0;
+	//HANDLE HMapFileBuffer = openMemoryMapping(FILE_MAP_ALL_ACCESS, FILE_MAPPING_BUFFER_CIRCULAR);
+	//if (HMapFileBuffer == NULL)
+	//{
+	//	HMapFileBuffer = createMemoryMapping(sizeof(Buffer), FILE_MAPPING_BUFFER_CIRCULAR);
+	//	dataThread.BufferCircular = (pBuffer)MapViewOfFile(HMapFileBuffer, FILE_MAP_ALL_ACCESS, 0, 0, 0);
+	//	dataThread.BufferCircular->nConsumidores = 0;
+	//	dataThread.BufferCircular->nProdutores = 0;
+	//	dataThread.BufferCircular->posEscrita = 0;
+	//	dataThread.BufferCircular->posLeitura = 0;
 
-		if (HMapFileBuffer == NULL)
-		{
-			_tprintf(TEXT("[ERRO] CreateFileMapping BufferCircular\n"));
-			return 0;
-		}
-	}
-	else
-	{
-		dataThread.BufferCircular = (Buffer*)MapViewOfFile(HMapFileBuffer, FILE_MAP_ALL_ACCESS, 0, 0, 0);
-		if (HMapFileBuffer == NULL)
-		{
-			_tprintf(TEXT("[ERRO] CreateFileMapping BufferCircular\n"));
-			return 0;
-		}
-	}
-	dataThread.id = dataThread.BufferCircular->nConsumidores++;
+	//	if (HMapFileBuffer == NULL)
+	//	{
+	//		_tprintf(TEXT("[ERRO] CreateFileMapping BufferCircular\n"));
+	//		return 0;
+	//	}
+	//}
+	//else
+	//{
+	//	dataThread.BufferCircular = (Buffer*)MapViewOfFile(HMapFileBuffer, FILE_MAP_ALL_ACCESS, 0, 0, 0);
+	//	if (HMapFileBuffer == NULL)
+	//	{
+	//		_tprintf(TEXT("[ERRO] CreateFileMapping BufferCircular\n"));
+	//		return 0;
+	//	}
+	//}
+	//dataThread.BufferCircular = NULL;
+	dataThread.BufferCircular = InitSharedMemory();
+
+	//dataThread.id = dataThread.BufferCircular->nConsumidores++;
 	dataThread.RoadsDirection = &RoadsData;
 	dataThread.Map = &data.map;
 	dataThread.threadsHandles = &RoadThreads;
@@ -941,8 +946,8 @@ int _tmain(int argc, TCHAR* argv[]) {
 	HANDLE ending_event = CreateEvent(NULL, TRUE, FALSE, ENDING_EVENT);
 	SetEvent(ending_event);
 
-	UnmapViewOfFile(HMapFile);
-	UnmapViewOfFile(HMapFileBuffer);
+	//UnmapViewOfFile(HMapFile);
+	//UnmapViewOfFile(HMapFileBuffer);
 	// Close thread handles
 	for (int i = 0; i < data.numRoads; i++) {
 		CloseHandle(RoadThreads[i]);
