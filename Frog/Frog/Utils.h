@@ -63,3 +63,9 @@
 //named pipe
 #define PIPE_NAME TEXT("\\\\.\\pipe\\teste")
 #define N 10
+
+//Orientação sapos Grafico
+#define POSUP 1001
+#define	POSDOWN 1001
+#define POSLEFT 1001
+#define POSRIGHT 1001

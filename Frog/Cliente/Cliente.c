@@ -32,35 +32,16 @@ LRESULT CALLBACK TrataEventosInicial(HWND, UINT, WPARAM, LPARAM);
 
 
 // Nome da classe da janela (para programas de uma só janela, normalmente este nome é 
-// igual ao do próprio programa) "szprogName" é usado mais abaixo na definição das 
+// igual ao do próprio programa) "szprogName" é usado mais abaixo na definição das
 // propriedades do objecto janela
 TCHAR szProgName[] = TEXT("Base");
 
-// ============================================================================
-// FUNÇÃO DE INÍCIO DO PROGRAMA: WinMain()
-// ============================================================================
-// Em Windows, o programa começa sempre a sua execução na função WinMain()que desempenha
-// o papel da função main() do C em modo consola WINAPI indica o "tipo da função" (WINAPI
-// para todas as declaradas nos headers do Windows e CALLBACK para as funções de
-// processamento da janela)
-// Parâmetros:
-//   hInst: Gerado pelo Windows, é o handle (número) da instância deste programa 
-//   hPrevInst: Gerado pelo Windows, é sempre NULL para o NT (era usado no Windows 3.1)
-//   lpCmdLine: Gerado pelo Windows, é um ponteiro para uma string terminada por 0
-//              destinada a conter parâmetros para o programa 
-//   nCmdShow:  Parâmetro que especifica o modo de exibição da janela (usado em  
-//        	   ShowWindow()
 
-//BITMAP
-// uma vez que temos de usar estas vars tanto na main como na funcao de tratamento de eventos
-// nao ha uma maneira de fugir ao uso de vars globais, dai estarem aqui
+
 HBITMAP hBmp; // handle para o bitmap
 HDC bmpDC; // hdc do bitmap
 BITMAP bmp; // informação sobre o bitmap
-int xBitmap; // posicao onde o bitmap vai ser desenhado
-int yBitmap;
 
-int limDir; // limite direito
 HWND hWndGlobal; // handle para a janela
 HANDLE hMutex;
 
@@ -71,7 +52,7 @@ HANDLE hPipe;
 
 TCHAR username[16];
 BOOL GameOption;
-int currentFrogpos = 1; // 1 up 2 left 3 right 5 down
+int currentFrogpos = POSUP; // 1 up 2 left 3 right 5 down
 
 
 DWORD WINAPI mapPipe(LPVOID lpParam)
@@ -140,6 +121,7 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR lpCmdLine, int nC
 	// (NULL = não tem menu)
 	wcApp.cbClsExtra = 0;				// Livre, para uso particular
 	wcApp.cbWndExtra = 0;				// Livre, para uso particular
+
 	wcApp.hbrBackground = CreateSolidBrush(RGB(125, 125, 125));
 	//(HBRUSH)GetStockObject(WHITE_BRUSH);
 // "hbrBackground" = handler para "brush" de pintura do fundo da janela. Devolvido por
@@ -187,39 +169,12 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR lpCmdLine, int nC
 
 	// Cria a thread de movimentação
 	//CreateThread(NULL, 0, RefreshMap, NULL, 0, NULL);
-
-
-	// ============================================================================
-	// 4. Mostrar a janela
-	// ============================================================================
+	
 	ShowWindow(hWnd, nCmdShow);	// "hWnd"= handler da janela, devolvido por
 	// "CreateWindow"; "nCmdShow"= modo de exibição (p.e.
 	// normal/modal); é passado como parâmetro de WinMain()
 	UpdateWindow(hWnd);		// Refresfiller a janela (Windows envia à janela uma
 	// mensagem para pintar, mostrar dados, (refresfiller)
-
-// ============================================================================
-// 5. Loop de Mensagens
-// ============================================================================
-// O Windows envia mensagens às janelas (programas). Estas mensagens ficam numa fila de
-// espera até que GetMessage(...) possa ler "a mensagem seguinte"
-// Parâmetros de "getMessage":
-// 1)"&lpMsg"=Endereço de uma estrutura do tipo MSG ("MSG lpMsg" ja foi declarada no
-//   início de WinMain()):
-//			HWND hwnd		handler da janela a que se destina a mensagem
-//			UINT message		Identificador da mensagem
-//			WPARAM wParam		Parâmetro, p.e. código da tecla premida
-//			LPARAM lParam		Parâmetro, p.e. se ALT também estava premida
-//			DWORD time		Hora a que a mensagem foi enviada pelo Windows
-//			POINT pt		Localização do mouse (x, y)
-// 2)handle da window para a qual se pretendem receber mensagens (=NULL se se pretendem
-//   receber as mensagens para todas as
-// janelas pertencentes à thread actual)
-// 3)Código limite inferior das mensagens que se pretendem receber
-// 4)Código limite superior das mensagens que se pretendem receber
-
-// NOTA: GetMessage() devolve 0 quando for recebida a mensagem de fecho da janela,
-// 	  terminando então o loop de recepção de mensagens, e o programa
 
 	while (GetMessage(&lpMsg, NULL, 0, 0)) {
 		TranslateMessage(&lpMsg);	// Pré-processamento da mensagem (p.e. obter código
@@ -229,35 +184,9 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR lpCmdLine, int nC
 		// tratamento da janela, CALLBACK TrataEventos (abaixo)
 	}
 
-	// ============================================================================
-	// 6. Fim do programa
-	// ============================================================================
+	
 	return((int)lpMsg.wParam);	// Retorna sempre o parâmetro wParam da estrutura lpMsg
 }
-
-// ============================================================================
-// FUNÇÃO DE PROCESSAMENTO DA JANELA
-// Esta função pode ter um nome qualquer: Apenas é necesário que na inicialização da
-// estrutura "wcApp", feita no início de // WinMain(), se identifique essa função. Neste
-// caso "wcApp.lpfnWndProc = WndProc"
-//
-// WndProc recebe as mensagens enviadas pelo Windows (depois de lidas e pré-processadas
-// no loop "while" da função WinMain()
-// Parâmetros:
-//		hWnd	O handler da janela, obtido no CreateWindow()
-//		messg	Ponteiro para a estrutura mensagem (ver estrutura em 5. Loop...
-//		wParam	O parâmetro wParam da estrutura messg (a mensagem)
-//		lParam	O parâmetro lParam desta mesma estrutura
-//
-// NOTA:Estes parâmetros estão aqui acessíveis o que simplifica o acesso aos seus valores
-//
-// A função EndProc é sempre do tipo "switch..." com "cases" que descriminam a mensagem
-// recebida e a tratar.
-// Estas mensagens são identificadas por constantes (p.e.
-// WM_DESTROY, WM_CHAR, WM_KEYDOWN, WM_PAINT...) definidas em windows.h
-// ============================================================================
-
-
 
 LRESULT CALLBACK TrataEventos(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam) {
 	//handle para o device context
@@ -466,13 +395,13 @@ LRESULT CALLBACK TrataEventos(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPara
 					BitBlt(memDC, j * 20, i * 20, limit.bmWidth, limit.bmHeight, bpmDC4, 0, 0, SRCCOPY);
 				}
 				else if (buffer == FROGGE_ELEMENT) {
-					if(currentFrogpos == 1)
+					if(currentFrogpos == POSUP)
 						BitBlt(memDC, j * 20, i * 20 ,frog.bmWidth, frog.bmHeight, bmpDC2, 0, 0, SRCCOPY);
-					else if (currentFrogpos == 2)
+					else if (currentFrogpos == POSLEFT)
 						BitBlt(memDC, j * 20, i * 20, frogLeft.bmWidth, frogLeft.bmHeight, bpmDC7, 0, 0, SRCCOPY);
-					else if (currentFrogpos == 3)
+					else if (currentFrogpos == POSRIGHT)
 						BitBlt(memDC, j * 20, i * 20, frogRight.bmWidth, frogRight.bmHeight, bpmDC8, 0, 0, SRCCOPY);
-					else if (currentFrogpos == 4)
+					else if (currentFrogpos == POSDOWN)
 						BitBlt(memDC, j * 20, i * 20, frogDown.bmWidth, frogDown.bmHeight, bpmDC9, 0, 0, SRCCOPY);
 
 				}
@@ -499,7 +428,7 @@ LRESULT CALLBACK TrataEventos(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPara
 		{
 			// caso seja duplo clique
 		case VK_UP:
-			currentFrogpos = 1;
+			currentFrogpos = POSUP;
 			sendInfo.pressInput = wParam;
 			sendInfo.x = -1;
 			sendInfo.y = -1;
@@ -511,7 +440,7 @@ LRESULT CALLBACK TrataEventos(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPara
 			ResetEvent(hcommand);
 			break;
 		case VK_DOWN:
-			currentFrogpos = 4;
+			currentFrogpos = POSDOWN;
 			sendInfo.pressInput = wParam;
 			sendInfo.x = -1;
 			sendInfo.y = -1;
@@ -523,7 +452,7 @@ LRESULT CALLBACK TrataEventos(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPara
 			ResetEvent(hcommand);
 			break;
 		case VK_LEFT:
-			currentFrogpos = 2;
+			currentFrogpos = POSLEFT;
 			sendInfo.pressInput = wParam;
 			sendInfo.x = -1;
 			sendInfo.y = -1;
@@ -535,7 +464,7 @@ LRESULT CALLBACK TrataEventos(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPara
 			ResetEvent(hcommand);
 			break;
 		case VK_RIGHT:
-			currentFrogpos = 3;
+			currentFrogpos = POSRIGHT;
 			sendInfo.pressInput = wParam;
 			sendInfo.x = -1;
 			sendInfo.y = -1;
