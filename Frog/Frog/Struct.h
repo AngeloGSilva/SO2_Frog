@@ -104,7 +104,7 @@ typedef struct {
 	TCHAR map[MAX_ROWS + 4][MAX_COLS];
 	int numRoads;
 	int directions[MAX_ROWS];
-	pFrogPos frog_pos[MAX_FROGS];
+	FrogPos frog_pos[MAX_FROGS];
 }PipeSendToClient, *pPipeSendToClient;
 
 //estrutra para passar os dados para as threads relacionadas com o named pipe

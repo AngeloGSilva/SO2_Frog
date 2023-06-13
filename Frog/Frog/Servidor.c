@@ -79,9 +79,9 @@ DWORD WINAPI send(LPVOID lpParam)
 	dados->frogPos->level = 1;
 	dados->frogPos->score = 0;*/
 
-	dados->structToSend.frog_pos[0]->time = &dados->frogPos->time;
-	dados->structToSend.frog_pos[0]->level = &dados->frogPos->level;
-	dados->structToSend.frog_pos[0]->score = &dados->frogPos->score;
+	dados->structToSend.frog_pos[0].time = dados->frogPos[0].time;
+	dados->structToSend.frog_pos[0].level = dados->frogPos[0].level;
+	dados->structToSend.frog_pos[0].score = dados->frogPos[0].score;
 
 	while(1){
 		//WaitForSingleObject(dados->hMutex, INFINITE);
