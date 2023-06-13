@@ -10,10 +10,12 @@ typedef struct {
 
 //talvez trocar nome
 typedef struct {
-	int identificador;
+	char name[100];
+	int time;
+	int score;
+	int level;
 	int col;
 	int row;
-	int pontuacao;
 }FrogPos, *pFrogPos;
 
 typedef struct {
@@ -102,6 +104,7 @@ typedef struct {
 	TCHAR map[MAX_ROWS + 4][MAX_COLS];
 	int numRoads;
 	int directions[MAX_ROWS];
+	pFrogPos frog_pos[MAX_FROGS];
 }PipeSendToClient, *pPipeSendToClient;
 
 //estrutra para passar os dados para as threads relacionadas com o named pipe

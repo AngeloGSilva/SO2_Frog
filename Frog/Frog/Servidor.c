@@ -74,12 +74,16 @@ DWORD WINAPI send(LPVOID lpParam)
 	heventmapread = CreateEvent(NULL, TRUE, FALSE, TEXT("eventoPipeRead"));
 	hmutexhere = CreateMutex(NULL, FALSE, TEXT("MutexServerPipe"));
 
-	while(1){
-		//criar e fazer set evento para a janela do cliente saber que tem dados novos
-		/*_tprintf(TEXT("[send] Frase: "));
-		_fgetts(buf, 256, stdin);*/
-		/*buf[_tcslen(buf) - 1] = '\0';*/
+	//First execution
+	/*dados->frogPos->time = 100;
+	dados->frogPos->level = 1;
+	dados->frogPos->score = 0;*/
 
+	dados->structToSend.frog_pos[0]->time = &dados->frogPos->time;
+	dados->structToSend.frog_pos[0]->level = &dados->frogPos->level;
+	dados->structToSend.frog_pos[0]->score = &dados->frogPos->score;
+
+	while(1){
 		//WaitForSingleObject(dados->hMutex, INFINITE);
 		WaitForSingleObject(heventmapwrite,INFINITE);
 		Sleep(100);
@@ -128,8 +132,8 @@ void HandleFroggeMovement(int frogge, PipeFroggeInput input, pFrogPos pos, TCHAR
 			} else if(pos[frogge].row == 1)
 			{
 				_tprintf(TEXT("PASSOU DE NIVEL\n"));
-				pos[frogge].pontuacao += 1;
-				_tprintf(TEXT("Pontuacao passou a %d\n"), pos[frogge].pontuacao);
+				/*pos[frogge].pontuacao += 1;
+				_tprintf(TEXT("Pontuacao passou a %d\n"), pos[frogge].pontuacao);*/
 			}
 		}
 		break;
@@ -230,9 +234,9 @@ DWORD WINAPI receive(LPVOID lpParam)
 	HANDLE hmutexRoads = CreateMutex(NULL, FALSE, THREAD_ROADS_MUTEX);
 
 	WaitForSingleObject(hcommand, INFINITE);
+	//Passar para a outra thread
 	ReadFile(dados->hPipe[0], &froginitialdata, sizeof(FrogInitialdata), &n, NULL);
 	_tprintf(TEXT("CONEXÂO POR %s com o modo de jogo %d\n"), froginitialdata.Username,froginitialdata.Gamemode);
-
 	
 	while (1) {
 		WaitForSingleObject(hcommand, INFINITE);
@@ -680,8 +684,9 @@ int _tmain(int argc, TCHAR* argv[]) {
 		} while (data.map[sapRowRandom][sapColRandom] == 'S');
 		data.frog_pos[i].col = sapColRandom;
 		data.frog_pos[i].row = sapRowRandom;
-		data.frog_pos[i].identificador = i;
-		data.frog_pos[i].pontuacao = 0;
+		data.frog_pos[i].level = 1;
+		data.frog_pos[i].score = 2;
+		data.frog_pos[i].time = 3;
 		data.map[sapRowRandom][sapColRandom] = FROGGE_ELEMENT;
 	}
 

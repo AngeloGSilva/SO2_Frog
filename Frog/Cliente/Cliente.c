@@ -55,12 +55,7 @@ BOOL GameOption;
 int currentFrogpos = POSUP; // 1 up 2 left 3 right 5 down
 
 
-struct GameData {
-	char name[100];
-	int time;
-	int score;
-	int level;
-} gameData;
+
 
 
 
@@ -426,7 +421,6 @@ LRESULT CALLBACK TrataEventos(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPara
 						BitBlt(memDC, posX, posY, frogRight.bmWidth, frogRight.bmHeight, bpmDC8, 0, 0, SRCCOPY);
 					else if (currentFrogpos == POSDOWN)
 						BitBlt(memDC, posX, posY, frogDown.bmWidth, frogDown.bmHeight, bpmDC9, 0, 0, SRCCOPY);
-
 				}
 				else if (buffer == OBSTACLE_ELEMENT) {
 					BitBlt(memDC, posX, posY, obstacle.bmWidth, obstacle.bmHeight, bpmDC6, 0, 0, SRCCOPY);
@@ -443,18 +437,15 @@ LRESULT CALLBACK TrataEventos(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPara
 		rcGameInfo.bottom = rcGameInfo.top + 40;
 
 		char gameInfoText[200];
-		gameData.level = 69;
-		gameData.score = 420;
-		gameData.time = 404;
-		_tcscpy_s(gameData.name, sizeof(TEXT("WORKING")), TEXT("WORKING"));
-		wsprintf(gameInfoText, TEXT("Name: %s  Time: %d   Score: %d  Level: %d"), gameData.name, gameData.time, gameData.score, gameData.level);
+		//Tem de ir buscar esta info ao AllGameInfo.
+		//_tcscpy_s(gameData.name, sizeof(TEXT("WORKING")), TEXT("WORKING"));
+		wsprintf(gameInfoText, TEXT("Name: Hodler  Time: %d   Score: %d  Level: %d"),  AllGameData->frog_pos[0]->time, AllGameData->frog_pos[0]->score, AllGameData->frog_pos[0]->level);
 		SetTextColor(memDC, RGB(255, 255, 255));
 		SetBkMode(memDC, TRANSPARENT);
 		DrawText(memDC, gameInfoText, -1, &rcGameInfo, DT_CENTER);
 
 		// Copy the content from the memory DC to the actual DC
 		BitBlt(hdc, 0, 0, rect.right, rect.bottom, memDC, 0, 0, SRCCOPY);
-
 
 		BitBlt(hdc, 0, 0, rect.right, rect.bottom,memDC, 0, 0, SRCCOPY);
 		EndPaint(hWnd, &ps);
