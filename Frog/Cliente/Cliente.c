@@ -439,7 +439,7 @@ LRESULT CALLBACK TrataEventos(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPara
 		char gameInfoText[200];
 		//Tem de ir buscar esta info ao AllGameInfo.
 		//_tcscpy_s(gameData.name, sizeof(TEXT("WORKING")), TEXT("WORKING"));
-		wsprintf(gameInfoText, TEXT("Name: Hodler  Time: %d   Score: %d  Level: %d"),  AllGameData->frog_pos[0]->time, AllGameData->frog_pos[0]->score, AllGameData->frog_pos[0]->level);
+		wsprintf(gameInfoText, TEXT("Name: Hodler  Time: %d   Score: %d  Level: %d"),  AllGameData->frog_pos[0].time, AllGameData->frog_pos[0].score, AllGameData->frog_pos[0].level);
 		SetTextColor(memDC, RGB(255, 255, 255));
 		SetBkMode(memDC, TRANSPARENT);
 		DrawText(memDC, gameInfoText, -1, &rcGameInfo, DT_CENTER);
@@ -474,6 +474,7 @@ LRESULT CALLBACK TrataEventos(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPara
 			ReleaseMutex(hMutex);
 			SetEvent(hcommand);
 			ResetEvent(hcommand);
+			Sleep(100);
 			break;
 		case VK_DOWN:
 			currentFrogpos = POSDOWN;
@@ -486,6 +487,8 @@ LRESULT CALLBACK TrataEventos(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPara
 			ReleaseMutex(hMutex);
 			SetEvent(hcommand);
 			ResetEvent(hcommand);
+			Sleep(100);
+
 			break;
 		case VK_LEFT:
 			currentFrogpos = POSLEFT;
@@ -498,6 +501,8 @@ LRESULT CALLBACK TrataEventos(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPara
 			ReleaseMutex(hMutex);
 			SetEvent(hcommand);
 			ResetEvent(hcommand);
+			Sleep(100);
+
 			break;
 		case VK_RIGHT:
 			currentFrogpos = POSRIGHT;
@@ -510,6 +515,8 @@ LRESULT CALLBACK TrataEventos(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPara
 			ReleaseMutex(hMutex);
 			SetEvent(hcommand);
 			ResetEvent(hcommand);
+			Sleep(100);
+
 			break;
 		}
 
