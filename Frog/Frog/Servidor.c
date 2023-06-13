@@ -384,8 +384,8 @@ DWORD WINAPI ThreadRoads(LPVOID lpParam)
 				data->Map[temp[i].row * MAX_COLS + temp[i].col] = CAR_ELEMENT;
 			}
 		}
-		copyMemoryOperation(data->sharedMap, data->Map, sizeof(TCHAR) * (MAX_ROWS + SKIP_BEGINING_END) * MAX_COLS);
-
+		//copyMemoryOperation(data->sharedMap, data->Map, sizeof(TCHAR) * (MAX_ROWS + SKIP_BEGINING_END) * MAX_COLS);
+		SharedMemoryMapThreadRoads(data);
 		ReleaseMutex(data->hMutex);
 
 		//Criamos evento para que as threads ja consiga ler
@@ -736,7 +736,7 @@ int _tmain(int argc, TCHAR* argv[]) {
 	//gerar thread por estrada para tratar do movimento do carro na estrada especifica
 	for (int i = 0; i < data.numRoads; i++)
 	{
-		HANDLE HMapFile = createMemoryMapping(sizeof(TCHAR) * (MAX_ROWS + SKIP_BEGINING_END) * MAX_COLS, FILE_MAPPING_THREAD_ROADS);
+		/*HANDLE HMapFile = createMemoryMapping(sizeof(TCHAR) * (MAX_ROWS + SKIP_BEGINING_END) * MAX_COLS, FILE_MAPPING_THREAD_ROADS);
 		if (HMapFile == NULL)
 		{
 			_tprintf(TEXT("[ERRO] CreateFileMapping Mapa\n"));
@@ -747,7 +747,9 @@ int _tmain(int argc, TCHAR* argv[]) {
 		{
 			_tprintf(TEXT("[ERRO] MapViewOfFile Mapa\n"));
 			return 0;
-		}
+		}*/
+
+		RoadsData[i].sharedMap = InitSharedMemoryMapThreadRoads();
 
 		//este frog ja nao deve ser mais necessario
 		//temporario acho

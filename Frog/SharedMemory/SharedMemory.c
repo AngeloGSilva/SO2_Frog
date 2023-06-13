@@ -19,7 +19,34 @@ void clearMemoryOperation(PVOID destination, SIZE_T Length) {
 	ZeroMemory(destination, Length);
 }
 
+TCHAR* InitSharedMemoryMapThreadRoads() {
+	HANDLE HMapFile = CreateFileMapping(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, sizeof(TCHAR) * (MAX_ROWS + SKIP_BEGINING_END) * MAX_COLS, FILE_MAPPING_THREAD_ROADS);
+	if (HMapFile == NULL)
+	{
+		_tprintf(TEXT("[ERRO] CreateFileMapping Mapa\n"));
+		return NULL;
+	}
 
+	TCHAR* sharedMap = (TCHAR*)MapViewOfFile(HMapFile, FILE_MAP_ALL_ACCESS, 0, 0, 0);
+	if (sharedMap == NULL)
+	{
+		_tprintf(TEXT("[ERRO] MapViewOfFile Mapa\n"));
+		return NULL;
+	}
+
+	return sharedMap;
+}
+
+void SharedMemoryMapThreadRoads(pTRoads data) {
+	CopyMemory(data->sharedMap, data->Map, sizeof(TCHAR) * (MAX_ROWS + SKIP_BEGINING_END) * MAX_COLS);
+}
+
+void SharedMemoryMapThreadRoadsOperador(pTRoads data, TCHAR* temp) {
+	CopyMemory(temp, &data->sharedMap, sizeof(TCHAR) * (MAX_ROWS + SKIP_BEGINING_END) * MAX_COLS);
+}
+
+
+//primeiro mapa se nao me engano
 void SharedMemoryMap(pGameData pBuf, pGameData data) {
 	HANDLE hMutex = CreateMutex(NULL, FALSE, SHARED_MEMORY_MUTEX);
 	if (hMutex == NULL)
@@ -36,7 +63,7 @@ void SharedMemoryMap(pGameData pBuf, pGameData data) {
 	ReleaseMutex(hMutex);
 }
 
-
+//primeiro mapa se nao me engano
 pGameData InitSharedMemoryMap() {
 	HANDLE HMapFile = CreateFileMapping(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, sizeof(GameData), FILE_MAPPING_GAME_DATA);
 	if (HMapFile == NULL)
@@ -46,7 +73,7 @@ pGameData InitSharedMemoryMap() {
 	}
 
 	//criar mesmo a memoria
-	pGameData pBuf = (TCHAR*)MapViewOfFile(HMapFile, FILE_MAP_ALL_ACCESS, 0, 0, 0);
+	pGameData pBuf = (pGameData)MapViewOfFile(HMapFile, FILE_MAP_ALL_ACCESS, 0, 0, 0);
 	if (pBuf == NULL)
 	{
 		_tprintf(TEXT("[ERRO] MapViewOfFile GameInfo\n"));
@@ -57,6 +84,7 @@ pGameData InitSharedMemoryMap() {
 }
 
 
+//bufferCircular
 pBuffer InitSharedMemoryBufferCircular() {
 	pBuffer BufferCircular = NULL;
 	HANDLE HMapFileBuffer = OpenFileMapping(FILE_MAP_ALL_ACCESS, FALSE, FILE_MAPPING_BUFFER_CIRCULAR);
@@ -96,6 +124,7 @@ pBuffer InitSharedMemoryBufferCircular() {
 	return BufferCircular;
 }
 
+//bufferCircular
 EspacoBuffer ReadSharedMemoryServer(pBuffer BufferCircular) {
 	EspacoBuffer space;
 	HANDLE hMutex = CreateMutex(NULL, FALSE, BUFFER_CIRCULAR_MUTEX_LEITOR);
@@ -118,7 +147,7 @@ EspacoBuffer ReadSharedMemoryServer(pBuffer BufferCircular) {
 	return space;
 }
 
-
+//bufferCircular
 BOOL ReadSharedMemoryOperador(pBuffer BufferCircular, EspacoBuffer space) {
 	//EspacoBuffer space;
 	HANDLE hMutex = CreateMutex(NULL, FALSE, BUFFER_CIRCULAR_MUTEX_ESCRITOR);

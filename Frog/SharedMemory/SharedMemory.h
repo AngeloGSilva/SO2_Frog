@@ -18,6 +18,11 @@ DLL_IMP_API void copyMemoryOperation(PVOID destiny, VOID* source, SIZE_T Length)
 
 DLL_IMP_API void clearMemoryOperation(PVOID destination, SIZE_T Length);
 
+DLL_IMP_API TCHAR* InitSharedMemoryMapThreadRoads();
+DLL_IMP_API void SharedMemoryMapThreadRoads(pTRoads data);
+
+DLL_IMP_API void SharedMemoryMapThreadRoadsOperador(pTRoads data, TCHAR* temp);
+
 DLL_IMP_API pGameData InitSharedMemoryMap();
 DLL_IMP_API void SharedMemoryMap(pGameData pBuf, pGameData data);
 

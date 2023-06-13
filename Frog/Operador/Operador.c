@@ -51,7 +51,6 @@ DWORD WINAPI ThreadKeyHook(LPVOID lpParam)
 
 DWORD WINAPI CheckEnding(LPVOID lpParam)
 {
-
 	int* terminate = (int*)lpParam;
 	HANDLE ending_event = CreateEvent(NULL, TRUE, FALSE, ENDING_EVENT);
 	WaitForSingleObject(ending_event, INFINITE);
@@ -69,7 +68,9 @@ DWORD WINAPI ThreadRoads(LPVOID lpParam)
 	{
 		WaitForSingleObject(data->hEventRoads, INFINITE);
 		WaitForSingleObject(data->hMutex, INFINITE);
-		copyMemoryOperation(&temp, &data->sharedMap, sizeof(TCHAR) * (MAX_ROWS + SKIP_BEGINING_END) * MAX_COLS);
+		//copyMemoryOperation(&temp, &data->sharedMap, sizeof(TCHAR) * (MAX_ROWS + SKIP_BEGINING_END) * MAX_COLS);
+		
+		SharedMemoryMapThreadRoadsOperador(data, &temp);
 		HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
 		for (int i = 0; i < MAX_COLS; i++)
 		{
@@ -241,9 +242,11 @@ int _tmain(int argc, TCHAR* argv[]) {
 
 	GameData data;
 
-	//data tem de sair e so ficar pbuf penso eu
-	HANDLE HMapFile = createMemoryMapping(sizeof(GameData), FILE_MAPPING_GAME_DATA);
-	pGameData pBuf = (GameData*)MapViewOfFile(HMapFile, FILE_MAP_ALL_ACCESS, 0, 0, 0);
+	////data tem de sair e so ficar pbuf penso eu
+	//HANDLE HMapFile = createMemoryMapping(sizeof(GameData), FILE_MAPPING_GAME_DATA);
+	//pGameData pBuf = (GameData*)MapViewOfFile(HMapFile, FILE_MAP_ALL_ACCESS, 0, 0, 0);
+
+	pGameData pBuf = InitSharedMemoryMap();
 	//data.event = OpenEvent(READ_CONTROL,TRUE, TEXT("TP_Evento"));
 	data.Serv_HEvent = CreateEvent(NULL, TRUE, FALSE, SHARED_MEMORY_EVENT);
 	//data.mutex = OpenMutex(READ_CONTROL, TRUE, TEXT("TP_Mutex"));
@@ -280,20 +283,22 @@ int _tmain(int argc, TCHAR* argv[]) {
 
 	TStartEnd StartEndData[1];
 
-	HANDLE HMapFileBeginEnd = createMemoryMapping(sizeof(TCHAR) * (MAX_ROWS + SKIP_BEGINING_END) * MAX_COLS, FILE_MAPPING_THREAD_ROADS);
-	//_tprintf(TEXT("SO2_MAP_OLA") + (i + 2));
-	if (HMapFileBeginEnd == NULL)
-	{
-		_tprintf(TEXT("[ERRO] CreateFileMapping Meta e Partida\n"));
-		return 0;
-	}
+	//HANDLE HMapFileBeginEnd = createMemoryMapping(sizeof(TCHAR) * (MAX_ROWS + SKIP_BEGINING_END) * MAX_COLS, FILE_MAPPING_THREAD_ROADS);
+	////_tprintf(TEXT("SO2_MAP_OLA") + (i + 2));
+	//if (HMapFileBeginEnd == NULL)
+	//{
+	//	_tprintf(TEXT("[ERRO] CreateFileMapping Meta e Partida\n"));
+	//	return 0;
+	//}
 
-	StartEndData[0].sharedMap = (TCHAR*)MapViewOfFile(HMapFileBeginEnd, FILE_MAP_ALL_ACCESS, 0, 0, 0);
-	if (StartEndData[0].sharedMap == NULL)
-	{
-		_tprintf(TEXT("[ERRO] CreateFileMapping Meta e Partida\n"));
-		return 0;
-	}
+	//StartEndData[0].sharedMap = (TCHAR*)MapViewOfFile(HMapFileBeginEnd, FILE_MAP_ALL_ACCESS, 0, 0, 0);
+	//if (StartEndData[0].sharedMap == NULL)
+	//{
+	//	_tprintf(TEXT("[ERRO] CreateFileMapping Meta e Partida\n"));
+	//	return 0;
+	//}
+
+	StartEndData[0].sharedMap = InitSharedMemoryMapThreadRoads();
 	StartEndData[0].hMutex = CreateMutex(NULL, FALSE, THREAD_ROADS_MUTEX);
 	StartEndData[0].numRoads = pBuf->numRoads;
 	StartEndData[0].Map = pBuf->map;
@@ -317,22 +322,22 @@ int _tmain(int argc, TCHAR* argv[]) {
 	//criar Threads para lidar com os carros por estrada
 	for (int i = 0; i < pBuf->numRoads; i++)
 	{
-		//TODO Nao me lembro o porque de isto ser preciso
-		HANDLE HMapFile = createMemoryMapping(sizeof(TCHAR) * (MAX_ROWS + SKIP_BEGINING_END) * MAX_COLS, FILE_MAPPING_THREAD_ROADS);
-		//_tprintf(TEXT("SO2_MAP_OLA") + (i + 2));
-		if (HMapFile == NULL)
-		{
-			_tprintf(TEXT("[ERRO] CreateFileMapping Thread da estrada %d\n"),i);
-			return 0;
-		}
+		////TODO Nao me lembro o porque de isto ser preciso
+		//HANDLE HMapFile = createMemoryMapping(sizeof(TCHAR) * (MAX_ROWS + SKIP_BEGINING_END) * MAX_COLS, FILE_MAPPING_THREAD_ROADS);
+		////_tprintf(TEXT("SO2_MAP_OLA") + (i + 2));
+		//if (HMapFile == NULL)
+		//{
+		//	_tprintf(TEXT("[ERRO] CreateFileMapping Thread da estrada %d\n"),i);
+		//	return 0;
+		//}
 
-		RoadsData[i].sharedMap = (TCHAR*)MapViewOfFile(HMapFile, FILE_MAP_ALL_ACCESS, 0, 0, 0);
-		if (RoadsData[i].sharedMap == NULL)
-		{
-			_tprintf(TEXT("[ERRO] CreateFileMapping Thread da estrada %d\n"), i);
-			return 0;
-		}
-
+		//RoadsData[i].sharedMap = (TCHAR*)MapViewOfFile(HMapFile, FILE_MAP_ALL_ACCESS, 0, 0, 0);
+		//if (RoadsData[i].sharedMap == NULL)
+		//{
+		//	_tprintf(TEXT("[ERRO] CreateFileMapping Thread da estrada %d\n"), i);
+		//	return 0;
+		//}
+		RoadsData[i].sharedMap = InitSharedMemoryMapThreadRoads();
 		RoadsData[i].numCars = pBuf->numCars;
 		RoadsData[i].hMutex = CreateMutex(NULL, FALSE, THREAD_ROADS_MUTEX);
 		RoadsData[i].hEventRoads = CreateEvent(NULL, TRUE, FALSE, THREAD_ROADS_EVENT + i);
