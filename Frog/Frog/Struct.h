@@ -29,6 +29,7 @@ typedef struct {
 	CarPos car_pos[MAX_CARS]; 
 	FrogPos frog_pos[MAX_FROGS];
 	TCHAR map[MAX_ROWS + 4][MAX_COLS];
+	int directions[MAX_ROWS];
 }GameData, *pGameData;
 
 typedef struct {
@@ -113,6 +114,7 @@ typedef struct {
 	HANDLE hMutex; //para controlar o numClientes
 	PipeSendToClient structToSend;
 	pFrogPos frogPos;
+	int directions[MAX_ROWS];
 	TCHAR *mapToShare;
 	int numClientes;
 	int terminar;

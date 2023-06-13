@@ -36,8 +36,6 @@ LRESULT CALLBACK TrataEventosInicial(HWND, UINT, WPARAM, LPARAM);
 // propriedades do objecto janela
 TCHAR szProgName[] = TEXT("Base");
 
-
-
 HBITMAP hBmp; // handle para o bitmap
 HDC bmpDC; // hdc do bitmap
 BITMAP bmp; // informação sobre o bitmap
@@ -356,6 +354,9 @@ LRESULT CALLBACK TrataEventos(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPara
 		bpmDC9 = CreateCompatibleDC(hdc);
 		SelectObject(bpmDC9, hfrogDown);
 
+		bpmDC10 = CreateCompatibleDC(hdc);
+		SelectObject(bpmDC10, hcarRight);
+
 
 		ReleaseDC(hWnd, hdc);
 		break;
@@ -397,11 +398,10 @@ LRESULT CALLBACK TrataEventos(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPara
 				int posY = contentY + (i * 20);
 				if (buffer == CAR_ELEMENT)
 				{
-					/*if(AllGameData->directions[i] == ROAD_RIGHT) //Resolver ele apagar obstaculo quando passa por cima
-
-					else*/
-
-					BitBlt(memDC, posX, posY, car.bmWidth, car.bmHeight, bmpDC, 0, 0, SRCCOPY);
+					if(AllGameData->directions[i - 2] == ROAD_LEFT) //Resolver ele apagar obstaculo quando passa por cima
+						BitBlt(memDC, posX, posY, car.bmWidth, car.bmHeight, bmpDC, 0, 0, SRCCOPY);
+					else
+						BitBlt(memDC, posX, posY, carRight.bmWidth, carRight.bmHeight, bpmDC10, 0, 0, SRCCOPY);
 				}
 				else if (buffer == ROAD_ELEMENT) {
 					BitBlt(memDC, posX, posY, road.bmWidth, road.bmHeight, bmpDC3, 0, 0, SRCCOPY);

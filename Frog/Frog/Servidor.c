@@ -89,13 +89,16 @@ DWORD WINAPI send(LPVOID lpParam)
 		Sleep(100);
 		WaitForSingleObject(hmutexhere, INFINITE);
 		copyMapArray(dados->structToSend.numRoads,dados->mapToShare, dados->structToSend.map);
+		for (int i = 0; i < dados->structToSend.numRoads; i++)
+			dados->structToSend.directions[i] = dados->directions[i];
+		dados->structToSend.frog_pos->score = dados->frogPos->score;
+		dados->structToSend.frog_pos->level = dados->frogPos->level;
 		//CopyMemory(dados->structToSend.map, dados->mapToShare, sizeof(dados->mapToShare));
 		for (i = 0; i < dados->numClientes; i++) {
 			if (!WriteFile(dados->hPipe[i], &dados->structToSend,sizeof(PipeSendToClient), &n, NULL)) {
 				_tprintf(TEXT("[ERRO] Escrever no pipe! (WriteFile)\n"));
 				exit(-1);
 			}
-
 			_tprintf(TEXT("[send] Enviei %d bytes ao leitor [%d]... (WriteFile)\n"), n, i);
 		}
 		ReleaseMutex(hmutexhere);
@@ -120,8 +123,13 @@ void HandleFroggeMovement(int frogge, PipeFroggeInput input, pFrogPos pos, TCHAR
 		{
 			if(pos[frogge].row == 1 || pos[frogge].row == numRoads + 2)
 				map[pos[frogge].row * MAX_COLS + pos[frogge].col] = BEGIN_END_ELEMENT;
+			else if (map[(pos[frogge].row - 1) * MAX_COLS + pos[frogge].col] == OBSTACLE_ELEMENT) {
+				_tprintf(TEXT("Ouch iobstacle\n"));
+				break;
+			}
 			else
 				map[pos[frogge].row * MAX_COLS + pos[frogge].col] = ROAD_ELEMENT;
+
 			pos[frogge].row = pos[frogge].row - 1;
 			if (map[pos[frogge].row * MAX_COLS + pos[frogge].col] == CAR_ELEMENT) {
 				//isto vai depois ser um flag q é atualizada para informar que o sapo perdeu ou no multiplayer tem de voltar para o inicio
@@ -132,9 +140,11 @@ void HandleFroggeMovement(int frogge, PipeFroggeInput input, pFrogPos pos, TCHAR
 			} else if(pos[frogge].row == 1)
 			{
 				_tprintf(TEXT("PASSOU DE NIVEL\n"));
-				/*pos[frogge].pontuacao += 1;
-				_tprintf(TEXT("Pontuacao passou a %d\n"), pos[frogge].pontuacao);*/
+				pos[frogge].score += 1;
+				pos[frogge].level += 1;
+				_tprintf(TEXT("Pontuacao passou a %d\n"), pos[frogge].score);
 			}
+			
 		}
 		break;
 	case KEY_DOWN:
@@ -143,6 +153,10 @@ void HandleFroggeMovement(int frogge, PipeFroggeInput input, pFrogPos pos, TCHAR
 		{
 			if (pos[frogge].row == 1 || pos[frogge].row == numRoads + 2)
 				map[pos[frogge].row * MAX_COLS + pos[frogge].col] = BEGIN_END_ELEMENT;
+			else if (map[(pos[frogge].row + 1) * MAX_COLS + pos[frogge].col] == OBSTACLE_ELEMENT) {
+				_tprintf(TEXT("Ouch iobstacle\n"));
+				break;
+			}
 			else
 				map[pos[frogge].row * MAX_COLS + pos[frogge].col] = ROAD_ELEMENT;
 			pos[frogge].row = pos[frogge].row + 1;
@@ -153,6 +167,7 @@ void HandleFroggeMovement(int frogge, PipeFroggeInput input, pFrogPos pos, TCHAR
 				pos[frogge].row = numRoads + 2;
 				pos[frogge].col = (rand() % (MAX_COLS - 2)) + 1;
 			}
+			
 		}
 		break;
 	case KEY_LEFT:
@@ -160,6 +175,10 @@ void HandleFroggeMovement(int frogge, PipeFroggeInput input, pFrogPos pos, TCHAR
 		{
 			if (pos[frogge].row == 1 || pos[frogge].row == numRoads + 2)
 				map[pos[frogge].row * MAX_COLS + pos[frogge].col] = BEGIN_END_ELEMENT;
+			else if (map[pos[frogge].row * MAX_COLS + (pos[frogge].col - 1)] == OBSTACLE_ELEMENT) {
+				_tprintf(TEXT("Ouch iobstacle\n"));
+				break;
+			}
 			else
 				map[pos[frogge].row * MAX_COLS + pos[frogge].col] = ROAD_ELEMENT;
 			pos[frogge].col = pos[frogge].col - 1;
@@ -170,6 +189,7 @@ void HandleFroggeMovement(int frogge, PipeFroggeInput input, pFrogPos pos, TCHAR
 				pos[frogge].row = numRoads + 2;
 				pos[frogge].col = (rand() % (MAX_COLS - 2)) + 1;
 			}
+			
 		}
 		break;
 	case KEY_RIGHT:
@@ -178,6 +198,10 @@ void HandleFroggeMovement(int frogge, PipeFroggeInput input, pFrogPos pos, TCHAR
 		{
 			if (pos[frogge].row == 1 || pos[frogge].row == numRoads + 2)
 				map[pos[frogge].row * MAX_COLS + pos[frogge].col] = BEGIN_END_ELEMENT;
+			else if (map[pos[frogge].row * MAX_COLS + (pos[frogge].col + 1)] == OBSTACLE_ELEMENT) {
+				_tprintf(TEXT("Ouch iobstacle\n"));
+				break;
+			}
 			else
 				map[pos[frogge].row * MAX_COLS + pos[frogge].col] = ROAD_ELEMENT;
 			pos[frogge].col = pos[frogge].col + 1;
@@ -188,6 +212,7 @@ void HandleFroggeMovement(int frogge, PipeFroggeInput input, pFrogPos pos, TCHAR
 				pos[frogge].row = numRoads + 2;
 				pos[frogge].col = (rand() % (MAX_COLS - 2)) + 1;
 			}
+			
 		}
 		break;
 	default:
@@ -219,6 +244,18 @@ DWORD WINAPI ThreadSapos(LPVOID lpParam)
 	return 1;
 }
 
+DWORD WINAPI ThreadGameTimer(LPVOID lpParam) {
+	int timer = 100;
+	while (timer > 0)
+	{
+		Sleep(1000);
+		timer--;
+
+	}
+	
+	return 1;
+}
+
 DWORD WINAPI receive(LPVOID lpParam)
 {
 	TdadosPipeSendReceive* dados = (TdadosPipeSendReceive*)lpParam;
@@ -237,6 +274,14 @@ DWORD WINAPI receive(LPVOID lpParam)
 	//Passar para a outra thread
 	ReadFile(dados->hPipe[0], &froginitialdata, sizeof(FrogInitialdata), &n, NULL);
 	_tprintf(TEXT("CONEXÂO POR %s com o modo de jogo %d\n"), froginitialdata.Username,froginitialdata.Gamemode);
+
+	HANDLE FroggeThread = CreateThread(
+		NULL,    // Thread attributes
+		0,       // Stack size (0 = use default)
+		ThreadGameTimer, // Thread start address
+		NULL,    // Parameter to pass to the thread
+		0,       // Creation flags
+		NULL);   // Th
 	
 	while (1) {
 		WaitForSingleObject(hcommand, INFINITE);
@@ -674,6 +719,9 @@ int _tmain(int argc, TCHAR* argv[]) {
 	data.nivel = 1;
 	data.numCars = 0;
 	resetMapCars(data.map,data.numRoads,&data.car_pos,&data.numCars);
+	//Preencher direções das estradas
+	for(int i=0;i<data.numRoads;i++)
+		data.directions[i] = (rand() % 2);
 	//Gerar sapos (Primeira meta....) // alterar para ser com opcao do menu
 	int sapRowRandom = data.numRoads + 2; //+3 para ficar na penultima estrada.
 	for (int i = 0; i < 2; i++)
@@ -685,8 +733,8 @@ int _tmain(int argc, TCHAR* argv[]) {
 		data.frog_pos[i].col = sapColRandom;
 		data.frog_pos[i].row = sapRowRandom;
 		data.frog_pos[i].level = 1;
-		data.frog_pos[i].score = 2;
-		data.frog_pos[i].time = 3;
+		data.frog_pos[i].score = 0;
+		data.frog_pos[i].time = 69;
 		data.map[sapRowRandom][sapColRandom] = FROGGE_ELEMENT;
 	}
 
@@ -764,7 +812,7 @@ int _tmain(int argc, TCHAR* argv[]) {
 		RoadsData[i].id = i + SKIP_BEGINING; //o numero do id é a estrada q elas estao encarregues
 		RoadsData[i].speed = data.carSpeed;//((rand() % 8) + 1) * 1000
 		RoadsData[i].terminar = &terminar;
-		RoadsData[i].direction = (rand() % 2); // Isto tem de estar na data, o toggle da velocidade tem de alterar da data depois .-.
+		RoadsData[i].direction = data.directions[i]; // Isto tem de estar na data, o toggle da velocidade tem de alterar da data depois .-.
 		RoadThreads[i] = CreateThread(
 			NULL,    // Thread attributes
 			0,       // Stack size (0 = use default)
@@ -894,6 +942,8 @@ int _tmain(int argc, TCHAR* argv[]) {
 	//dadosPipe.numRoads = data.numRoads;
 	//dadosPipe.mapToShare = &data.map;
 	dadosPipe.frogPos = &data.frog_pos;
+	for (int i = 0; i < data.numRoads; i++)
+		dadosPipe.directions[i] = data.directions[i];
 	dadosPipe.hMutex = CreateMutex(NULL, FALSE, NULL); //Criação do mutex
 
 	if (dadosPipe.hMutex == NULL) {
@@ -912,6 +962,8 @@ int _tmain(int argc, TCHAR* argv[]) {
 		_tprintf(TEXT("[Erro] ao criar thread send!\n"));
 		return -1;
 	}
+
+
 	
 
 	_tprintf(TEXT("[Servidor] Criar uma cópia do pipe '%s' ... (CreateNamedPipe)\n"), PIPE_NAME);
