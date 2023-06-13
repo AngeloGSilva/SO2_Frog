@@ -18,6 +18,9 @@ DLL_IMP_API void copyMemoryOperation(PVOID destiny, VOID* source, SIZE_T Length)
 
 DLL_IMP_API void clearMemoryOperation(PVOID destination, SIZE_T Length);
 
-DLL_IMP_API pBuffer InitSharedMemory();
+DLL_IMP_API pGameData InitSharedMemoryMap();
+DLL_IMP_API void SharedMemoryMap(pGameData pBuf, pGameData data);
+
+DLL_IMP_API pBuffer InitSharedMemoryBufferCircular();
 DLL_IMP_API EspacoBuffer ReadSharedMemoryServer(pBuffer BufferCircular);
 DLL_IMP_API BOOL ReadSharedMemoryOperador(pBuffer BufferCircular);

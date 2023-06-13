@@ -19,7 +19,45 @@ void clearMemoryOperation(PVOID destination, SIZE_T Length) {
 	ZeroMemory(destination, Length);
 }
 
-pBuffer InitSharedMemory() {
+
+void SharedMemoryMap(pGameData pBuf, pGameData data) {
+	HANDLE hMutex = CreateMutex(NULL, FALSE, SHARED_MEMORY_MUTEX);
+	if (hMutex == NULL)
+	{
+		_tprintf(TEXT("[ERRO] CreateMutex GameInfo\n"));
+		return;
+	}
+	WaitForSingleObject(hMutex, INFINITE);
+
+	ZeroMemory(pBuf, sizeof(GameData));
+	CopyMemory(pBuf, data, sizeof(GameData));
+
+	//libertat o mutex
+	ReleaseMutex(hMutex);
+}
+
+
+pGameData InitSharedMemoryMap() {
+	HANDLE HMapFile = CreateFileMapping(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, sizeof(GameData), FILE_MAPPING_GAME_DATA);
+	if (HMapFile == NULL)
+	{
+		_tprintf(TEXT("[ERRO] CreateFileMapping GameInfo\n"));
+		return NULL;
+	}
+
+	//criar mesmo a memoria
+	pGameData pBuf = (TCHAR*)MapViewOfFile(HMapFile, FILE_MAP_ALL_ACCESS, 0, 0, 0);
+	if (pBuf == NULL)
+	{
+		_tprintf(TEXT("[ERRO] MapViewOfFile GameInfo\n"));
+		return NULL;
+	}
+
+	return pBuf;
+}
+
+
+pBuffer InitSharedMemoryBufferCircular() {
 	pBuffer BufferCircular = NULL;
 	HANDLE HMapFileBuffer = OpenFileMapping(FILE_MAP_ALL_ACCESS, FALSE, FILE_MAPPING_BUFFER_CIRCULAR);
 	if (HMapFileBuffer == NULL)

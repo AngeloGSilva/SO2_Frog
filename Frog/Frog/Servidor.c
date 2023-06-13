@@ -690,37 +690,40 @@ int _tmain(int argc, TCHAR* argv[]) {
 		data.map[sapRowRandom][sapColRandom] = FROGGE_ELEMENT;
 	}
 
-	//memoria partilhada com operador com info total do jogo
-	HANDLE HMapFile = createMemoryMapping(sizeof(GameData), FILE_MAPPING_GAME_DATA);
-	if (HMapFile == NULL)
-	{
-		_tprintf(TEXT("[ERRO] CreateFileMapping GameInfo\n"));
-		return 0;
-	}
+	////memoria partilhada com operador com info total do jogo
+	//HANDLE HMapFile = createMemoryMapping(sizeof(GameData), FILE_MAPPING_GAME_DATA);
+	//if (HMapFile == NULL)
+	//{
+	//	_tprintf(TEXT("[ERRO] CreateFileMapping GameInfo\n"));
+	//	return 0;
+	//}
 
-	//criar mesmo a memoria
-	pGameData pBuf = (TCHAR*)MapViewOfFile(HMapFile, FILE_MAP_ALL_ACCESS, 0, 0, 0);
-	if (pBuf == NULL)
-	{
-		_tprintf(TEXT("[ERRO] MapViewOfFile GameInfo\n"));
-		return 0;
-	}
+	////criar mesmo a memoria
+	//pGameData pBuf = (TCHAR*)MapViewOfFile(HMapFile, FILE_MAP_ALL_ACCESS, 0, 0, 0);
+	//if (pBuf == NULL)
+	//{
+	//	_tprintf(TEXT("[ERRO] MapViewOfFile GameInfo\n"));
+	//	return 0;
+	//}
+	pGameData pBuf = InitSharedMemoryMap();
 
 	//criar mutex para a partilha de memoria com o operador (acho q nem é necessario)
-	data.Serv_HMutex = CreateMutex(NULL, FALSE, SHARED_MEMORY_MUTEX);
-	if (data.Serv_HMutex == NULL)
-	{
-		_tprintf(TEXT("[ERRO] CreateMutex GameInfo\n"));
-		return 0;
-	}
+	//data.Serv_HMutex = CreateMutex(NULL, FALSE, SHARED_MEMORY_MUTEX);
+	//if (data.Serv_HMutex == NULL)
+	//{
+	//	_tprintf(TEXT("[ERRO] CreateMutex GameInfo\n"));
+	//	return 0;
+	//}
 
-	WaitForSingleObject(data.Serv_HMutex, INFINITE);
+	//WaitForSingleObject(data.Serv_HMutex, INFINITE);
 
-	clearMemoryOperation(pBuf, sizeof(GameData));
-	copyMemoryOperation(pBuf, &data, sizeof(GameData));
+	//clearMemoryOperation(pBuf, sizeof(GameData));
+	//copyMemoryOperation(pBuf, &data, sizeof(GameData));
 
-	//libertat o mutex
-	ReleaseMutex(data.Serv_HMutex);
+	////libertat o mutex
+	//ReleaseMutex(data.Serv_HMutex);
+
+	SharedMemoryMap(pBuf, &data);
 
 	//Gerar Threads das Roads
 	HANDLE mutex_ROADS;
@@ -825,7 +828,7 @@ int _tmain(int argc, TCHAR* argv[]) {
 	//	}
 	//}
 	//dataThread.BufferCircular = NULL;
-	dataThread.BufferCircular = InitSharedMemory();
+	dataThread.BufferCircular = InitSharedMemoryBufferCircular();
 
 	//dataThread.id = dataThread.BufferCircular->nConsumidores++;
 	dataThread.RoadsDirection = &RoadsData;

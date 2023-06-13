@@ -389,7 +389,7 @@ int _tmain(int argc, TCHAR* argv[]) {
 	dataThread.id = dataThread.BufferCircular->nProdutores++;*/
 	dataThread.threadsHandles = &RoadThreads;
 	dataThread.numRoads = pBuf->numRoads;
-	dataThread.BufferCircular = InitSharedMemory();
+	dataThread.BufferCircular = InitSharedMemoryBufferCircular();
 	dataThread.terminar = &terminar;
 
 
