@@ -52,11 +52,6 @@ TCHAR username[16];
 BOOL GameOption;
 int currentFrogpos = POSUP; // 1 up 2 left 3 right 5 down
 
-
-
-
-
-
 DWORD WINAPI mapPipe(LPVOID lpParam)
 {
 	//esta parte tem de ser numa thread

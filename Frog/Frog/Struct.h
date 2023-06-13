@@ -53,7 +53,7 @@ typedef struct {
 	int numCars;
 	pCarPos car_pos;
 	TCHAR* Map;
-	int direction;
+	int* direction;
 	pCarPos sharedCarPos;
 	TCHAR* sharedMap;
 	HANDLE hEventRoads, hMutex;
@@ -114,7 +114,7 @@ typedef struct {
 	HANDLE hMutex; //para controlar o numClientes
 	PipeSendToClient structToSend;
 	pFrogPos frogPos;
-	int directions[MAX_ROWS];
+	int* directions;
 	TCHAR *mapToShare;
 	int numClientes;
 	int terminar;

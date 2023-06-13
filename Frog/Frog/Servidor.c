@@ -250,7 +250,6 @@ DWORD WINAPI ThreadGameTimer(LPVOID lpParam) {
 	{
 		Sleep(1000);
 		timer--;
-
 	}
 	
 	return 1;
@@ -942,8 +941,9 @@ int _tmain(int argc, TCHAR* argv[]) {
 	//dadosPipe.numRoads = data.numRoads;
 	//dadosPipe.mapToShare = &data.map;
 	dadosPipe.frogPos = &data.frog_pos;
-	for (int i = 0; i < data.numRoads; i++)
-		dadosPipe.directions[i] = data.directions[i];
+	//for (int i = 0; i < data.numRoads; i++)
+	//	dadosPipe.directions[i] = &RoadsData->direction;
+	dadosPipe.directions = &data.directions;
 	dadosPipe.hMutex = CreateMutex(NULL, FALSE, NULL); //Criação do mutex
 
 	if (dadosPipe.hMutex == NULL) {
