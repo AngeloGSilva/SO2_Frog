@@ -118,6 +118,7 @@ typedef struct {
 	TCHAR *mapToShare;
 	int numClientes;
 	int terminar;
+	pTRoads structToGetDirection;
 }TdadosPipeSendReceive, * pTdadosPipeSendReceive;
 
 //estrutura que é enviada do cliente para o server com o input

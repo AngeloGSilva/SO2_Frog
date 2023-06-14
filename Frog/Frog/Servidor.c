@@ -90,7 +90,10 @@ DWORD WINAPI send(LPVOID lpParam)
 		WaitForSingleObject(hmutexhere, INFINITE);
 		copyMapArray(dados->structToSend.numRoads,dados->mapToShare, dados->structToSend.map);
 		for (int i = 0; i < dados->structToSend.numRoads; i++)
-			dados->structToSend.directions[i] = dados->directions[i];
+		{
+			dados->structToSend.directions[i] = dados->structToGetDirection[i].direction;
+			_tprintf(TEXT("[DEBUG] direcao [%d]... (WriteFile)\n"), dados->structToGetDirection[i].direction);
+		}
 		dados->structToSend.frog_pos->score = dados->frogPos->score;
 		dados->structToSend.frog_pos->level = dados->frogPos->level;
 		//CopyMemory(dados->structToSend.map, dados->mapToShare, sizeof(dados->mapToShare));
@@ -943,7 +946,7 @@ int _tmain(int argc, TCHAR* argv[]) {
 	dadosPipe.frogPos = &data.frog_pos;
 	//for (int i = 0; i < data.numRoads; i++)
 	//	dadosPipe.directions[i] = &RoadsData->direction;
-	dadosPipe.directions = &data.directions;
+	dadosPipe.structToGetDirection = &RoadsData;
 	dadosPipe.hMutex = CreateMutex(NULL, FALSE, NULL); //Criação do mutex
 
 	if (dadosPipe.hMutex == NULL) {
