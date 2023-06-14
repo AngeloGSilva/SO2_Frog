@@ -32,11 +32,21 @@ void resetMapCars(TCHAR* map, int numRoads, pCarPos car_pos, int* numCars) {
 
 		}
 	}
+	_tprintf(TEXT("[DEBUG]Novo mapa gerado\n"));
+
+	//Reset ao array car_pos
+	for (int i = 0; i < MAX_CARS; i++)
+	{
+		car_pos[i].col = -1;
+		car_pos[i].row = -1;
+	}
+
 
 	//Gerar carros
 	for (int i = 0; i < numRoads; i++)
 	{
 		int carsInRoad = (rand() % 8) + 1;
+		_tprintf(TEXT("[DEBUG]Numero novo de carros gerado para a estrada %d é %d\n"),i, carsInRoad);
 		for (; carsInRoad > 0; carsInRoad--) {
 			car_pos[*numCars].row = i + SKIP_BEGINING; //X -> linha
 			int posInRoad = 0;
@@ -49,7 +59,7 @@ void resetMapCars(TCHAR* map, int numRoads, pCarPos car_pos, int* numCars) {
 			*numCars = *numCars + 1;
 		}
 	}
-	_tprintf(TEXT("[INFO] Numero total de carros %d\n"), *numCars);
+	_tprintf(TEXT("[DEBUG]Novo numero total de carros %d\n"), *numCars);
 }
 
 void copyMapArray(int numRoads, TCHAR *mapOriginal, TCHAR *mapSend) {
@@ -233,6 +243,7 @@ void HandleFroggeMovement(int frogge, PipeFroggeInput input, pFrogPos pos, TCHAR
 		}
 
 		//alterar numero de carros, ainda tenho de ver como se pode fazer (nao faço ideia)
+		resetMapCars(map,numRoads,structToRoads->car_pos,&structToRoads->numCars);
 	}
 	if (colisaoReset) {
 		_tprintf(TEXT("PERDEU PQ ESTA NUM CARRO\n"));
