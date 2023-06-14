@@ -14,7 +14,9 @@
 
 void resetMapCars(TCHAR* map, int numRoads, pCarPos car_pos, int* numCars) {
 	*numCars = 0;
-	//desenho do mapa... limites do mapa e numero de estradas
+	HANDLE hmutex = CreateMutex(NULL, FALSE, THREAD_ROADS_MUTEX);
+		//desenho do mapa... limites do mapa e numero de estradas
+		WaitForSingleObject(hmutex, INFINITE);
 	for (int i = 0; i < numRoads + SKIP_BEGINING_END; i++)
 	{
 		for (int j = 0; j < MAX_COLS; j++)
@@ -60,6 +62,7 @@ void resetMapCars(TCHAR* map, int numRoads, pCarPos car_pos, int* numCars) {
 		}
 	}
 	_tprintf(TEXT("[DEBUG]Novo numero total de carros %d\n"), *numCars);
+	ReleaseMutex(hmutex);
 }
 
 void copyMapArray(int numRoads, TCHAR *mapOriginal, TCHAR *mapSend) {
@@ -106,6 +109,7 @@ DWORD WINAPI send(LPVOID lpParam)
 		}
 		dados->structToSend.frog_pos->score = dados->frogPos->score;
 		dados->structToSend.frog_pos->level = dados->frogPos->level;
+		dados->structToSend.frog_pos->time = dados->frogPos->time;
 		//CopyMemory(dados->structToSend.map, dados->mapToShare, sizeof(dados->mapToShare));
 		for (i = 0; i < dados->numClientes; i++) {
 			if (!WriteFile(dados->hPipe[i], &dados->structToSend,sizeof(PipeSendToClient), &n, NULL)) {
@@ -129,8 +133,11 @@ DWORD WINAPI send(LPVOID lpParam)
 void HandleFroggeMovement(int frogge, PipeFroggeInput input, pFrogPos pos, TCHAR* map, int numRoads, pTRoads structToRoads) {
 	//TODO nao sei se +e o sito certo para fazer o evento de atualizar o mapa com o sapo
 	HANDLE keyPress = CreateEvent(NULL, TRUE, FALSE, TEXT("eventoSapoMOVEMENT"));
+	HANDLE hFrogMove = CreateMutex(NULL, FALSE, TEXT("mutexsaposmovimento"));
+	WaitForSingleObject(hFrogMove, INFINITE);
 	BOOL levelUp = FALSE;
 	BOOL colisaoReset = FALSE;
+	
 	switch (input.pressInput)
 	{
 	case KEY_UP:
@@ -232,12 +239,15 @@ void HandleFroggeMovement(int frogge, PipeFroggeInput input, pFrogPos pos, TCHAR
 		pos[frogge].level += 1;
 		_tprintf(TEXT("[DEBUG] Pontuacao passou a %d\n"), pos[frogge].score);
 
-		int newSpeed = ((rand() % 8) + 1) * 1000;
-		_tprintf(TEXT("[DEBUG] Nova Speed é %d, antiga speed é %d\n"), newSpeed,structToRoads[0].speed);
+		//int newSpeed = ((rand() % 8) + 1) * 1000;
+		//_tprintf(TEXT("[DEBUG] Nova Speed é %d, antiga speed é %d\n"), newSpeed,structToRoads[0].speed);
 
 		for (int i = 0; i < numRoads; i++)
 		{
-			structToRoads[i].speed = newSpeed;
+			//structToRoads[i].speed = newSpeed;
+			structToRoads[i].speed = ((rand() % 8) + 1) * 1000 / pos[frogge].level;
+			if (structToRoads[i].speed < 700)
+				structToRoads[i].speed = 700;
 			structToRoads[i].direction = (rand() % 2);
 			_tprintf(TEXT("[DEBUG] Nova direcao da estrada %d\n"), structToRoads[i].direction);
 		}
@@ -253,6 +263,8 @@ void HandleFroggeMovement(int frogge, PipeFroggeInput input, pFrogPos pos, TCHAR
 
 	SetEvent(keyPress);
 	ResetEvent(keyPress);
+	ReleaseMutex(hFrogMove);
+
 }
 
 //para dividir um pouco a logica
@@ -283,13 +295,22 @@ DWORD WINAPI ThreadSapos(LPVOID lpParam)
 }
 
 DWORD WINAPI ThreadGameTimer(LPVOID lpParam) {
-	int timer = 100;
-	while (timer > 0)
+	pFrogPos data = (pFrogPos)lpParam;
+	HANDLE timerevent = CreateEvent(NULL, TRUE, FALSE, TEXT("countdownevent"));
+	HANDLE heventmapwrite = CreateEvent(NULL, TRUE, FALSE, TEXT("eventoPipeWrite"));
+	HANDLE hMutexEventoEnviarMapaCliente = CreateMutex(NULL, FALSE, TEXT("MutexServerPipeEsperarEnviarEventoParaEnviarMapaCliente"));
+	while (data[0].time > 0)
 	{
 		Sleep(1000);
-		timer--;
+		data[0].time = data[0].time - 1;
+		WaitForSingleObject(hMutexEventoEnviarMapaCliente, INFINITE);
+		SetEvent(heventmapwrite);
+		ResetEvent(heventmapwrite);
+		ReleaseMutex(hMutexEventoEnviarMapaCliente);
 	}
-	
+	_tprintf(TEXT("[INFO]TIME OVER!\n"));
+	SetEvent(timerevent);
+	ResetEvent(timerevent);
 	return 1;
 }
 
@@ -316,7 +337,7 @@ DWORD WINAPI receive(LPVOID lpParam)
 		NULL,    // Thread attributes
 		0,       // Stack size (0 = use default)
 		ThreadGameTimer, // Thread start address
-		NULL,    // Parameter to pass to the thread
+		dados->frogPos,    // Parameter to pass to the thread
 		0,       // Creation flags
 		NULL);   // Th
 	
@@ -771,7 +792,7 @@ int _tmain(int argc, TCHAR* argv[]) {
 		data.frog_pos[i].row = sapRowRandom;
 		data.frog_pos[i].level = 1;
 		data.frog_pos[i].score = 0;
-		data.frog_pos[i].time = 69;
+		data.frog_pos[i].time = 10;
 		data.map[sapRowRandom][sapColRandom] = FROGGE_ELEMENT;
 	}
 

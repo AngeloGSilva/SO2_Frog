@@ -30,7 +30,6 @@ LRESULT CALLBACK TrataEventos(HWND, UINT, WPARAM, LPARAM);
 
 LRESULT CALLBACK TrataEventosInicial(HWND, UINT, WPARAM, LPARAM);
 
-
 // Nome da classe da janela (para programas de uma só janela, normalmente este nome é 
 // igual ao do próprio programa) "szprogName" é usado mais abaixo na definição das
 // propriedades do objecto janela
@@ -51,6 +50,7 @@ HANDLE hPipe;
 TCHAR username[16];
 BOOL GameOption;
 int currentFrogpos = POSUP; // 1 up 2 left 3 right 5 down
+BOOL GameEnd = FALSE;
 
 DWORD WINAPI mapPipe(LPVOID lpParam)
 {
@@ -80,6 +80,15 @@ DWORD WINAPI mapPipe(LPVOID lpParam)
 	Sleep(1);
 
 	return 0;
+}
+
+DWORD WINAPI CountDownTimer(LPVOID lpParam) {
+	HANDLE timerevent = CreateEvent(NULL, TRUE, FALSE, TEXT("countdownevent"));
+	while (1) {
+		WaitForSingleObject(timerevent,INFINITE);
+		GameEnd = TRUE;
+		InvalidateRect(hWndGlobal, NULL, FALSE);
+	}
 }
 
 
@@ -192,7 +201,6 @@ LRESULT CALLBACK TrataEventos(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPara
 	PAINTSTRUCT ps;
 	MINMAXINFO* mmi;
 
-
 	//keyup
 	HANDLE hcommand = CreateEvent(NULL, TRUE, FALSE, TEXT("eventoSapo"));
 	TCHAR* message;
@@ -272,6 +280,13 @@ LRESULT CALLBACK TrataEventos(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPara
 			_tprintf(TEXT("[ERRO] Thread pipe Map\n"));
 			return 1;
 		}
+		HANDLE hThreadCountDown = CreateThread(
+			NULL,    // Thread attributes
+			0,       // Stack size (0 = use default)
+			CountDownTimer, // Thread start address
+			NULL,    // Parameter to pass to the thread
+			0,       // Creation flags
+			NULL);
 
 		//CAR BITMAPS
 
@@ -375,6 +390,15 @@ LRESULT CALLBACK TrataEventos(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPara
 			
 			// Cleanup
 		}
+		if (GameEnd) {
+			FillRect(memDC, &rect, CreateSolidBrush(RGB(0, 0, 0)));
+			RECT rcGameInfo;
+			rcGameInfo.left = 20;
+			rcGameInfo.top = 20;
+			rcGameInfo.right = rect.right - 20;
+			rcGameInfo.bottom = rcGameInfo.top + 40;
+			DrawText(memDC, TEXT("YOU LOST BUT YOU AREA WINNER"), -1, &rcGameInfo, DT_CENTER);
+		}else{
 		int contentWidth = MAX_COLS * 20; // Width of the content
 		int contentHeight = (AllGameData->numRoads + 4) * 20; // Height of the content
 
@@ -438,11 +462,12 @@ LRESULT CALLBACK TrataEventos(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPara
 		SetTextColor(memDC, RGB(255, 255, 255));
 		SetBkMode(memDC, TRANSPARENT);
 		DrawText(memDC, gameInfoText, -1, &rcGameInfo, DT_CENTER);
+		}
 
 		// Copy the content from the memory DC to the actual DC
 		BitBlt(hdc, 0, 0, rect.right, rect.bottom, memDC, 0, 0, SRCCOPY);
 
-		BitBlt(hdc, 0, 0, rect.right, rect.bottom,memDC, 0, 0, SRCCOPY);
+		//BitBlt(hdc, 0, 0, rect.right, rect.bottom,memDC, 0, 0, SRCCOPY);
 		EndPaint(hWnd, &ps);
 		break;
 
