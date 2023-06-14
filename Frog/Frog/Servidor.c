@@ -92,7 +92,7 @@ DWORD WINAPI send(LPVOID lpParam)
 		for (int i = 0; i < dados->structToSend.numRoads; i++)
 		{
 			dados->structToSend.directions[i] = dados->structToGetDirection[i].direction;
-			_tprintf(TEXT("[DEBUG] direcao [%d]... (WriteFile)\n"), dados->structToGetDirection[i].direction);
+			//_tprintf(TEXT("[DEBUG] direcao [%d]... (WriteFile)\n"), dados->structToGetDirection[i].direction);
 		}
 		dados->structToSend.frog_pos->score = dados->frogPos->score;
 		dados->structToSend.frog_pos->level = dados->frogPos->level;
@@ -116,9 +116,11 @@ DWORD WINAPI send(LPVOID lpParam)
 
 //nao sei se a logica de averificar se tem carro aqui é o melhor sitio mas pahh e falta o obstaculo
 //Falta ainda a parte de estar parado e o carro passar por ele.... esta parte  vai ser mais chata, talvez com uma flag ou algo assim na thread roads mas ja meti la para testar algo
-void HandleFroggeMovement(int frogge, PipeFroggeInput input, pFrogPos pos, TCHAR* map, int numRoads) {
+void HandleFroggeMovement(int frogge, PipeFroggeInput input, pFrogPos pos, TCHAR* map, int numRoads, pTRoads structToRoads) {
 	//TODO nao sei se +e o sito certo para fazer o evento de atualizar o mapa com o sapo
 	HANDLE keyPress = CreateEvent(NULL, TRUE, FALSE, TEXT("eventoSapoMOVEMENT"));
+	BOOL levelUp = FALSE;
+	BOOL colisaoReset = FALSE;
 	switch (input.pressInput)
 	{
 	case KEY_UP:
@@ -127,25 +129,21 @@ void HandleFroggeMovement(int frogge, PipeFroggeInput input, pFrogPos pos, TCHAR
 			if(pos[frogge].row == 1 || pos[frogge].row == numRoads + 2)
 				map[pos[frogge].row * MAX_COLS + pos[frogge].col] = BEGIN_END_ELEMENT;
 			else if (map[(pos[frogge].row - 1) * MAX_COLS + pos[frogge].col] == OBSTACLE_ELEMENT) {
-				_tprintf(TEXT("Ouch iobstacle\n"));
+				_tprintf(TEXT("[DEBUG] Ouch iobstacle\n"));
 				break;
 			}
 			else
 				map[pos[frogge].row * MAX_COLS + pos[frogge].col] = ROAD_ELEMENT;
 
+			//movimento
 			pos[frogge].row = pos[frogge].row - 1;
+
 			if (map[pos[frogge].row * MAX_COLS + pos[frogge].col] == CAR_ELEMENT) {
-				//isto vai depois ser um flag q é atualizada para informar que o sapo perdeu ou no multiplayer tem de voltar para o inicio
-				_tprintf(TEXT("PERDEU PQ ESTA NUM CARRO\n"));
-				//ou simplemente fazer isto... podes ver a melhor maneira
-				pos[frogge].row = numRoads + 1;
-				pos[frogge].col = (rand() % (MAX_COLS - 2)) + 1;
+				colisaoReset = TRUE;
 			} else if(pos[frogge].row == 1)
 			{
-				_tprintf(TEXT("PASSOU DE NIVEL\n"));
-				pos[frogge].score += 1;
-				pos[frogge].level += 1;
-				_tprintf(TEXT("Pontuacao passou a %d\n"), pos[frogge].score);
+				levelUp = TRUE;
+				colisaoReset = TRUE;
 			}
 			
 		}
@@ -157,18 +155,17 @@ void HandleFroggeMovement(int frogge, PipeFroggeInput input, pFrogPos pos, TCHAR
 			if (pos[frogge].row == 1 || pos[frogge].row == numRoads + 2)
 				map[pos[frogge].row * MAX_COLS + pos[frogge].col] = BEGIN_END_ELEMENT;
 			else if (map[(pos[frogge].row + 1) * MAX_COLS + pos[frogge].col] == OBSTACLE_ELEMENT) {
-				_tprintf(TEXT("Ouch iobstacle\n"));
+				_tprintf(TEXT("[DEBUG] Ouch iobstacle\n"));
 				break;
 			}
 			else
 				map[pos[frogge].row * MAX_COLS + pos[frogge].col] = ROAD_ELEMENT;
+
+			//movimento
 			pos[frogge].row = pos[frogge].row + 1;
+
 			if (map[pos[frogge].row * MAX_COLS + pos[frogge].col] == CAR_ELEMENT) {
-				//isto vai depois ser um flag q é atualizada para informar que o sapo perdeu ou no multiplayer tem de voltar para o inicio
-				_tprintf(TEXT("PERDEU PQ ESTA NUM CARRO\n"));
-				//ou simplemente fazer isto... podes ver a melhor maneira
-				pos[frogge].row = numRoads + 2;
-				pos[frogge].col = (rand() % (MAX_COLS - 2)) + 1;
+				colisaoReset = TRUE;
 			}
 			
 		}
@@ -179,18 +176,17 @@ void HandleFroggeMovement(int frogge, PipeFroggeInput input, pFrogPos pos, TCHAR
 			if (pos[frogge].row == 1 || pos[frogge].row == numRoads + 2)
 				map[pos[frogge].row * MAX_COLS + pos[frogge].col] = BEGIN_END_ELEMENT;
 			else if (map[pos[frogge].row * MAX_COLS + (pos[frogge].col - 1)] == OBSTACLE_ELEMENT) {
-				_tprintf(TEXT("Ouch iobstacle\n"));
+				_tprintf(TEXT("[DEBUG] Ouch iobstacle\n"));
 				break;
 			}
 			else
 				map[pos[frogge].row * MAX_COLS + pos[frogge].col] = ROAD_ELEMENT;
+			
+			//movimento
 			pos[frogge].col = pos[frogge].col - 1;
+
 			if (map[pos[frogge].row * MAX_COLS + pos[frogge].col] == CAR_ELEMENT) {
-				//isto vai depois ser um flag q é atualizada para informar que o sapo perdeu ou no multiplayer tem de voltar para o inicio
-				_tprintf(TEXT("PERDEU PQ ESTA NUM CARRO\n"));
-				//ou simplemente fazer isto... podes ver a melhor maneira
-				pos[frogge].row = numRoads + 2;
-				pos[frogge].col = (rand() % (MAX_COLS - 2)) + 1;
+				colisaoReset = TRUE;
 			}
 			
 		}
@@ -202,18 +198,17 @@ void HandleFroggeMovement(int frogge, PipeFroggeInput input, pFrogPos pos, TCHAR
 			if (pos[frogge].row == 1 || pos[frogge].row == numRoads + 2)
 				map[pos[frogge].row * MAX_COLS + pos[frogge].col] = BEGIN_END_ELEMENT;
 			else if (map[pos[frogge].row * MAX_COLS + (pos[frogge].col + 1)] == OBSTACLE_ELEMENT) {
-				_tprintf(TEXT("Ouch iobstacle\n"));
+				_tprintf(TEXT("[DEBUG] Ouch iobstacle\n"));
 				break;
 			}
 			else
 				map[pos[frogge].row * MAX_COLS + pos[frogge].col] = ROAD_ELEMENT;
+
+			//movimento
 			pos[frogge].col = pos[frogge].col + 1;
+
 			if (map[pos[frogge].row * MAX_COLS + pos[frogge].col] == CAR_ELEMENT) {
-				//isto vai depois ser um flag q é atualizada para informar que o sapo perdeu ou no multiplayer tem de voltar para o inicio
-				_tprintf(TEXT("PERDEU PQ ESTA NUM CARRO\n"));
-				//ou simplemente fazer isto... podes ver a melhor maneira
-				pos[frogge].row = numRoads + 2;
-				pos[frogge].col = (rand() % (MAX_COLS - 2)) + 1;
+				colisaoReset = TRUE;
 			}
 			
 		}
@@ -221,9 +216,38 @@ void HandleFroggeMovement(int frogge, PipeFroggeInput input, pFrogPos pos, TCHAR
 	default:
 		break;
 	}
+	if (levelUp) {
+		_tprintf(TEXT("[DEBUG] PASSOU DE NIVEL\n"));
+		pos[frogge].score += 1;
+		pos[frogge].level += 1;
+		_tprintf(TEXT("[DEBUG] Pontuacao passou a %d\n"), pos[frogge].score);
+
+		int newSpeed = ((rand() % 8) + 1) * 1000;
+		_tprintf(TEXT("[DEBUG] Nova Speed é %d, antiga speed é %d\n"), newSpeed,structToRoads[0].speed);
+
+		for (int i = 0; i < numRoads; i++)
+		{
+			structToRoads[i].speed = newSpeed;
+			structToRoads[i].direction = (rand() % 2);
+			_tprintf(TEXT("[DEBUG] Nova direcao da estrada %d\n"), structToRoads[i].direction);
+		}
+
+		//alterar numero de carros, ainda tenho de ver como se pode fazer (nao faço ideia)
+	}
+	if (colisaoReset) {
+		_tprintf(TEXT("PERDEU PQ ESTA NUM CARRO\n"));
+		pos[frogge].row = numRoads + 1;
+		pos[frogge].col = (rand() % (MAX_COLS - 2)) + 1;
+	}
+
 	SetEvent(keyPress);
 	ResetEvent(keyPress);
 }
+
+//para dividir um pouco a logica
+//void HandleLevelUp(BOOL levelUp) {
+//
+//}
 
 DWORD WINAPI ThreadSapos(LPVOID lpParam)
 {
@@ -294,7 +318,7 @@ DWORD WINAPI receive(LPVOID lpParam)
 
 		ReleaseMutex(hmutexhere);
 		WaitForSingleObject(hmutexRoads, INFINITE);
-		HandleFroggeMovement(0, receiveInfo, dados->frogPos,dados->mapToShare,dados->structToSend.numRoads);
+		HandleFroggeMovement(0, receiveInfo, dados->frogPos,dados->mapToShare,dados->structToSend.numRoads,dados->structToGetDirection);
 		ReleaseMutex(hmutexRoads);
 	}
 
