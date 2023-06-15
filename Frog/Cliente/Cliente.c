@@ -363,6 +363,7 @@ LRESULT CALLBACK TrataEventos(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPara
 		bmpCarRight = CreateCompatibleDC(hdc);
 		SelectObject(bmpCarRight, hcarRight);
 
+		//hcommand = CreateEvent(NULL, TRUE, FALSE, TEXT("eventoSapo") + AllGameData->identificador);
 
 		ReleaseDC(hWnd, hdc);
 		break;

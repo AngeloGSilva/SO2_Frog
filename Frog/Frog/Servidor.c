@@ -91,10 +91,13 @@ DWORD WINAPI send(LPVOID lpParam)
 	/*dados->frogPos->time = 100;
 	dados->frogPos->level = 1;
 	dados->frogPos->score = 0;*/
-		
-	dados->structToSend.frog_pos[0].time = dados->frogPos[0].time;
-	dados->structToSend.frog_pos[0].level = dados->frogPos[0].level;
-	dados->structToSend.frog_pos[0].score = dados->frogPos[0].score;
+	for (int i = 0; i < dados->numClientes; i++)
+	{
+		dados->structToSend.frog_pos[i].time = dados->frogPos[i].time;
+		dados->structToSend.frog_pos[i].level = dados->frogPos[i].level;
+		dados->structToSend.frog_pos[i].score = dados->frogPos[i].score;
+	}
+	
 
 	while(1){
 		//WaitForSingleObject(dados->hMutex, INFINITE);
@@ -107,13 +110,15 @@ DWORD WINAPI send(LPVOID lpParam)
 			dados->structToSend.directions[i] = dados->structToGetDirection[i].direction;
 			//_tprintf(TEXT("[DEBUG] direcao [%d]... (WriteFile)\n"), dados->structToGetDirection[i].direction);
 		}
-		dados->structToSend.frog_pos->score = dados->frogPos->score;
-		dados->structToSend.frog_pos->level = dados->frogPos->level;
-		dados->structToSend.frog_pos->time = dados->frogPos->time;
+
 		//CopyMemory(dados->structToSend.map, dados->mapToShare, sizeof(dados->mapToShare));
 		for (i = 0; i < dados->numClientes; i++) {
+			dados->structToSend.frog_pos[i].score = dados->frogPos[i].score;
+			dados->structToSend.frog_pos[i].level = dados->frogPos[i].level;
+			dados->structToSend.frog_pos[i].time = dados->frogPos[i].time;
+			dados->structToSend.identificador = i;
 			if (!WriteFile(dados->hPipe[i], &dados->structToSend,sizeof(PipeSendToClient), &n, NULL)) {
-				_tprintf(TEXT("[ERRO] Escrever no pipe! (WriteFile)\n"));
+				_tprintf(TEXT("[ERRO] Escrever no pipe! %d(WriteFile)\n"), i);
 				exit(-1);
 			}
 			_tprintf(TEXT("[send] Enviei %d bytes ao leitor [%d]... (WriteFile)\n"), n, i);
@@ -132,7 +137,7 @@ DWORD WINAPI send(LPVOID lpParam)
 //Falta ainda a parte de estar parado e o carro passar por ele.... esta parte  vai ser mais chata, talvez com uma flag ou algo assim na thread roads mas ja meti la para testar algo
 void HandleFroggeMovement(int frogge, PipeFroggeInput input, pFrogPos pos, TCHAR* map, int numRoads, pTRoads structToRoads) {
 	//TODO nao sei se +e o sito certo para fazer o evento de atualizar o mapa com o sapo
-	HANDLE keyPress = CreateEvent(NULL, TRUE, FALSE, TEXT("eventoSapoMOVEMENT"));
+	HANDLE keyPress = CreateEvent(NULL, TRUE, FALSE, TEXT("eventoSapoMOVEMENT") + frogge);
 	HANDLE hFrogMove = CreateMutex(NULL, FALSE, TEXT("mutexsaposmovimento"));
 	WaitForSingleObject(hFrogMove, INFINITE);
 	BOOL levelUp = FALSE;
@@ -261,7 +266,7 @@ void HandleFroggeMovement(int frogge, PipeFroggeInput input, pFrogPos pos, TCHAR
 		pos[frogge].row = numRoads + 1;
 		pos[frogge].col = (rand() % (MAX_COLS - 2)) + 1;
 	}
-
+	_tprintf(TEXT("[DEBUG] Nova posicao do sapo %d col: %d, row: %d\n"), frogge, pos[frogge].col,pos[frogge].row);
 	SetEvent(keyPress);
 	ResetEvent(keyPress);
 	ReleaseMutex(hFrogMove);
@@ -277,8 +282,8 @@ DWORD WINAPI ThreadSapos(LPVOID lpParam)
 {
 	pTdadosUpdateSapoMapa data = (pTdadosUpdateSapoMapa)lpParam;
 	HANDLE hidk = CreateEvent(NULL, TRUE, FALSE, TEXT("eventoPipeWrite"));
-
-	HANDLE keyPress = CreateEvent(NULL, TRUE, FALSE, TEXT("eventoSapoMOVEMENT"));
+	int frogge = 0;
+	HANDLE keyPress = CreateEvent(NULL, TRUE, FALSE, TEXT("eventoSapoMOVEMENT") + frogge);
 
 	HANDLE hMutexEventoEnviarMapaCliente = CreateMutex(NULL, FALSE, TEXT("MutexServerPipeEsperarEnviarEventoParaEnviarMapaCliente"));
 
@@ -287,6 +292,7 @@ DWORD WINAPI ThreadSapos(LPVOID lpParam)
 		//wait por evento de q sapo se mexeu que vem do receive ou o caracas
 		//int x = data->frog_pos[0].row;
 		data->Map[data->frog_pos[0].row * MAX_COLS + data->frog_pos[0].col] = FROGGE_ELEMENT;
+		data->Map[data->frog_pos[1].row * MAX_COLS + data->frog_pos[1].col] = FROGGE_ELEMENT;
 		WaitForSingleObject(hMutexEventoEnviarMapaCliente, INFINITE);
 		SetEvent(hidk, INFINITE);
 		ResetEvent(hidk);
@@ -300,10 +306,11 @@ DWORD WINAPI ThreadGameTimer(LPVOID lpParam) {
 	HANDLE timerevent = CreateEvent(NULL, TRUE, FALSE, TEXT("countdownevent"));
 	HANDLE heventmapwrite = CreateEvent(NULL, TRUE, FALSE, TEXT("eventoPipeWrite"));
 	HANDLE hMutexEventoEnviarMapaCliente = CreateMutex(NULL, FALSE, TEXT("MutexServerPipeEsperarEnviarEventoParaEnviarMapaCliente"));
-	while (data[0].time > 0)
+	while (data[0].time > 0 && data[1].time > 0)
 	{
 		Sleep(1000);
 		data[0].time = data[0].time - 1;
+		data[1].time = data[1].time - 1;
 		WaitForSingleObject(hMutexEventoEnviarMapaCliente, INFINITE);
 		SetEvent(heventmapwrite);
 		ResetEvent(heventmapwrite);
@@ -325,14 +332,16 @@ DWORD WINAPI receive(LPVOID lpParam)
 	HANDLE hcommand, hmutexhere;
 	PipeFroggeInput receiveInfo;
 	FrogInitialdata froginitialdata;
-	hcommand = CreateEvent(NULL, TRUE, FALSE, TEXT("eventoSapo"));
+	hcommand = CreateEvent(NULL, TRUE, FALSE, TEXT("eventoSapo") + dados->clienteIdentificador);
 	hmutexhere = CreateMutex(NULL, FALSE, TEXT("MutexServerPipe"));
 	HANDLE hmutexRoads = CreateMutex(NULL, FALSE, THREAD_ROADS_MUTEX);
 
-	WaitForSingleObject(hcommand, INFINITE);
-	//Passar para a outra thread
-	ReadFile(dados->hPipe[0], &froginitialdata, sizeof(FrogInitialdata), &n, NULL);
-	_tprintf(TEXT("CONEXÂO POR %s com o modo de jogo %d\n"), froginitialdata.Username,froginitialdata.Gamemode);
+	_tprintf(TEXT("Cliente identificador %d\n"), dados->clienteIdentificador);
+
+	//WaitForSingleObject(hcommand, INFINITE);
+	////Passar para a outra thread
+	//ReadFile(dados->hPipe[dados->clienteIdentificador], &froginitialdata, sizeof(FrogInitialdata), &n, NULL);
+	//_tprintf(TEXT("CONEXÂO POR %s com o modo de jogo %d\n"), froginitialdata.Username,froginitialdata.Gamemode);
 
 	HANDLE FroggeThread = CreateThread(
 		NULL,    // Thread attributes
@@ -343,15 +352,15 @@ DWORD WINAPI receive(LPVOID lpParam)
 		NULL);   // Th
 	
 	while (1) {
-		WaitForSingleObject(hcommand, INFINITE);
+		//WaitForSingleObject(hcommand, INFINITE);
 
 		WaitForSingleObject(hmutexhere, INFINITE);
-		ret = ReadFile(dados->hPipe[0], &receiveInfo, sizeof(PipeFroggeInput), &n, NULL);
-		_tprintf(TEXT("[receive] Recebi %d bytes: '%d'... (ReadFile)\n"), n, receiveInfo.pressInput);
+		ret = ReadFile(dados->hPipe[dados->clienteIdentificador], &receiveInfo, sizeof(PipeFroggeInput), &n, NULL);
+		_tprintf(TEXT("[receive] Recebi %d bytes: '%d'... do cliente %d (ReadFile)\n"), n, receiveInfo.pressInput, dados->clienteIdentificador);
 
 		ReleaseMutex(hmutexhere);
 		WaitForSingleObject(hmutexRoads, INFINITE);
-		HandleFroggeMovement(0, receiveInfo, dados->frogPos,dados->mapToShare,dados->structToSend.numRoads,dados->structToGetDirection);
+		HandleFroggeMovement(dados->clienteIdentificador, receiveInfo, dados->frogPos,dados->mapToShare,dados->structToSend.numRoads,dados->structToGetDirection);
 		ReleaseMutex(hmutexRoads);
 	}
 
@@ -793,7 +802,7 @@ int _tmain(int argc, TCHAR* argv[]) {
 		data.frog_pos[i].row = sapRowRandom;
 		data.frog_pos[i].level = 1;
 		data.frog_pos[i].score = 0;
-		data.frog_pos[i].time = 30;
+		data.frog_pos[i].time = 1000;
 		data.map[sapRowRandom][sapColRandom] = FROGGE_ELEMENT;
 	}
 
@@ -1011,11 +1020,11 @@ int _tmain(int argc, TCHAR* argv[]) {
 		return -1;
 	}
 
-	threadRPipe = CreateThread(NULL, 0, receive, &dadosPipe, 0, NULL);
-	if (threadRPipe == NULL) {
-		_tprintf(TEXT("[Erro] ao criar thread receive!\n"));
-		return -1;
-	}
+	//threadRPipe = CreateThread(NULL, 0, receive, &dadosPipe, 0, NULL);
+	//if (threadRPipe == NULL) {
+	//	_tprintf(TEXT("[Erro] ao criar thread receive!\n"));
+	//	return -1;
+	//}
 
 	threadWPipe = CreateThread(NULL, 0, send, &dadosPipe, 0, NULL);
 	if (threadWPipe == NULL) {
@@ -1023,8 +1032,6 @@ int _tmain(int argc, TCHAR* argv[]) {
 		return -1;
 	}
 
-
-	
 
 	_tprintf(TEXT("[Servidor] Criar uma cópia do pipe '%s' ... (CreateNamedPipe)\n"), PIPE_NAME);
 
@@ -1047,8 +1054,16 @@ int _tmain(int argc, TCHAR* argv[]) {
 		WaitForSingleObject(dadosPipe.hMutex, INFINITE);
 
 		dadosPipe.hPipe[dadosPipe.numClientes] = hPipe;
+		dadosPipe.clienteIdentificador = dadosPipe.numClientes;
 		dadosPipe.numClientes++;
 		ReleaseMutex(dadosPipe.hMutex);
+
+		threadRPipe = CreateThread(NULL, 0, receive, &dadosPipe, 0, NULL);
+		if (threadRPipe == NULL) {
+			_tprintf(TEXT("[Erro] ao criar thread receive!\n"));
+			return -1;
+		}
+
 	}
 
 	//criar thread de ler e escrever em cada programa
