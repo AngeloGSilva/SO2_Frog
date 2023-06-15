@@ -18,6 +18,23 @@ typedef struct {
 	int row;
 }FrogPos, *pFrogPos;
 
+//Estrutura usada na thread de conectar Operadores
+typedef struct {
+	HANDLE InitialEvent;
+	HANDLE GameDataEvent;
+	HANDLE SharedMemoryEvent;
+	HANDLE hEventRoads[MAX_ROWS];
+}EventHandles, * pEventHandles;
+
+typedef struct {
+	HANDLE semSingleServer;
+}SemaphoreHandles, * pSemaphoreHandles;
+
+typedef struct {
+	HANDLE mutexMapaChange;
+	HANDLE mutexPipe;
+}MutexHandles, * pMutexHandles;
+
 typedef struct {
 	int nivel;
 	int *terminar;
