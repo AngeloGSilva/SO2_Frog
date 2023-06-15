@@ -334,7 +334,7 @@ LRESULT CALLBACK TrataEventos(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPara
 		hdc = GetDC(hWnd);
 
 		bmpCar = CreateCompatibleDC(hdc);
-		SelectObject(bmpDC, hcar);
+		SelectObject(bmpCar, hcar);
 
 		bmpFrogUp = CreateCompatibleDC(hdc);
 		SelectObject(bmpFrogUp, hfrog);
