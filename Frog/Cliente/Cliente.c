@@ -206,18 +206,17 @@ LRESULT CALLBACK TrataEventos(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPara
 	TCHAR* message;
 	DWORD n;
 
-	static HDC bmpDC = NULL;
-	static HDC bmpDC2 = NULL;
-	static HDC bmpDC3 = NULL;
-	static HDC bpmDC4 = NULL;
-	static HDC bpmDC5 = NULL;
-	static HDC bpmDC6 = NULL;
-	static HDC bpmDC7 = NULL;
-	static HDC bpmDC8 = NULL;
-	static HDC bpmDC9 = NULL;
-	static HDC bpmDC10 = NULL;
+	static HDC bmpCar = NULL;		
+	static HDC bmpFrogUp = NULL;
+	static HDC bmpRoad = NULL;
+	static HDC bmpLimit = NULL;
+	static HDC bmpBeginEnd = NULL;
+	static HDC bmpObstacle = NULL;
+	static HDC bmpFrogLeft = NULL;
+	static HDC bmpFrogRight = NULL;
+	static HDC bmpFrogDown = NULL;
+	static HDC bmpCarRight = NULL;
 
-	HBITMAP hBmp = NULL;
 	HBITMAP hcar = NULL;
 	HBITMAP hcarRight = NULL; //NEED
 	HBITMAP hroad = NULL;
@@ -228,7 +227,6 @@ LRESULT CALLBACK TrataEventos(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPara
 	HBITMAP hlimit = NULL;
 	HBITMAP hbeginend = NULL;
 	HBITMAP hObstacle = NULL; //NEED
-
 
 	static BITMAP bmp;
 	static BITMAP car;
@@ -242,16 +240,13 @@ LRESULT CALLBACK TrataEventos(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPara
 	static BITMAP beginend;
 	static BITMAP obstacle; //NEED
 
-
 	//buffer
 	static HDC memDC = NULL;
 
 	srand((unsigned)time(NULL));
 
-
 	//send info struct
 	PipeFroggeInput sendInfo;
-
 
 	switch (messg)
 	{
@@ -337,35 +332,36 @@ LRESULT CALLBACK TrataEventos(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPara
 		GetObject(hObstacle, sizeof(obstacle), &obstacle);
 
 		hdc = GetDC(hWnd);
-		bmpDC = CreateCompatibleDC(hdc);
+
+		bmpCar = CreateCompatibleDC(hdc);
 		SelectObject(bmpDC, hcar);
 
-		bmpDC2 = CreateCompatibleDC(hdc);
-		SelectObject(bmpDC2, hfrog);
+		bmpFrogUp = CreateCompatibleDC(hdc);
+		SelectObject(bmpFrogUp, hfrog);
 
-		bmpDC3 = CreateCompatibleDC(hdc);
-		SelectObject(bmpDC3, hroad);
+		bmpRoad = CreateCompatibleDC(hdc);
+		SelectObject(bmpRoad, hroad);
 
-		bpmDC4 = CreateCompatibleDC(hdc);
-		SelectObject(bpmDC4, hlimit);
+		bmpLimit = CreateCompatibleDC(hdc);
+		SelectObject(bmpLimit, hlimit);
 
-		bpmDC5 = CreateCompatibleDC(hdc);
-		SelectObject(bpmDC5, hbeginend);
+		bmpBeginEnd = CreateCompatibleDC(hdc);
+		SelectObject(bmpBeginEnd, hbeginend);
 
-		bpmDC6 = CreateCompatibleDC(hdc);
-		SelectObject(bpmDC6, hObstacle);
+		bmpObstacle = CreateCompatibleDC(hdc);
+		SelectObject(bmpObstacle, hObstacle);
 
-		bpmDC7 = CreateCompatibleDC(hdc);
-		SelectObject(bpmDC7, hfrogLeft);
+		bmpFrogLeft = CreateCompatibleDC(hdc);
+		SelectObject(bmpFrogLeft, hfrogLeft);
 
-		bpmDC8 = CreateCompatibleDC(hdc);
-		SelectObject(bpmDC8, hfrogRight);
+		bmpFrogRight = CreateCompatibleDC(hdc);
+		SelectObject(bmpFrogRight, hfrogRight);
 
-		bpmDC9 = CreateCompatibleDC(hdc);
-		SelectObject(bpmDC9, hfrogDown);
+		bmpFrogDown = CreateCompatibleDC(hdc);
+		SelectObject(bmpFrogDown, hfrogDown);
 
-		bpmDC10 = CreateCompatibleDC(hdc);
-		SelectObject(bpmDC10, hcarRight);
+		bmpCarRight = CreateCompatibleDC(hdc);
+		SelectObject(bmpCarRight, hcarRight);
 
 
 		ReleaseDC(hWnd, hdc);
@@ -418,31 +414,31 @@ LRESULT CALLBACK TrataEventos(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPara
 				if (buffer == CAR_ELEMENT)
 				{
 					if(AllGameData->directions[i - 2] == ROAD_LEFT) //Resolver ele apagar obstaculo quando passa por cima
-						BitBlt(memDC, posX, posY, car.bmWidth, car.bmHeight, bmpDC, 0, 0, SRCCOPY);
+						BitBlt(memDC, posX, posY, car.bmWidth, car.bmHeight, bmpCar, 0, 0, SRCCOPY);
 					else
-						BitBlt(memDC, posX, posY, carRight.bmWidth, carRight.bmHeight, bpmDC10, 0, 0, SRCCOPY);
+						BitBlt(memDC, posX, posY, carRight.bmWidth, carRight.bmHeight, bmpCarRight, 0, 0, SRCCOPY);
 				}
 				else if (buffer == ROAD_ELEMENT) {
-					BitBlt(memDC, posX, posY, road.bmWidth, road.bmHeight, bmpDC3, 0, 0, SRCCOPY);
+					BitBlt(memDC, posX, posY, road.bmWidth, road.bmHeight, bmpRoad, 0, 0, SRCCOPY);
 				}
 				else if (buffer == BEGIN_END_ELEMENT) {
-					BitBlt(memDC, posX, posY, beginend.bmWidth, beginend.bmHeight, bpmDC5, 0, 0, SRCCOPY);
+					BitBlt(memDC, posX, posY, beginend.bmWidth, beginend.bmHeight, bmpBeginEnd, 0, 0, SRCCOPY);
 				}
 				else if (buffer == BLOCK_ELEMENT) {
-					BitBlt(memDC, posX, posY, limit.bmWidth, limit.bmHeight, bpmDC4, 0, 0, SRCCOPY);
+					BitBlt(memDC, posX, posY, limit.bmWidth, limit.bmHeight, bmpLimit, 0, 0, SRCCOPY);
 				}
 				else if (buffer == FROGGE_ELEMENT) {
 					if(currentFrogpos == POSUP)
-						BitBlt(memDC, posX, posY,frog.bmWidth, frog.bmHeight, bmpDC2, 0, 0, SRCCOPY);
+						BitBlt(memDC, posX, posY,frog.bmWidth, frog.bmHeight, bmpFrogUp, 0, 0, SRCCOPY);
 					else if (currentFrogpos == POSLEFT)
-						BitBlt(memDC, posX, posY, frogLeft.bmWidth, frogLeft.bmHeight, bpmDC7, 0, 0, SRCCOPY);
+						BitBlt(memDC, posX, posY, frogLeft.bmWidth, frogLeft.bmHeight, bmpFrogLeft, 0, 0, SRCCOPY);
 					else if (currentFrogpos == POSRIGHT)
-						BitBlt(memDC, posX, posY, frogRight.bmWidth, frogRight.bmHeight, bpmDC8, 0, 0, SRCCOPY);
+						BitBlt(memDC, posX, posY, frogRight.bmWidth, frogRight.bmHeight, bmpFrogRight, 0, 0, SRCCOPY);
 					else if (currentFrogpos == POSDOWN)
-						BitBlt(memDC, posX, posY, frogDown.bmWidth, frogDown.bmHeight, bpmDC9, 0, 0, SRCCOPY);
+						BitBlt(memDC, posX, posY, frogDown.bmWidth, frogDown.bmHeight, bmpFrogDown, 0, 0, SRCCOPY);
 				}
 				else if (buffer == OBSTACLE_ELEMENT) {
-					BitBlt(memDC, posX, posY, obstacle.bmWidth, obstacle.bmHeight, bpmDC6, 0, 0, SRCCOPY);
+					BitBlt(memDC, posX, posY, obstacle.bmWidth, obstacle.bmHeight, bmpObstacle, 0, 0, SRCCOPY);
 				}
 			}
 		}

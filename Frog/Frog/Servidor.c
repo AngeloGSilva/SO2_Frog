@@ -249,6 +249,7 @@ void HandleFroggeMovement(int frogge, PipeFroggeInput input, pFrogPos pos, TCHAR
 			if (structToRoads[i].speed < 700)
 				structToRoads[i].speed = 700;
 			structToRoads[i].direction = (rand() % 2);
+			//Adicionar uns segundos ao tempo?
 			_tprintf(TEXT("[DEBUG] Nova direcao da estrada %d\n"), structToRoads[i].direction);
 		}
 
@@ -792,7 +793,7 @@ int _tmain(int argc, TCHAR* argv[]) {
 		data.frog_pos[i].row = sapRowRandom;
 		data.frog_pos[i].level = 1;
 		data.frog_pos[i].score = 0;
-		data.frog_pos[i].time = 10;
+		data.frog_pos[i].time = 30;
 		data.map[sapRowRandom][sapColRandom] = FROGGE_ELEMENT;
 	}
 
