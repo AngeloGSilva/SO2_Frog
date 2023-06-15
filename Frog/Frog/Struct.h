@@ -102,7 +102,6 @@ typedef struct {
 
 //estrutura para mandar para o cliente de cada vez
 typedef struct {
-	int identificador;
 	TCHAR map[MAX_ROWS + 4][MAX_COLS];
 	int numRoads;
 	int directions[MAX_ROWS];
@@ -120,7 +119,6 @@ typedef struct {
 	int numClientes;
 	int terminar;
 	pTRoads structToGetDirection;
-	int clienteIdentificador;
 }TdadosPipeSendReceive, * pTdadosPipeSendReceive;
 
 //estrutura que é enviada do cliente para o server com o input
