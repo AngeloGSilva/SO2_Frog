@@ -79,18 +79,6 @@ DWORD WINAPI send(LPVOID lpParam)
 	TdadosPipeSendReceive* dados = (TdadosPipeSendReceive*)lpParam;
 	TCHAR buf[256];
 	DWORD n;
-	HANDLE heventmapwrite;
-	HANDLE heventmapread;
-	HANDLE hmutexhere;
-	int i;
-	/*heventmapwrite = CreateEvent(NULL, TRUE, FALSE, TEXT("eventoPipeWrite"));
-	heventmapread = CreateEvent(NULL, TRUE, FALSE, TEXT("eventoPipeRead"));
-	hmutexhere = CreateMutex(NULL, FALSE, TEXT("MutexServerPipe"));*/
-
-	//First execution
-	/*dados->frogPos->time = 100;
-	dados->frogPos->level = 1;
-	dados->frogPos->score = 0;*/
 		
 	dados->structToSend.frog_pos[0].time = dados->frogPos[0].time;
 	dados->structToSend.frog_pos[0].level = dados->frogPos[0].level;
@@ -98,9 +86,9 @@ DWORD WINAPI send(LPVOID lpParam)
 
 	while(1){
 		//WaitForSingleObject(dados->hMutex, INFINITE);
-		WaitForSingleObject(dados->hEventPipeWrite,INFINITE);
+		WaitForSingleObject(dados->evtHandles.hEventPipeWrite,INFINITE);
 		Sleep(100);
-		WaitForSingleObject(dados->mutexServerPipe, INFINITE);
+		WaitForSingleObject(dados->mtxHandles.mutexServerPipe, INFINITE);
 		copyMapArray(dados->structToSend.numRoads,dados->mapToShare, dados->structToSend.map);
 		for (int i = 0; i < dados->structToSend.numRoads; i++)
 		{
@@ -111,17 +99,17 @@ DWORD WINAPI send(LPVOID lpParam)
 		dados->structToSend.frog_pos->level = dados->frogPos->level;
 		dados->structToSend.frog_pos->time = dados->frogPos->time;
 		//CopyMemory(dados->structToSend.map, dados->mapToShare, sizeof(dados->mapToShare));
-		for (i = 0; i < dados->numClientes; i++) {
+		for (int i = 0; i < dados->numClientes; i++) {
 			if (!WriteFile(dados->hPipe[i], &dados->structToSend,sizeof(PipeSendToClient), &n, NULL)) {
 				_tprintf(TEXT("[ERRO] Escrever no pipe! (WriteFile)\n"));
 				exit(-1);
 			}
 			_tprintf(TEXT("[send] Enviei %d bytes ao leitor [%d]... (WriteFile)\n"), n, i);
 		}
-		ReleaseMutex(dados->mutexServerPipe);
-		SetEvent(dados->hEventPipeRead);
-		ResetEvent(dados->hEventPipeRead);
-		ReleaseMutex(dados->hMutex);
+		ReleaseMutex(dados->mtxHandles.mutexServerPipe);
+		SetEvent(dados->evtHandles.hEventPipeRead);
+		ResetEvent(dados->evtHandles.hEventPipeRead);
+		/*ReleaseMutex(dados->mtxHandles.hMutex);*/
 	} 
 	dados->terminar = 1;
 	return 1;
@@ -130,10 +118,8 @@ DWORD WINAPI send(LPVOID lpParam)
 
 void HandleFroggeMovement(int frogge, PipeFroggeInput input, pFrogPos pos, TCHAR* map, int numRoads, pTRoads structToRoads) {
 	//TODO nao sei se +e o sito certo para fazer o evento de atualizar o mapa com o sapo
-	HANDLE keyPress = CreateEvent(NULL, TRUE, FALSE, TEXT("eventoSapoMOVEMENT"));
-	HANDLE hFrogMove = CreateMutex(NULL, FALSE, TEXT("mutexsaposmovimento"));
-	HANDLE mutexMapaChange = CreateMutex(NULL, FALSE, THREAD_ROADS_MUTEX);
-	WaitForSingleObject(hFrogMove, INFINITE);
+
+	WaitForSingleObject(structToRoads->mtxHandles.mutexFrogMovement, INFINITE);
 	BOOL levelUp = FALSE;
 	BOOL colisaoReset = FALSE;
 	
@@ -253,7 +239,7 @@ void HandleFroggeMovement(int frogge, PipeFroggeInput input, pFrogPos pos, TCHAR
 		}
 
 		//alterar numero de carros, ainda tenho de ver como se pode fazer (nao faço ideia)
-		resetMapCars(map,numRoads,structToRoads->car_pos,&structToRoads->numCars, mutexMapaChange);
+		resetMapCars(map,numRoads,structToRoads->car_pos,&structToRoads->numCars, structToRoads->mtxHandles.mutexMapaChange);
 	}
 	if (colisaoReset) {
 		_tprintf(TEXT("PERDEU PQ ESTA NUM CARRO\n"));
@@ -261,9 +247,9 @@ void HandleFroggeMovement(int frogge, PipeFroggeInput input, pFrogPos pos, TCHAR
 		pos[frogge].col = (rand() % (MAX_COLS - 2)) + 1;
 	}
 
-	SetEvent(keyPress);
-	ResetEvent(keyPress);
-	ReleaseMutex(hFrogMove);
+	SetEvent(structToRoads->evtHandles.hEventFrogMovement);
+	ResetEvent(structToRoads->evtHandles.hEventFrogMovement);
+	ReleaseMutex(structToRoads->mtxHandles.mutexFrogMovement);
 
 }
 
@@ -275,41 +261,34 @@ void HandleFroggeMovement(int frogge, PipeFroggeInput input, pFrogPos pos, TCHAR
 DWORD WINAPI ThreadSapos(LPVOID lpParam)
 {
 	pTdadosUpdateSapoMapa data = (pTdadosUpdateSapoMapa)lpParam;
-	HANDLE hidk = CreateEvent(NULL, TRUE, FALSE, TEXT("eventoPipeWrite"));
-
-	HANDLE keyPress = CreateEvent(NULL, TRUE, FALSE, TEXT("eventoSapoMOVEMENT"));
-
-	HANDLE hMutexEventoEnviarMapaCliente = CreateMutex(NULL, FALSE, TEXT("MutexServerPipeEsperarEnviarEventoParaEnviarMapaCliente"));
-
+	
 	while (1) {
-		WaitForSingleObject(keyPress,INFINITE);
+		WaitForSingleObject(data->evtHandles.hEventFrogMovement,INFINITE);
 		//for(int i=0;i<data->frog_pos;i++)
 		data->Map[data->frog_pos[0].row * MAX_COLS + data->frog_pos[0].col] = FROGGE_ELEMENT;
-		WaitForSingleObject(hMutexEventoEnviarMapaCliente, INFINITE);
-		SetEvent(hidk, INFINITE);
-		ResetEvent(hidk);
-		ReleaseMutex(hMutexEventoEnviarMapaCliente);
+		WaitForSingleObject(data->mtxHandles.mutexEventoEnviarMapaCliente, INFINITE);
+		SetEvent(data->evtHandles.hEventPipeWrite, INFINITE);
+		ResetEvent(data->evtHandles.hEventPipeWrite);
+		ReleaseMutex(data->mtxHandles.mutexEventoEnviarMapaCliente);
 	}
 	return 1;
 }
 
 DWORD WINAPI ThreadGameTimer(LPVOID lpParam) {
-	pFrogPos data = (pFrogPos)lpParam;
-	HANDLE timerevent = CreateEvent(NULL, TRUE, FALSE, TEXT("countdownevent"));
-	HANDLE heventmapwrite = CreateEvent(NULL, TRUE, FALSE, TEXT("eventoPipeWrite"));
-	HANDLE hMutexEventoEnviarMapaCliente = CreateMutex(NULL, FALSE, TEXT("MutexServerPipeEsperarEnviarEventoParaEnviarMapaCliente"));
-	while (data[0].time > 0)
+	pTdadosPipeSendReceive data = (pTdadosPipeSendReceive)lpParam;
+
+	while (data->frogPos[0].time > 0)
 	{
 		Sleep(1000);
-		data[0].time = data[0].time - 1;
-		WaitForSingleObject(hMutexEventoEnviarMapaCliente, INFINITE);
-		SetEvent(heventmapwrite);
-		ResetEvent(heventmapwrite);
-		ReleaseMutex(hMutexEventoEnviarMapaCliente);
+		data->frogPos[0].time = data->frogPos[0].time - 1;
+		WaitForSingleObject(data->mtxHandles.mutexEventoEnviarMapaCliente, INFINITE);
+		SetEvent(data->evtHandles.hEventPipeWrite);
+		ResetEvent(data->evtHandles.hEventPipeWrite);
+		ReleaseMutex(data->mtxHandles.mutexEventoEnviarMapaCliente);
 	}
 	_tprintf(TEXT("[INFO]TIME OVER!\n"));
-	SetEvent(timerevent);
-	ResetEvent(timerevent);
+	SetEvent(data->evtHandles.hCountDownEvent);
+	ResetEvent(data->evtHandles.hCountDownEvent);
 	return 1;
 }
 
@@ -319,15 +298,10 @@ DWORD WINAPI receive(LPVOID lpParam)
 	TCHAR buf[256];
 	BOOL ret;
 	DWORD n;
-	int i;
-	HANDLE hcommand, hmutexhere;
 	PipeFroggeInput receiveInfo;
 	FrogInitialdata froginitialdata;
-	//hcommand = CreateEvent(NULL, TRUE, FALSE, TEXT("eventoSapo"));
-	//hmutexhere = CreateMutex(NULL, FALSE, TEXT("MutexServerPipe"));
-	//HANDLE hmutexRoads = CreateMutex(NULL, FALSE, THREAD_ROADS_MUTEX);
 
-	WaitForSingleObject(dados->hEventFroggeMovement, INFINITE);
+	WaitForSingleObject(dados->evtHandles.hEventFroggeMovement, INFINITE);
 	//Passar para a outra thread
 	ReadFile(dados->hPipe[0], &froginitialdata, sizeof(FrogInitialdata), &n, NULL);
 	_tprintf(TEXT("CONEXÂO POR %s com o modo de jogo %d\n"), froginitialdata.Username,froginitialdata.Gamemode);
@@ -336,21 +310,21 @@ DWORD WINAPI receive(LPVOID lpParam)
 		NULL,    // Thread attributes
 		0,       // Stack size (0 = use default)
 		ThreadGameTimer, // Thread start address
-		dados->frogPos,    // Parameter to pass to the thread
+		dados,    // Parameter to pass to the thread
 		0,       // Creation flags
 		NULL);   // Th
 	
 	while (1) {
-		WaitForSingleObject(dados->hEventFroggeMovement, INFINITE);
+		WaitForSingleObject(dados->evtHandles.hEventFroggeMovement, INFINITE);
 
-		WaitForSingleObject(dados->mutexServerPipe, INFINITE);
+		WaitForSingleObject(dados->mtxHandles.mutexServerPipe, INFINITE);
 		ret = ReadFile(dados->hPipe[0], &receiveInfo, sizeof(PipeFroggeInput), &n, NULL);
 		_tprintf(TEXT("[receive] Recebi %d bytes: '%d'... (ReadFile)\n"), n, receiveInfo.pressInput);
 
-		ReleaseMutex(dados->mutexServerPipe);
-		WaitForSingleObject(dados->mutexMapaChange, INFINITE);
+		ReleaseMutex(dados->mtxHandles.mutexServerPipe);
+		WaitForSingleObject(dados->mtxHandles.mutexMapaChange, INFINITE);
 		HandleFroggeMovement(0, receiveInfo, dados->frogPos,dados->mapToShare,dados->structToSend.numRoads,dados->structToGetDirection);
-		ReleaseMutex(dados->mutexMapaChange);
+		ReleaseMutex(dados->mtxHandles.mutexMapaChange);
 	}
 
 	dados->terminar = 1;
@@ -365,7 +339,7 @@ DWORD WINAPI ThreadRoads(LPVOID lpParam)
 	_tprintf(TEXT("[INFO] INICIO DA THREAD %d\n"), data->id);
 	while (*data->terminar == 0)
 	{
-		WaitForSingleObject(data->mutexMapaChange, INFINITE);
+		WaitForSingleObject(data->mtxHandles.mutexMapaChange, INFINITE);
 		temp = data->car_pos;
 		//movimento carros
 		for (int i = 0; i < data->numCars; i++)
@@ -488,18 +462,18 @@ DWORD WINAPI ThreadRoads(LPVOID lpParam)
 		}
 		//copyMemoryOperation(data->sharedMap, data->Map, sizeof(TCHAR) * (MAX_ROWS + SKIP_BEGINING_END) * MAX_COLS);
 		SharedMemoryMapThreadRoads(data);
-		ReleaseMutex(data->mutexMapaChange);
+		ReleaseMutex(data->mtxHandles.mutexMapaChange);
 
 		//Criamos evento para que as threads ja consiga ler
-		SetEvent(data->hEventRoads);
-		ResetEvent(data->hEventRoads);
+		SetEvent(data->evtHandles.hEventRoads[data->id - SKIP_BEGINING]);
+		ResetEvent(data->evtHandles.hEventRoads[data->id - SKIP_BEGINING]);
 		Sleep(data->speed);
 		//HANDLE hidk = CreateEvent(NULL, TRUE, FALSE, TEXT("eventoPipeWrite"));
 		//HANDLE hMutexEventoEnviarMapaCliente = CreateMutex(NULL, FALSE, TEXT("MutexServerPipeEsperarEnviarEventoParaEnviarMapaCliente"));
-		WaitForSingleObject(data->mutexEventoEnviarMapaCliente,INFINITE);
-		SetEvent(data->hEventPipeWrite, INFINITE);
-		ResetEvent(data->hEventPipeWrite);
-		ReleaseMutex(data->mutexEventoEnviarMapaCliente);
+		WaitForSingleObject(data->mtxHandles.mutexEventoEnviarMapaCliente,INFINITE);
+		SetEvent(data->evtHandles.hEventPipeWrite, INFINITE);
+		ResetEvent(data->evtHandles.hEventPipeWrite);
+		ReleaseMutex(data->mtxHandles.mutexEventoEnviarMapaCliente);
 	}
 	return 0;
 }
@@ -774,22 +748,27 @@ int _tmain(int argc, TCHAR* argv[]) {
 	evtHandles.hEventPipeWrite = CreateEvent(NULL, TRUE, FALSE, TEXT("eventoPipeWrite"));
 
 	mtxHandles.mutexEventoEnviarMapaCliente = CreateMutex(NULL, FALSE, TEXT("MutexServerPipeEsperarEnviarEventoParaEnviarMapaCliente"));
-	
 	mtxHandles.mutexServerPipe = CreateMutex(NULL, FALSE, TEXT("MutexServerPipe"));
+
 	evtHandles.hEventPipeRead = CreateEvent(NULL, TRUE, FALSE, TEXT("eventoPipeRead"));
 	evtHandles.hEventFroggeMovement = CreateEvent(NULL, TRUE, FALSE, TEXT("eventoSapo"));
-	
+
+	mtxHandles.mutexMapaChange = CreateMutex(NULL, FALSE, THREAD_ROADS_MUTEX);
+
+	evtHandles.hEventFrogMovement = CreateEvent(NULL, TRUE, FALSE, TEXT("eventoSapoMOVEMENT"));
+	mtxHandles.mutexFrogMovement = CreateMutex(NULL, FALSE, TEXT("mutexsaposmovimento"));
+
 	
 	//Verificar handles criados
 
 	//passar por data da thread
 	//thread para verificar se existe operador novo para partilhar a info do mapa 
 	HANDLE tHCheckOpearators = CreateThread(
-		NULL,    // Thread attributes
-		0,       // Stack size (0 = use default)
-		CheckOperators, // Thread start address
-		&evtHandles,    // Parameter to pass to the thread
-		0,       // Creation flags
+		NULL,
+		0,
+		CheckOperators,
+		&evtHandles,
+		0,
 		NULL);
 	if (tHCheckOpearators == NULL)
 	{
@@ -802,7 +781,7 @@ int _tmain(int argc, TCHAR* argv[]) {
 	//Gerar mapa e dados de jogo
 	data.nivel = 1;
 	data.numCars = 0;
-	mtxHandles.mutexMapaChange = CreateMutex(NULL, FALSE, THREAD_ROADS_MUTEX);
+
 	//TODO
 
 	resetMapCars(data.map,data.numRoads,&data.car_pos,&data.numCars, mtxHandles.mutexMapaChange);
@@ -847,20 +826,18 @@ int _tmain(int argc, TCHAR* argv[]) {
 		//temporario acho
 		RoadsData[i].frog_pos = &data.frog_pos;
 		RoadsData[i].numRoads = data.numRoads;
-		RoadsData[i].hEventPipeWrite = evtHandles.hEventPipeWrite;
 		RoadsData[i].Map = &data.map;
 		RoadsData[i].car_pos = &data.car_pos;
 		RoadsData[i].numCars = data.numCars;
-		RoadsData[i].mutexMapaChange = mtxHandles.mutexMapaChange;
-		RoadsData[i].mutexEventoEnviarMapaCliente = mtxHandles.mutexEventoEnviarMapaCliente;
 		evtHandles.hEventRoads[i] = CreateEvent(NULL, TRUE, FALSE, THREAD_ROADS_EVENT + i);
-		RoadsData[i].hEventRoads = evtHandles.hEventRoads[i];
 		RoadsData[i].id = i + SKIP_BEGINING; 
 		RoadsData[i].speed = data.carSpeed;
 		RoadsData[i].terminar = &terminar;
 		RoadsData[i].direction = data.directions[i];
+		RoadsData[i].mtxHandles = mtxHandles;
+		RoadsData[i].evtHandles = evtHandles;
 		RoadThreads[i] = CreateThread(
-			NULL,    
+			NULL,
 			0,       
 			ThreadRoads, 
 			&RoadsData[i],    
@@ -878,6 +855,8 @@ int _tmain(int argc, TCHAR* argv[]) {
 	TfroggeData.mutexRoads = mtxHandles.mutexMapaChange;
 	TfroggeData.frog_pos = &data.frog_pos;
 	TfroggeData.Map =&data.map;
+	TfroggeData.evtHandles = evtHandles;
+	TfroggeData.mtxHandles = mtxHandles;
 
 	HANDLE FroggeThread = CreateThread(
 		NULL,    // Thread attributes
@@ -910,12 +889,12 @@ int _tmain(int argc, TCHAR* argv[]) {
 	dataThread.terminar = &terminar;
 
 	HANDLE hThreads = CreateThread(
-		NULL,    // Thread attributes
-		0,       // Stack size (0 = use default)
-		ThreadBufferCircular, // Thread start address
-		&dataThread,    // Parameter to pass to the thread
-		0,       // Creation flags
-		NULL);   // Thread id   // returns the thread identifier 
+		NULL,    
+		0,       
+		ThreadBufferCircular, 
+		&dataThread,    
+		0,
+		NULL);
 	if (hThreads == NULL)
 	{
 		_tprintf(TEXT("[ERRO] Thread BufferCircular\n"));
@@ -935,11 +914,8 @@ int _tmain(int argc, TCHAR* argv[]) {
 	TCHAR bufPipe[256];
 	TdadosPipeSendReceive dadosPipe;
 
-	dadosPipe.hEventPipeRead = evtHandles.hEventPipeRead;
-	dadosPipe.hEventPipeWrite = evtHandles.hEventPipeWrite;
-	dadosPipe.mutexServerPipe = mtxHandles.mutexServerPipe;
-	dadosPipe.mutexMapaChange = mtxHandles.mutexMapaChange;
-	dadosPipe.hEventFroggeMovement = evtHandles.hEventFroggeMovement;
+	dadosPipe.evtHandles = evtHandles;
+	dadosPipe.mtxHandles = mtxHandles;
 	dadosPipe.numClientes = 0;
 	dadosPipe.terminar = 0;
 	dadosPipe.mapToShare = &data.map;
@@ -952,9 +928,8 @@ int _tmain(int argc, TCHAR* argv[]) {
 	//	dadosPipe.directions[i] = &RoadsData->direction;
 	dadosPipe.structToGetDirection = &RoadsData;
 	mtxHandles.mutexPipe = CreateMutex(NULL, FALSE, NULL);
-	dadosPipe.hMutex = mtxHandles.mutexPipe; //Criação do mutex
 
-	if (dadosPipe.hMutex == NULL) {
+	if (dadosPipe.mtxHandles.mutexPipe == NULL) {
 		_tprintf(TEXT("[Erro] ao criar mutex!\n"));
 		return -1;
 	}
@@ -992,11 +967,11 @@ int _tmain(int argc, TCHAR* argv[]) {
 			exit(-1);
 		}
 
-		WaitForSingleObject(dadosPipe.hMutex, INFINITE);
+		WaitForSingleObject(dadosPipe.mtxHandles.mutexPipe, INFINITE);
 
 		dadosPipe.hPipe[dadosPipe.numClientes] = hPipe;
 		dadosPipe.numClientes++;
-		ReleaseMutex(dadosPipe.hMutex);
+		ReleaseMutex(dadosPipe.mtxHandles.mutexPipe);
 	}
 
 	while (terminar == 0)
@@ -1006,6 +981,7 @@ int _tmain(int argc, TCHAR* argv[]) {
 		
 	//fechar tudo
 	_tprintf(TEXT("[INFO] SERVIDOR VAI TERMINAR\n"));
+	//adicionar à cena
 	HANDLE ending_event = CreateEvent(NULL, TRUE, FALSE, ENDING_EVENT);
 	SetEvent(ending_event);
 

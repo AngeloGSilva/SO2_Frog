@@ -66,8 +66,8 @@ DWORD WINAPI ThreadRoads(LPVOID lpParam)
 	DWORD numWritten; // Number of characters actually written
 	while (*data->terminar == 0)
 	{
-		WaitForSingleObject(data->hEventRoads, INFINITE);
-		WaitForSingleObject(data->hMutex, INFINITE);
+		WaitForSingleObject(data->evtHandles.hEventRoads[data->id - SKIP_BEGINING], INFINITE);
+		WaitForSingleObject(data->mtxHandles.mutexMapaChange, INFINITE);
 		//copyMemoryOperation(&temp, &data->sharedMap, sizeof(TCHAR) * (MAX_ROWS + SKIP_BEGINING_END) * MAX_COLS);
 		
 		SharedMemoryMapThreadRoadsOperador(data, &temp);
@@ -80,7 +80,7 @@ DWORD WINAPI ThreadRoads(LPVOID lpParam)
 			SetConsoleCursorPosition(hConsole, cursorPos);
 			WriteConsole(hConsole, &temp[data->id * MAX_COLS + i], 1, &numWritten, NULL);
 		}
-		ReleaseMutex(data->hMutex);
+		ReleaseMutex(data->mtxHandles.mutexMapaChange);
 	}
 	return 0;
 }
@@ -242,61 +242,45 @@ int _tmain(int argc, TCHAR* argv[]) {
 
 	GameData data;
 
-	////data tem de sair e so ficar pbuf penso eu
-	//HANDLE HMapFile = createMemoryMapping(sizeof(GameData), FILE_MAPPING_GAME_DATA);
-	//pGameData pBuf = (GameData*)MapViewOfFile(HMapFile, FILE_MAP_ALL_ACCESS, 0, 0, 0);
+	EventHandles evtHandles;
+	SemaphoreHandles smphHandles;
+	MutexHandles mtxHandles;
 
 	pGameData pBuf = InitSharedMemoryMap();
+
+	evtHandles.SharedMemoryEvent = CreateEvent(NULL, TRUE, FALSE, SHARED_MEMORY_EVENT);
+	mtxHandles.mutexMapaChange = CreateMutex(NULL, FALSE, THREAD_ROADS_MUTEX);
+
 	//data.event = OpenEvent(READ_CONTROL,TRUE, TEXT("TP_Evento"));
-	data.Serv_HEvent = CreateEvent(NULL, TRUE, FALSE, SHARED_MEMORY_EVENT);
+	//data.Serv_HEvent = CreateEvent(NULL, TRUE, FALSE, SHARED_MEMORY_EVENT);
 	//data.mutex = OpenMutex(READ_CONTROL, TRUE, TEXT("TP_Mutex"));
-	data.Serv_HMutex = CreateMutex(NULL, FALSE, SHARED_MEMORY_MUTEX);
 
-	HANDLE InitialEvent = CreateEvent(NULL, TRUE, FALSE, INITIAL_EVENT);
+	evtHandles.InitialEvent = CreateEvent(NULL, TRUE, FALSE, INITIAL_EVENT);
 
-	SetEvent(InitialEvent);
-	ResetEvent(InitialEvent);
+	SetEvent(evtHandles.InitialEvent);
+	ResetEvent(evtHandles.InitialEvent);
 
 
-	DWORD abandon = WaitForSingleObject(data.Serv_HEvent, 5000);
+	DWORD abandon = WaitForSingleObject(evtHandles.SharedMemoryEvent, 5000);
+
 	if (abandon == WAIT_TIMEOUT) {
 		_tprintf(TEXT("[INFO] Nao ha servidor disponivel\n"));
 		return 1;
 	}
 
-	WaitForSingleObject(data.Serv_HMutex, INFINITE);
-
-	//libertat o mutex
-	ReleaseMutex(data.Serv_HMutex);
-
 	//Thread para inicio e fim do Mapa + pontuacao/ restante info necessaria 
 	HANDLE hThreadsINFO = CreateThread(
-		NULL,    // Thread attributes
-		0,       // Stack size (0 = use default)
-		ThreadGameInfo, // Thread start address
-		&terminar,    // Parameter to pass to the thread
-		0,       // Creation flags
-		NULL);   // Thread id   // returns the thread identifier 
+		NULL,
+		0,
+		ThreadGameInfo,
+		&terminar,
+		0,
+		NULL);
 
 	//Threads de geração do inicio e fim
 	HANDLE StartEndThreads[1];
 
 	TStartEnd StartEndData[1];
-
-	//HANDLE HMapFileBeginEnd = createMemoryMapping(sizeof(TCHAR) * (MAX_ROWS + SKIP_BEGINING_END) * MAX_COLS, FILE_MAPPING_THREAD_ROADS);
-	////_tprintf(TEXT("SO2_MAP_OLA") + (i + 2));
-	//if (HMapFileBeginEnd == NULL)
-	//{
-	//	_tprintf(TEXT("[ERRO] CreateFileMapping Meta e Partida\n"));
-	//	return 0;
-	//}
-
-	//StartEndData[0].sharedMap = (TCHAR*)MapViewOfFile(HMapFileBeginEnd, FILE_MAP_ALL_ACCESS, 0, 0, 0);
-	//if (StartEndData[0].sharedMap == NULL)
-	//{
-	//	_tprintf(TEXT("[ERRO] CreateFileMapping Meta e Partida\n"));
-	//	return 0;
-	//}
 
 	StartEndData[0].sharedMap = InitSharedMemoryMapThreadRoads();
 	StartEndData[0].hMutex = CreateMutex(NULL, FALSE, THREAD_ROADS_MUTEX);
@@ -339,12 +323,14 @@ int _tmain(int argc, TCHAR* argv[]) {
 		//}
 		RoadsData[i].sharedMap = InitSharedMemoryMapThreadRoads();
 		RoadsData[i].numCars = pBuf->numCars;
-		RoadsData[i].hMutex = CreateMutex(NULL, FALSE, THREAD_ROADS_MUTEX);
-		RoadsData[i].hEventRoads = CreateEvent(NULL, TRUE, FALSE, THREAD_ROADS_EVENT + i);
+		evtHandles.hEventRoads[i] = CreateEvent(NULL, TRUE, FALSE, THREAD_ROADS_EVENT + i);
 		RoadsData[i].id = i + SKIP_BEGINING; //o numero do id é a estrada q elas estao encarregues
 		RoadsData[i].speed = 0;
 		RoadsData[i].terminar = &terminar;
+		RoadsData[i].mtxHandles = mtxHandles;
+		RoadsData[i].evtHandles = evtHandles;
 		//RoadsData[i].direction = 1;
+
 		RoadThreads[i] = CreateThread(
 			NULL,    // Thread attributes
 			0,       // Stack size (0 = use default)
@@ -361,37 +347,10 @@ int _tmain(int argc, TCHAR* argv[]) {
 
 	TDados dataThread;
 
-	dataThread.hMutex = CreateMutex(NULL, FALSE, BUFFER_CIRCULAR_MUTEX_ESCRITOR);
+	/*dataThread.hMutex = CreateMutex(NULL, FALSE, BUFFER_CIRCULAR_MUTEX_ESCRITOR);
 	dataThread.hSemEscrita = CreateSemaphore(NULL, 10, 10, BUFFER_CIRCULAR_SEMAPHORE_ESCRITOR);
-	dataThread.hSemLeitura = CreateSemaphore(NULL, 0, 10, BUFFER_CIRCULAR_SEMAPHORE_LEITORE);
+	dataThread.hSemLeitura = CreateSemaphore(NULL, 0, 10, BUFFER_CIRCULAR_SEMAPHORE_LEITORE);*/
 
-	/*HANDLE HMapFileBuffer = openMemoryMapping(FILE_MAP_ALL_ACCESS,FILE_MAPPING_BUFFER_CIRCULAR);
-	if (HMapFileBuffer == NULL)
-	{
-		HMapFileBuffer = createMemoryMapping(sizeof(Buffer), FILE_MAPPING_BUFFER_CIRCULAR);
-		dataThread.BufferCircular = (pBuffer)MapViewOfFile(HMapFileBuffer, FILE_MAP_ALL_ACCESS, 0, 0, 0);
-		dataThread.BufferCircular->nConsumidores = 0;
-		dataThread.BufferCircular->nProdutores = 0;
-		dataThread.BufferCircular->posEscrita = 0;
-		dataThread.BufferCircular->posLeitura = 0;
-		if (HMapFileBuffer == NULL)
-		{
-			_tprintf(TEXT("[ERRO] CreateFileMapping BufferCircular\n"));
-			return 0;
-		}
-	}
-	else
-	{
-		dataThread.BufferCircular = (Buffer*)MapViewOfFile(HMapFileBuffer, FILE_MAP_ALL_ACCESS, 0, 0, 0);
-		if (HMapFileBuffer == NULL)
-		{
-			_tprintf(TEXT("[ERRO] CreateFileMapping BufferCircular\n"));
-			return 0;
-		}
-		dataThread.threadsHandles = &RoadThreads;
-		dataThread.numRoads = pBuf->numRoads;
-	}
-	dataThread.id = dataThread.BufferCircular->nProdutores++;*/
 	dataThread.threadsHandles = &RoadThreads;
 	dataThread.numRoads = pBuf->numRoads;
 	dataThread.BufferCircular = InitSharedMemoryBufferCircular();
@@ -399,12 +358,12 @@ int _tmain(int argc, TCHAR* argv[]) {
 
 
 	HANDLE hThreads = CreateThread(
-		NULL,    // Thread attributes
-		0,       // Stack size (0 = use default)
-		ThreadBufferCircular, // Thread start address
-		&dataThread,    // Parameter to pass to the thread
-		0,       // Creation flags
-		NULL);   // Thread id   // returns the thread identifier
+		NULL,
+		0,
+		ThreadBufferCircular,
+		&dataThread,
+		0,
+		NULL);
 	if (hThreads == NULL)
 	{
 		_tprintf(TEXT("[ERRO] Thread BufferCircular\n"));

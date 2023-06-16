@@ -27,6 +27,8 @@ typedef struct {
 	HANDLE hEventPipeWrite;
 	HANDLE hEventPipeRead;
 	HANDLE hEventFroggeMovement;
+	HANDLE hEventFrogMovement;
+	HANDLE hCountDownEvent;
 }EventHandles, * pEventHandles;
 
 typedef struct {
@@ -38,6 +40,7 @@ typedef struct {
 	HANDLE mutexMapaChange;
 	HANDLE mutexPipe;
 	HANDLE mutexEventoEnviarMapaCliente;
+	HANDLE mutexFrogMovement;
 }MutexHandles, * pMutexHandles;
 
 typedef struct {
@@ -78,7 +81,8 @@ typedef struct {
 	int* direction;
 	pCarPos sharedCarPos;
 	TCHAR* sharedMap;
-	HANDLE hEventRoads, mutexMapaChange, hEventPipeWrite, mutexEventoEnviarMapaCliente;
+	MutexHandles mtxHandles;
+	EventHandles evtHandles;
 	int id;
 	pFrogPos frog_pos;
 } TRoads, *pTRoads;
@@ -120,6 +124,8 @@ typedef struct {
 	HANDLE mutexRoads;
 	TCHAR* Map;
 	pFrogPos frog_pos;
+	EventHandles evtHandles;
+	MutexHandles mtxHandles;
 }TdadosUpdateSapoMapa, * pTdadosUpdateSapoMapa;
 
 //estrutura para mandar para o cliente de cada vez
@@ -133,12 +139,8 @@ typedef struct {
 //estrutra para passar os dados para as threads relacionadas com o named pipe
 typedef struct {
 	HANDLE hPipe[3];
-	HANDLE hMutex; //para controlar o numClientes
-	HANDLE mutexServerPipe;
-	HANDLE hEventPipeWrite;
-	HANDLE hEventPipeRead;
-	HANDLE mutexMapaChange;
-	HANDLE hEventFroggeMovement;
+	EventHandles evtHandles;
+	MutexHandles mtxHandles;
 	PipeSendToClient structToSend;
 	pFrogPos frogPos;
 	int* directions;

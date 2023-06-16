@@ -206,7 +206,7 @@ LRESULT CALLBACK TrataEventos(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPara
 	TCHAR* message;
 	DWORD n;
 
-	static HDC bmpCar = NULL;		
+	static HDC bmpCar = NULL;
 	static HDC bmpFrogUp = NULL;
 	static HDC bmpRoad = NULL;
 	static HDC bmpLimit = NULL;
