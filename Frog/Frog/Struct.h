@@ -24,6 +24,9 @@ typedef struct {
 	HANDLE GameDataEvent;
 	HANDLE SharedMemoryEvent;
 	HANDLE hEventRoads[MAX_ROWS];
+	HANDLE hEventPipeWrite;
+	HANDLE hEventPipeRead;
+	HANDLE hEventFroggeMovement;
 }EventHandles, * pEventHandles;
 
 typedef struct {
@@ -31,8 +34,10 @@ typedef struct {
 }SemaphoreHandles, * pSemaphoreHandles;
 
 typedef struct {
+	HANDLE mutexServerPipe;
 	HANDLE mutexMapaChange;
 	HANDLE mutexPipe;
+	HANDLE mutexEventoEnviarMapaCliente;
 }MutexHandles, * pMutexHandles;
 
 typedef struct {
@@ -73,7 +78,7 @@ typedef struct {
 	int* direction;
 	pCarPos sharedCarPos;
 	TCHAR* sharedMap;
-	HANDLE hEventRoads, hMutex;
+	HANDLE hEventRoads, mutexMapaChange, hEventPipeWrite, mutexEventoEnviarMapaCliente;
 	int id;
 	pFrogPos frog_pos;
 } TRoads, *pTRoads;
@@ -129,6 +134,11 @@ typedef struct {
 typedef struct {
 	HANDLE hPipe[3];
 	HANDLE hMutex; //para controlar o numClientes
+	HANDLE mutexServerPipe;
+	HANDLE hEventPipeWrite;
+	HANDLE hEventPipeRead;
+	HANDLE mutexMapaChange;
+	HANDLE hEventFroggeMovement;
 	PipeSendToClient structToSend;
 	pFrogPos frogPos;
 	int* directions;
