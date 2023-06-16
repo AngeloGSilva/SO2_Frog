@@ -55,6 +55,7 @@ typedef struct {
 	FrogPos frog_pos[MAX_FROGS];
 	TCHAR map[MAX_ROWS + 4][MAX_COLS];
 	int directions[MAX_ROWS];
+	int gamemode;
 }GameData, *pGameData;
 
 typedef struct {
@@ -148,6 +149,7 @@ typedef struct {
 	int numClientes;
 	int terminar;
 	pTRoads structToGetDirection;
+	int* pGamemode;
 }TdadosPipeSendReceive, * pTdadosPipeSendReceive;
 
 //estrutura que é enviada do cliente para o server com o input
@@ -160,6 +162,6 @@ typedef struct {
 //estrutura que é enviada do cliente para o server com o input
 typedef struct {
 	int Gamemode;
-	TCHAR Username[16];
+	TCHAR username[100];
 }FrogInitialdata, * pFrogInitialdata;
 

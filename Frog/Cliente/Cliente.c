@@ -47,10 +47,12 @@ HBITMAP hBitmapDB; // copia as filleracteristicas da janela original para a jane
 pPipeSendToClient AllGameData ;
 HANDLE hPipe;
 
-TCHAR username[16];
+TCHAR username[100];
 BOOL GameOption;
 int currentFrogpos = POSUP; // 1 up 2 left 3 right 5 down
 BOOL GameEnd = FALSE;
+FrogInitialdata froginitialdata;
+
 
 DWORD WINAPI mapPipe(LPVOID lpParam)
 {
@@ -160,8 +162,8 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR lpCmdLine, int nC
 
 
 	//Janela de Inicio :D
-	/*HWND hDialog = CreateDialogParam(hInst, MAKEINTRESOURCE(IDD_INICIAL), hWnd, TrataEventosInicial,0);
-	ShowWindow(hDialog, SW_SHOW);*/
+	HWND hDialog = CreateDialogParam(hInst, MAKEINTRESOURCE(IDD_INICIAL), hWnd, TrataEventosInicial,0);
+	ShowWindow(hDialog, SW_SHOW);
 
 	//// definir as posicoes inicias da imagem
 	//GetClientRect(hWnd, &rect);
@@ -566,7 +568,6 @@ LRESULT CALLBACK TrataEventosInicial(HWND hWnd, UINT messg, WPARAM wParam, LPARA
 	BOOL result;
 	TCHAR message[256];
 	HANDLE hcommand = CreateEvent(NULL, TRUE, FALSE, TEXT("eventoSapo"));
-	FrogInitialdata froginitialdata;
 
 	switch (messg)
 	{
@@ -596,7 +597,7 @@ LRESULT CALLBACK TrataEventosInicial(HWND hWnd, UINT messg, WPARAM wParam, LPARA
 				EndDialog(hWnd, 0);
 				//Avisar para começar
 				froginitialdata.Gamemode = GameOption;
-				_tcscpy_s(froginitialdata.Username,sizeof(username), username);
+				_tcscpy_s(froginitialdata.username,sizeof(username), username);
 				WriteFile(hPipe, &froginitialdata, sizeof(FrogInitialdata), 0, NULL);
 
 				SetEvent(hcommand);

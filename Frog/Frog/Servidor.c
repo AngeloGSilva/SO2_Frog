@@ -118,8 +118,9 @@ DWORD WINAPI send(LPVOID lpParam)
 
 void HandleFroggeMovement(int frogge, PipeFroggeInput input, pFrogPos pos, TCHAR* map, int numRoads, pTRoads structToRoads) {
 	//TODO nao sei se +e o sito certo para fazer o evento de atualizar o mapa com o sapo
-
+	WaitForSingleObject(structToRoads->mtxHandles.mutexMapaChange, INFINITE);
 	WaitForSingleObject(structToRoads->mtxHandles.mutexFrogMovement, INFINITE);
+	
 	BOOL levelUp = FALSE;
 	BOOL colisaoReset = FALSE;
 	
@@ -250,7 +251,7 @@ void HandleFroggeMovement(int frogge, PipeFroggeInput input, pFrogPos pos, TCHAR
 	SetEvent(structToRoads->evtHandles.hEventFrogMovement);
 	ResetEvent(structToRoads->evtHandles.hEventFrogMovement);
 	ReleaseMutex(structToRoads->mtxHandles.mutexFrogMovement);
-
+	ReleaseMutex(structToRoads->mtxHandles.mutexMapaChange);
 }
 
 //para dividir um pouco a logica
@@ -304,7 +305,14 @@ DWORD WINAPI receive(LPVOID lpParam)
 	WaitForSingleObject(dados->evtHandles.hEventFroggeMovement, INFINITE);
 	//Passar para a outra thread
 	ReadFile(dados->hPipe[0], &froginitialdata, sizeof(FrogInitialdata), &n, NULL);
-	_tprintf(TEXT("CONEXÂO POR %s com o modo de jogo %d\n"), froginitialdata.Username,froginitialdata.Gamemode);
+	
+	*dados->pGamemode = froginitialdata.Gamemode;
+	HANDLE clientGamemode = CreateEvent(NULL, TRUE, FALSE, TEXT("clientgamemode"));
+	SetEvent(clientGamemode);
+	ResetEvent(clientGamemode);
+
+
+	_tprintf(TEXT("CONEXÂO POR %s com o modo de jogo %d\n"), froginitialdata.username,froginitialdata.Gamemode);
 
 	HANDLE FroggeThread = CreateThread(
 		NULL,    // Thread attributes
@@ -758,11 +766,8 @@ int _tmain(int argc, TCHAR* argv[]) {
 	evtHandles.hEventFrogMovement = CreateEvent(NULL, TRUE, FALSE, TEXT("eventoSapoMOVEMENT"));
 	mtxHandles.mutexFrogMovement = CreateMutex(NULL, FALSE, TEXT("mutexsaposmovimento"));
 
-	
 	//Verificar handles criados
 
-	//passar por data da thread
-	//thread para verificar se existe operador novo para partilhar a info do mapa 
 	HANDLE tHCheckOpearators = CreateThread(
 		NULL,
 		0,
@@ -776,8 +781,6 @@ int _tmain(int argc, TCHAR* argv[]) {
 		return 1;
 	}
 
-
-
 	//Gerar mapa e dados de jogo
 	data.nivel = 1;
 	data.numCars = 0;
@@ -790,24 +793,7 @@ int _tmain(int argc, TCHAR* argv[]) {
 	for(int i=0;i<data.numRoads;i++)
 		data.directions[i] = (rand() % 2);
 
-	//Gerar sapos (Primeira meta....) // alterar para ser com opcao do menu
-	int sapRowRandom = data.numRoads + 2; //+3 para ficar na penultima estrada.
-
-	//Depende de modo de jogo, a ser feito depois da conexão TODO
-	for (int i = 0; i < 2; i++)
-	{
-		int sapColRandom = (rand() % (MAX_COLS - 2)) + 1;
-		do {
-			sapColRandom = (rand() % (MAX_COLS - 2)) + 1;
-		} while (data.map[sapRowRandom][sapColRandom] == 'S');
-
-		data.frog_pos[i].col = sapColRandom;
-		data.frog_pos[i].row = sapRowRandom;
-		data.frog_pos[i].level = 1;
-		data.frog_pos[i].score = 0;
-		data.frog_pos[i].time = 30;
-		data.map[sapRowRandom][sapColRandom] = FROGGE_ELEMENT;
-	}
+	
 
 	pGameData pMemoriaPartilhada = InitSharedMemoryMap();
 
@@ -859,12 +845,12 @@ int _tmain(int argc, TCHAR* argv[]) {
 	TfroggeData.mtxHandles = mtxHandles;
 
 	HANDLE FroggeThread = CreateThread(
-		NULL,    // Thread attributes
-		0,       // Stack size (0 = use default)
-		ThreadSapos, // Thread start address
-		&TfroggeData,    // Parameter to pass to the thread
-		0,       // Creation flags
-		NULL);   // Thread id   // returns the thread identifier 
+		NULL,
+		0,
+		ThreadSapos,
+		&TfroggeData,
+		0,
+		NULL);
 		if (FroggeThread == NULL) {
 			_tprintf(TEXT("[DEBUG] Thread sapo erro\n"));
 			return 1;
@@ -873,10 +859,6 @@ int _tmain(int argc, TCHAR* argv[]) {
 	//BufferCircular e a thread
 
 	TDados dataThread;
-
-	/*dataThread.hMutex = CreateMutex(NULL, FALSE, BUFFER_CIRCULAR_MUTEX_LEITOR);
-	dataThread.hSemEscrita = CreateSemaphore(NULL, 10, 10, BUFFER_CIRCULAR_SEMAPHORE_ESCRITOR);
-	dataThread.hSemLeitura = CreateSemaphore(NULL, 0, 10, BUFFER_CIRCULAR_SEMAPHORE_LEITORE);*/
 
 	dataThread.BufferCircular = InitSharedMemoryBufferCircular();
 
@@ -907,6 +889,7 @@ int _tmain(int argc, TCHAR* argv[]) {
 	//Create pipe no main do servidor e connect named pipe, com as duas threads
 
 	//Main cliente tem create file, com criação das threads
+	
 	//Named pip com cliente
 	DWORD n;
 	HANDLE hPipe;
@@ -920,6 +903,7 @@ int _tmain(int argc, TCHAR* argv[]) {
 	dadosPipe.terminar = 0;
 	dadosPipe.mapToShare = &data.map;
 	dadosPipe.structToSend.numRoads = data.numRoads;
+	dadosPipe.pGamemode = &data.gamemode;
 	//dadosPipe.gamedatatemp = &data;
 	//dadosPipe.numRoads = data.numRoads;
 	//dadosPipe.mapToShare = &data.map;
@@ -946,12 +930,10 @@ int _tmain(int argc, TCHAR* argv[]) {
 		return -1;
 	}
 
-
-
-
 	_tprintf(TEXT("[Servidor] Criar uma cópia do pipe '%s' ... (CreateNamedPipe)\n"), PIPE_NAME);
-
-	while (1) {
+	int waiting=1;
+	data.gamemode = 1;
+	do{
 
 		hPipe = CreateNamedPipe(PIPE_NAME, PIPE_ACCESS_DUPLEX | FILE_FLAG_OVERLAPPED, PIPE_WAIT | PIPE_TYPE_BYTE | PIPE_READMODE_BYTE, 3, sizeof(GameData), sizeof(GameData), 1000, NULL);
 
@@ -970,9 +952,33 @@ int _tmain(int argc, TCHAR* argv[]) {
 		WaitForSingleObject(dadosPipe.mtxHandles.mutexPipe, INFINITE);
 
 		dadosPipe.hPipe[dadosPipe.numClientes] = hPipe;
+		int sapRowRandom = data.numRoads + 2; //+3 para ficar na penultima estrada.
+
+		//Depende de modo de jogo, a ser feito depois da conexão TODO
+
+		int sapColRandom = (rand() % (MAX_COLS - 2)) + 1;
+		do {
+			sapColRandom = (rand() % (MAX_COLS - 2)) + 1;
+		} while (data.map[sapRowRandom][sapColRandom] == 'S');
+
+		data.frog_pos[dadosPipe.numClientes].col = sapColRandom;
+		data.frog_pos[dadosPipe.numClientes].row = sapRowRandom;
+		data.frog_pos[dadosPipe.numClientes].level = 1;
+		data.frog_pos[dadosPipe.numClientes].score = 0;
+		data.frog_pos[dadosPipe.numClientes].time = 30;
+		data.map[sapRowRandom][sapColRandom] = FROGGE_ELEMENT;
 		dadosPipe.numClientes++;
 		ReleaseMutex(dadosPipe.mtxHandles.mutexPipe);
-	}
+
+		//WAIT RESPOSTA (SINGLE OU MULTIPLE)
+		//if resposta é single, waiting fica a 0
+		HANDLE clientGamemode = CreateEvent(NULL, TRUE, FALSE, TEXT("clientgamemode"));
+		
+		WaitForSingleObject(clientGamemode, INFINITE);
+		//Gerar sapos (Primeira meta....) // alterar para ser com opcao do menu
+		
+
+	} while(data.gamemode == 1);
 
 	while (terminar == 0)
 	{
