@@ -26,7 +26,7 @@ typedef struct {
 	HANDLE hEventRoads[MAX_ROWS];
 	HANDLE hEventPipeWrite;
 	HANDLE hEventPipeRead;
-	HANDLE hEventFroggeMovement;
+	HANDLE hEventFroggeMovement[2];
 	HANDLE hEventFrogMovement;
 	HANDLE hCountDownEvent;
 }EventHandles, * pEventHandles;
@@ -125,6 +125,7 @@ typedef struct {
 	HANDLE mutexRoads;
 	TCHAR* Map;
 	pFrogPos frog_pos;
+	int* numFrogs;
 	EventHandles evtHandles;
 	MutexHandles mtxHandles;
 }TdadosUpdateSapoMapa, * pTdadosUpdateSapoMapa;
@@ -135,11 +136,19 @@ typedef struct {
 	int numRoads;
 	int directions[MAX_ROWS];
 	FrogPos frog_pos[MAX_FROGS];
+	int identifier;
 }PipeSendToClient, *pPipeSendToClient;
+
+typedef struct {
+	HANDLE hPipe;
+	OVERLAPPED oOverlap;
+	BOOL* ready;
+}PipeInstance, * pPipeInstance;
 
 //estrutra para passar os dados para as threads relacionadas com o named pipe
 typedef struct {
-	HANDLE hPipe[3];
+	//HANDLE hPipe[3];
+	PipeInstance hPipe;
 	EventHandles evtHandles;
 	MutexHandles mtxHandles;
 	PipeSendToClient structToSend;
@@ -153,6 +162,20 @@ typedef struct {
 	int clienteIdentificador;
 }TdadosPipeSendReceive, * pTdadosPipeSendReceive;
 
+
+typedef struct {
+	PipeInstance hPipe[2];
+	EventHandles evtHandles;
+	MutexHandles mtxHandles;
+	PipeSendToClient structToSend;
+	pFrogPos frogPos;
+	TCHAR* mapToShare;
+	int numClientes;
+	int terminar;
+	pTRoads structToGetDirection;
+	int* pGamemode;
+}TdadosPipeSend, * pTdadosPipeSend;
+
 //estrutura que é enviada do cliente para o server com o input
 typedef struct {
 	int x;
@@ -164,5 +187,6 @@ typedef struct {
 typedef struct {
 	int Gamemode;
 	TCHAR username[100];
+	int identifier;
 }FrogInitialdata, * pFrogInitialdata;
 

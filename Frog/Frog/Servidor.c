@@ -78,7 +78,7 @@ void copyMapArray(int numRoads, TCHAR *mapOriginal, TCHAR *mapSend) {
 
 DWORD WINAPI send(LPVOID lpParam)
 {
-	TdadosPipeSendReceive* dados = (TdadosPipeSendReceive*)lpParam;
+	pTdadosPipeSend dados = (pTdadosPipeSend)lpParam;
 	TCHAR buf[256];
 	DWORD n;
 		
@@ -92,6 +92,7 @@ DWORD WINAPI send(LPVOID lpParam)
 		Sleep(100);
 		WaitForSingleObject(dados->mtxHandles.mutexServerPipe, INFINITE);
 		copyMapArray(dados->structToSend.numRoads,dados->mapToShare, dados->structToSend.map);
+
 		for (int i = 0; i < dados->structToSend.numRoads; i++)
 		{
 			dados->structToSend.directions[i] = dados->structToGetDirection[i].direction;
@@ -102,11 +103,15 @@ DWORD WINAPI send(LPVOID lpParam)
 		dados->structToSend.frog_pos->time = dados->frogPos->time;
 		//CopyMemory(dados->structToSend.map, dados->mapToShare, sizeof(dados->mapToShare));
 		for (int i = 0; i < dados->numClientes; i++) {
-			if (!WriteFile(dados->hPipe[i], &dados->structToSend,sizeof(PipeSendToClient), &n, NULL)) {
-				_tprintf(TEXT("[ERRO] Escrever no pipe! (WriteFile)\n"));
-				exit(-1);
+			if (dados->hPipe[i].ready == TRUE) {
+				dados->structToSend.identifier = i;
+				if (!WriteFile(dados->hPipe[i].hPipe, &dados->structToSend, sizeof(PipeSendToClient), &n, NULL)) {
+					_tprintf(TEXT("[ERRO] Escrever no pipe! (WriteFile)\n"));
+					exit(-1);
+				}
+				_tprintf(TEXT("[send] Enviei %d bytes ao leitor [%d]... (WriteFile)\n"), n, i);
+
 			}
-			_tprintf(TEXT("[send] Enviei %d bytes ao leitor [%d]... (WriteFile)\n"), n, i);
 		}
 		ReleaseMutex(dados->mtxHandles.mutexServerPipe);
 		SetEvent(dados->evtHandles.hEventPipeRead);
@@ -150,7 +155,6 @@ void HandleFroggeMovement(int frogge, PipeFroggeInput input, pFrogPos pos, TCHAR
 				levelUp = TRUE;
 				colisaoReset = TRUE;
 			}
-			
 		}
 		break;
 	case KEY_DOWN:
@@ -244,6 +248,7 @@ void HandleFroggeMovement(int frogge, PipeFroggeInput input, pFrogPos pos, TCHAR
 		//alterar numero de carros, ainda tenho de ver como se pode fazer (nao faço ideia)
 		resetMapCars(map,numRoads,structToRoads->car_pos,structToRoads->numCars, structToRoads->mtxHandles.mutexMapaChange);
 	}
+	//else if coma  lógica
 	if (colisaoReset) {
 		_tprintf(TEXT("PERDEU PQ ESTA NUM CARRO\n"));
 		pos[frogge].row = numRoads + 1;
@@ -267,8 +272,8 @@ DWORD WINAPI ThreadSapos(LPVOID lpParam)
 	
 	while (1) {
 		WaitForSingleObject(data->evtHandles.hEventFrogMovement,INFINITE);
-		//for(int i=0;i<data->frog_pos;i++)
-		data->Map[data->frog_pos[0].row * MAX_COLS + data->frog_pos[0].col] = FROGGE_ELEMENT;
+		for(int i=0;i<*data->numFrogs;i++)
+			data->Map[data->frog_pos[i].row * MAX_COLS + data->frog_pos[i].col] = FROGGE_ELEMENT;
 		WaitForSingleObject(data->mtxHandles.mutexEventoEnviarMapaCliente, INFINITE);
 		SetEvent(data->evtHandles.hEventPipeWrite, INFINITE);
 		ResetEvent(data->evtHandles.hEventPipeWrite);
@@ -304,32 +309,32 @@ DWORD WINAPI receive(LPVOID lpParam)
 	PipeFroggeInput receiveInfo;
 	FrogInitialdata froginitialdata;
 
-	WaitForSingleObject(dados->evtHandles.hEventFroggeMovement, INFINITE);
 	//Passar para a outra thread
-	ReadFile(dados->hPipe[0], &froginitialdata, sizeof(FrogInitialdata), &n, NULL);
+	WaitForSingleObject(dados->evtHandles.hEventFroggeMovement[dados->clienteIdentificador], INFINITE);
+	ReadFile(dados->hPipe.hPipe, &froginitialdata, sizeof(FrogInitialdata), &n, NULL);
+	_tprintf(TEXT("[receive] Recebi %d bytes... (ReadFile)\n"), n);
 	
 	*dados->pGamemode = froginitialdata.Gamemode;
 	HANDLE clientGamemode = CreateEvent(NULL, TRUE, FALSE, TEXT("clientgamemode"));
 	SetEvent(clientGamemode);
 	ResetEvent(clientGamemode);
 
-
 	_tprintf(TEXT("CONEXÂO POR %s com o modo de jogo %d\n"), froginitialdata.username,froginitialdata.Gamemode);
 
 	HANDLE FroggeThread = CreateThread(
-		NULL,    // Thread attributes
-		0,       // Stack size (0 = use default)
-		ThreadGameTimer, // Thread start address
-		dados,    // Parameter to pass to the thread
-		0,       // Creation flags
-		NULL);   // Th
+		NULL,
+		0,
+		ThreadGameTimer,
+		dados,
+		0,
+		NULL);
 	
 	while (1) {
-		WaitForSingleObject(dados->evtHandles.hEventFroggeMovement, INFINITE);
+		WaitForSingleObject(dados->evtHandles.hEventFroggeMovement[dados->clienteIdentificador], INFINITE);
 
 		WaitForSingleObject(dados->mtxHandles.mutexServerPipe, INFINITE);
-		ret = ReadFile(dados->hPipe[dados->clienteIdentificador], &receiveInfo, sizeof(PipeFroggeInput), &n, NULL);
-		_tprintf(TEXT("[receive] Recebi %d bytes: '%d'... (ReadFile)\n"), n, receiveInfo.pressInput);
+		ret = ReadFile(dados->hPipe.hPipe, &receiveInfo, sizeof(PipeFroggeInput), &n, NULL);
+		_tprintf(TEXT("[receive] Recebi %d bytes: '%d' do %d... (ReadFile)\n"), n, receiveInfo.pressInput, dados->clienteIdentificador);
 
 		ReleaseMutex(dados->mtxHandles.mutexServerPipe);
 		WaitForSingleObject(dados->mtxHandles.mutexMapaChange, INFINITE);
@@ -761,7 +766,9 @@ int _tmain(int argc, TCHAR* argv[]) {
 	mtxHandles.mutexServerPipe = CreateMutex(NULL, FALSE, TEXT("MutexServerPipe"));
 
 	evtHandles.hEventPipeRead = CreateEvent(NULL, TRUE, FALSE, TEXT("eventoPipeRead"));
-	evtHandles.hEventFroggeMovement = CreateEvent(NULL, TRUE, FALSE, TEXT("eventoSapo"));
+	int trash = 0, trash1 = 1;
+	evtHandles.hEventFroggeMovement[0] = CreateEvent(NULL, TRUE, FALSE, TEXT("eventoSapo") + trash);
+	evtHandles.hEventFroggeMovement[1] = CreateEvent(NULL, TRUE, FALSE, TEXT("eventoSapo") + trash1);
 
 	mtxHandles.mutexMapaChange = CreateMutex(NULL, FALSE, THREAD_ROADS_MUTEX);
 
@@ -786,6 +793,7 @@ int _tmain(int argc, TCHAR* argv[]) {
 	//Gerar mapa e dados de jogo
 	data.nivel = 1;
 	data.numCars = 0;
+	data.num_frogs = 0;
 
 	//TODO
 
@@ -843,6 +851,7 @@ int _tmain(int argc, TCHAR* argv[]) {
 	TfroggeData.mutexRoads = mtxHandles.mutexMapaChange;
 	TfroggeData.frog_pos = &data.frog_pos;
 	TfroggeData.Map =&data.map;
+	TfroggeData.numFrogs = &data.num_frogs;
 	TfroggeData.evtHandles = evtHandles;
 	TfroggeData.mtxHandles = mtxHandles;
 
@@ -895,83 +904,159 @@ int _tmain(int argc, TCHAR* argv[]) {
 	//Named pip com cliente
 	DWORD n;
 	HANDLE hPipe;
-	HANDLE threadWPipe, threadRPipe;
+	HANDLE threadWPipe, threadRPipe0, threadRPipe1;
 	TCHAR bufPipe[256];
-	TdadosPipeSendReceive dadosPipe;
+	TdadosPipeSend dadosPipeSend;
+	TdadosPipeSendReceive dadosPipeReceive1;
+	TdadosPipeSendReceive dadosPipeReceive2;
 
-	dadosPipe.evtHandles = evtHandles;
-	dadosPipe.mtxHandles = mtxHandles;
-	dadosPipe.numClientes = 0;
-	dadosPipe.terminar = 0;
-	dadosPipe.mapToShare = &data.map;
-	dadosPipe.structToSend.numRoads = data.numRoads;
-	dadosPipe.pGamemode = &data.gamemode;
-	//dadosPipe.gamedatatemp = &data;
-	//dadosPipe.numRoads = data.numRoads;
-	//dadosPipe.mapToShare = &data.map;
-	dadosPipe.frogPos = &data.frog_pos;
-	//for (int i = 0; i < data.numRoads; i++)
-	//	dadosPipe.directions[i] = &RoadsData->direction;
-	dadosPipe.structToGetDirection = &RoadsData;
+	dadosPipeSend.evtHandles = evtHandles;
+	dadosPipeSend.mtxHandles = mtxHandles;
+	dadosPipeSend.numClientes = 0;
+	dadosPipeSend.terminar = 0;
+	dadosPipeSend.mapToShare = &data.map;
+	dadosPipeSend.structToSend.numRoads = data.numRoads;
+	dadosPipeSend.pGamemode = &data.gamemode;
+	dadosPipeSend.frogPos = &data.frog_pos;
+	dadosPipeSend.structToGetDirection = &RoadsData;
+
+	dadosPipeReceive1.evtHandles = evtHandles;
+	dadosPipeReceive1.mtxHandles = mtxHandles;
+	dadosPipeReceive1.numClientes = 0;
+	dadosPipeReceive1.terminar = 0;
+	dadosPipeReceive1.mapToShare = &data.map;
+	dadosPipeReceive1.structToSend.numRoads = data.numRoads;
+	dadosPipeReceive1.pGamemode = &data.gamemode;
+	dadosPipeReceive1.frogPos = &data.frog_pos;
+	dadosPipeReceive1.structToGetDirection = &RoadsData;
+
+	dadosPipeReceive2.evtHandles = evtHandles;
+	dadosPipeReceive2.mtxHandles = mtxHandles;
+	dadosPipeReceive2.numClientes = 0;
+	dadosPipeReceive2.terminar = 0;
+	dadosPipeReceive2.mapToShare = &data.map;
+	dadosPipeReceive2.structToSend.numRoads = data.numRoads;
+	dadosPipeReceive2.pGamemode = &data.gamemode;
+	dadosPipeReceive2.frogPos = &data.frog_pos;
+	dadosPipeReceive2.structToGetDirection = &RoadsData;
 	mtxHandles.mutexPipe = CreateMutex(NULL, FALSE, NULL);
 
-	if (dadosPipe.mtxHandles.mutexPipe == NULL) {
+	if (dadosPipeSend.mtxHandles.mutexPipe == NULL) {
 		_tprintf(TEXT("[Erro] ao criar mutex!\n"));
 		return -1;
 	}
 
-	threadRPipe = CreateThread(NULL, 0, receive, &dadosPipe, 0, NULL);
-	if (threadRPipe == NULL) {
-		_tprintf(TEXT("[Erro] ao criar thread receive!\n"));
-		return -1;
+	PipeInstance pipes[2];
+	HANDLE hEvents[2];
+	HANDLE htemp, hEventTemp;
+
+	for (int index = 0; index < 2; index++) {
+		htemp =  CreateNamedPipe(PIPE_NAME, PIPE_ACCESS_DUPLEX | FILE_FLAG_OVERLAPPED, PIPE_WAIT | PIPE_TYPE_BYTE | PIPE_READMODE_BYTE, 2, sizeof(GameData), sizeof(GameData), 1000, NULL);
+		if (htemp == INVALID_HANDLE_VALUE) {
+			_tprintf(TEXT("[ERRO] Criar Named Pipe! (CreateNamedPipe)"));
+			exit(-1);
+		}
+
+		hEventTemp = CreateEvent(
+			NULL,
+			TRUE,
+			FALSE,
+			NULL);
+
+		if (hEventTemp == NULL)
+		{
+			printf("CreateEvent failed with %d.\n", GetLastError());
+			return 0;
+		}
+
+		pipes[index].hPipe = htemp;
+		pipes[index].ready = FALSE;
+
+		ZeroMemory(&pipes[index].oOverlap, sizeof(pipes[index].oOverlap));
+
+		pipes[index].oOverlap.hEvent = hEventTemp;
+
+		ConnectNamedPipe(htemp, &pipes[index].oOverlap);
+			
+		dadosPipeSend.hPipe[index].hPipe = pipes[index].hPipe;
+		dadosPipeSend.hPipe[index].oOverlap = pipes[index].oOverlap;
+		dadosPipeSend.hPipe[index].ready = &pipes[index].ready;
+		hEvents[index] = hEventTemp;
 	}
 
-	threadWPipe = CreateThread(NULL, 0, send, &dadosPipe, 0, NULL);
+	threadWPipe = CreateThread(NULL, 0, send, &dadosPipeSend, 0, NULL);
 	if (threadWPipe == NULL) {
 		_tprintf(TEXT("[Erro] ao criar thread send!\n"));
 		return -1;
 	}
 
-	_tprintf(TEXT("[Servidor] Criar uma cópia do pipe '%s' ... (CreateNamedPipe)\n"), PIPE_NAME);
-	int waiting=1;
+	int waiting=1,i;
 	data.gamemode = 1;
-	do{
+	DWORD offset, nBytes;
+	
+		_tprintf(TEXT("[SERVIDOR] Esperar ligação de um leitor... (ConnectNamedPipe)\n"));
 
-		hPipe = CreateNamedPipe(PIPE_NAME, PIPE_ACCESS_DUPLEX | FILE_FLAG_OVERLAPPED, PIPE_WAIT | PIPE_TYPE_BYTE | PIPE_READMODE_BYTE, 3, sizeof(GameData), sizeof(GameData), 1000, NULL);
+		while (1) {
+			offset = WaitForMultipleObjects(2, hEvents, FALSE, INFINITE);
+			i = offset - WAIT_OBJECT_0;
+			_tprintf(TEXT("[SERVIDOR] Connection\n"), i);
+			if (i >= 0 && i < 2) {
 
-		if (hPipe == INVALID_HANDLE_VALUE) {
-			_tprintf(TEXT("[ERRO] Criar Named Pipe! (CreateNamedPipe)"));
-			exit(-1);
+				_tprintf(TEXT("[ESCRITOR] Leitor %d chegou\n"), i);
+				if (GetOverlappedResult(pipes[i].hPipe, &pipes[i].oOverlap, &nBytes, FALSE)) {
+					// se entrarmos aqui significa que a funcao correu tudo bem
+					// fazemos reset do evento porque queremos que o WaitForMultipleObject desbloqueio com base noutro evento e nao neste
+					ResetEvent(pipes[i].oOverlap.hEvent);
+
+					//vamos esperar que o mutex esteja livre
+					dadosPipeSend.hPipe[i].ready = TRUE; // dizemos que esta instancia do named pipe está ativa para receber info do servidor
+					
+					//Gerar um sapo
+					WaitForSingleObject(dadosPipeSend.mtxHandles.mutexPipe, INFINITE);
+					int sapRowRandom = data.numRoads + 2; //+3 para ficar na penultima estrada.
+					//_tprintf(TEXT("[DEBUG] Cliente Identificador %d\n"), dadosPipe.clienteIdentificador);
+					//Depende de modo de jogo, a ser feito depois da conexão TODO
+
+					int sapColRandom = (rand() % (MAX_COLS - 2)) + 1;
+					do {
+						sapColRandom = (rand() % (MAX_COLS - 2)) + 1;
+					} while (data.map[sapRowRandom][sapColRandom] == 'S');
+
+					data.frog_pos[dadosPipeSend.numClientes].col = sapColRandom;
+					data.frog_pos[dadosPipeSend.numClientes].row = sapRowRandom;
+					data.frog_pos[dadosPipeSend.numClientes].level = 1;
+					data.frog_pos[dadosPipeSend.numClientes].score = 0;
+					data.frog_pos[dadosPipeSend.numClientes].time = 30;
+					if(i==0)
+					{
+						dadosPipeReceive1.clienteIdentificador = dadosPipeSend.numClientes;
+						dadosPipeReceive1.hPipe.hPipe = pipes[i].hPipe;
+						dadosPipeReceive1.hPipe.oOverlap = pipes[i].oOverlap;
+						threadRPipe0 = CreateThread(NULL, 0, receive, &dadosPipeReceive1, 0, NULL);
+						if (threadWPipe == NULL) {
+							_tprintf(TEXT("[Erro] ao criar thread send!\n"));
+							return -1;
+						}
+					}
+					else if(i==1)
+					{
+						dadosPipeReceive2.clienteIdentificador = dadosPipeSend.numClientes;
+						dadosPipeReceive2.hPipe.hPipe = pipes[i].hPipe;
+						dadosPipeReceive2.hPipe.oOverlap = pipes[i].oOverlap;
+						threadRPipe1 = CreateThread(NULL, 0, receive, &dadosPipeReceive2, 0, NULL);
+						if (threadWPipe == NULL) {
+							_tprintf(TEXT("[Erro] ao criar thread send!\n"));
+							return -1;
+						}
+					}
+					dadosPipeSend.numClientes = dadosPipeSend.numClientes + 1;
+					data.num_frogs = dadosPipeSend.numClientes;
+					data.map[sapRowRandom][sapColRandom] = FROGGE_ELEMENT;
+					ReleaseMutex(dadosPipeSend.mtxHandles.mutexPipe);
+				}
+			}
 		}
 
-		_tprintf(TEXT("[ESCRITOR] Esperar ligação de um leitor... (ConnectNamedPipe)\n"));
-
-		if (!ConnectNamedPipe(hPipe, NULL)) {
-			_tprintf(TEXT("[ERRO] Ligação ao leitor! (ConnectNamedPipe\n"));
-			exit(-1);
-		}
-
-		WaitForSingleObject(dadosPipe.mtxHandles.mutexPipe, INFINITE);
-
-		dadosPipe.hPipe[dadosPipe.numClientes] = hPipe;
-		dadosPipe.clienteIdentificador = dadosPipe.numClientes;
-		int sapRowRandom = data.numRoads + 2; //+3 para ficar na penultima estrada.
-		_tprintf(TEXT("[DEBUG] Cliente Identificador %d\n"), dadosPipe.clienteIdentificador);
-		//Depende de modo de jogo, a ser feito depois da conexão TODO
-
-		int sapColRandom = (rand() % (MAX_COLS - 2)) + 1;
-		do {
-			sapColRandom = (rand() % (MAX_COLS - 2)) + 1;
-		} while (data.map[sapRowRandom][sapColRandom] == 'S');
-
-		data.frog_pos[dadosPipe.numClientes].col = sapColRandom;
-		data.frog_pos[dadosPipe.numClientes].row = sapRowRandom;
-		data.frog_pos[dadosPipe.numClientes].level = 1;
-		data.frog_pos[dadosPipe.numClientes].score = 0;
-		data.frog_pos[dadosPipe.numClientes].time = 30;
-		data.map[sapRowRandom][sapColRandom] = FROGGE_ELEMENT;
-		dadosPipe.numClientes++;
-		ReleaseMutex(dadosPipe.mtxHandles.mutexPipe);
 		//mandar o handle de apenas um dos clientes para cada thread... basicamente cada receive apenas tem o handle do seu cliente...
 		//e o send vai ter q ter os dois handles
 		//threadRPipe = CreateThread(NULL, 0, receive, &dadosPipe, 0, NULL);
@@ -981,13 +1066,13 @@ int _tmain(int argc, TCHAR* argv[]) {
 		//}
 		//WAIT RESPOSTA (SINGLE OU MULTIPLE)
 		//if resposta é single, waiting fica a 0
+
 		HANDLE clientGamemode = CreateEvent(NULL, TRUE, FALSE, TEXT("clientgamemode"));
 		
 		WaitForSingleObject(clientGamemode, INFINITE);
 		//Gerar sapos (Primeira meta....) // alterar para ser com opcao do menu
-		
 
-	} while(data.gamemode == 1);
+	//} while(data.gamemode == 1);
 
 	while (terminar == 0)
 	{

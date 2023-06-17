@@ -52,6 +52,7 @@ BOOL GameOption;
 int currentFrogpos = POSUP; // 1 up 2 left 3 right 5 down
 BOOL GameEnd = FALSE;
 FrogInitialdata froginitialdata;
+HANDLE hcommand;
 
 
 DWORD WINAPI mapPipe(LPVOID lpParam)
@@ -61,7 +62,7 @@ DWORD WINAPI mapPipe(LPVOID lpParam)
 	TCHAR buf[256];
 	int i = 0;
 	BOOL ret;
-	DWORD n;
+	//DWORD n;
 	HANDLE heventmapread;
 
 	heventmapread = CreateEvent(NULL, TRUE, FALSE, TEXT("eventoPipeRead"));
@@ -69,9 +70,10 @@ DWORD WINAPI mapPipe(LPVOID lpParam)
 	while (1) {
 		WaitForSingleObject(heventmapread, INFINITE);
 		WaitForSingleObject(hMutex, INFINITE);
-		ret = ReadFile(hPipe, AllGameData, sizeof(PipeSendToClient), &n, NULL);
+		ret = ReadFile(hPipe, AllGameData, sizeof(PipeSendToClient), 0, NULL);
 		InvalidateRect(hWndGlobal, NULL, FALSE);
 		ReleaseMutex(hMutex);
+		hcommand = CreateEvent(NULL, TRUE, FALSE, TEXT("eventoSapo") + AllGameData->identifier);
 	}
 	//wait do evento de atualizacao do mapa
 	//e mutex para esperar pela vez de desenhar
@@ -204,7 +206,7 @@ LRESULT CALLBACK TrataEventos(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPara
 	MINMAXINFO* mmi;
 
 	//keyup
-	HANDLE hcommand = CreateEvent(NULL, TRUE, FALSE, TEXT("eventoSapo"));
+	
 	TCHAR* message;
 	DWORD n;
 
@@ -256,13 +258,13 @@ LRESULT CALLBACK TrataEventos(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPara
 	case WM_CREATE:
 		
 		AllGameData = (PipeSendToClient*)malloc(sizeof(PipeSendToClient));
-
 		if (!WaitNamedPipe(PIPE_NAME, NMPWAIT_WAIT_FOREVER)) {
 		}
 		hPipe = CreateFile(PIPE_NAME, GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
 		if (hPipe == NULL) {
 			//tratar
 		}
+		
 		hMutex = CreateMutex(NULL, FALSE, TEXT("MutexClientPipe"));
 
 		HANDLE hThreadMapPipe = CreateThread(
@@ -567,10 +569,10 @@ LRESULT CALLBACK TrataEventosInicial(HWND hWnd, UINT messg, WPARAM wParam, LPARA
 {
 	BOOL result;
 	TCHAR message[256];
-	HANDLE hcommand = CreateEvent(NULL, TRUE, FALSE, TEXT("eventoSapo"));
 
 	switch (messg)
 	{
+	
 	case WM_COMMAND:
 
 		switch(LOWORD(wParam))
@@ -599,10 +601,8 @@ LRESULT CALLBACK TrataEventosInicial(HWND hWnd, UINT messg, WPARAM wParam, LPARA
 				froginitialdata.Gamemode = GameOption;
 				_tcscpy_s(froginitialdata.username,sizeof(username), username);
 				WriteFile(hPipe, &froginitialdata, sizeof(FrogInitialdata), 0, NULL);
-
 				SetEvent(hcommand);
 				ResetEvent(hcommand);
-
 			break;
 			
 			case IDCANCEL:
