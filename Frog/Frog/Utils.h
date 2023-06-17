@@ -69,3 +69,7 @@
 #define	POSDOWN 1002
 #define POSLEFT 1003
 #define POSRIGHT 1004
+
+//GAMEMODE
+#define SINGLEPLAYER 0
+#define MULTIPLAYER 1

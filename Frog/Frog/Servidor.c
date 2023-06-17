@@ -123,7 +123,7 @@ DWORD WINAPI send(LPVOID lpParam)
 
 }
 
-void HandleFroggeMovement(int frogge, PipeFroggeInput input, pFrogPos pos, TCHAR* map, int numRoads, pTRoads structToRoads) {
+void HandleFroggeMovement(int frogge, PipeFroggeInput input, pFrogPos pos, TCHAR* map, int numRoads, pTRoads structToRoads,int Gamemode) {
 	//TODO nao sei se +e o sito certo para fazer o evento de atualizar o mapa com o sapo
 	WaitForSingleObject(structToRoads->mtxHandles.mutexMapaChange, INFINITE);
 	WaitForSingleObject(structToRoads->mtxHandles.mutexFrogMovement, INFINITE);
@@ -251,8 +251,16 @@ void HandleFroggeMovement(int frogge, PipeFroggeInput input, pFrogPos pos, TCHAR
 	//else if coma  lógica
 	if (colisaoReset) {
 		_tprintf(TEXT("PERDEU PQ ESTA NUM CARRO\n"));
-		pos[frogge].row = numRoads + 1;
-		pos[frogge].col = (rand() % (MAX_COLS - 2)) + 1;
+		if (Gamemode == MULTIPLAYER && levelUp) {
+			for (int i = 0; i < 2; i++) {
+				pos[i].row = numRoads + 2;
+				pos[i].col = (rand() % (MAX_COLS - 2)) + 1;
+			}
+		}
+		else {
+			pos[frogge].row = numRoads + 2;
+			pos[frogge].col = (rand() % (MAX_COLS - 2)) + 1;
+		}
 	}
 
 	SetEvent(structToRoads->evtHandles.hEventFrogMovement);
@@ -272,8 +280,10 @@ DWORD WINAPI ThreadSapos(LPVOID lpParam)
 	
 	while (1) {
 		WaitForSingleObject(data->evtHandles.hEventFrogMovement,INFINITE);
+		WaitForSingleObject(data->mtxHandles.mutexMapaChange, INFINITE);
 		for(int i=0;i<*data->numFrogs;i++)
 			data->Map[data->frog_pos[i].row * MAX_COLS + data->frog_pos[i].col] = FROGGE_ELEMENT;
+		ReleaseMutex(data->mtxHandles.mutexMapaChange);
 		WaitForSingleObject(data->mtxHandles.mutexEventoEnviarMapaCliente, INFINITE);
 		SetEvent(data->evtHandles.hEventPipeWrite, INFINITE);
 		ResetEvent(data->evtHandles.hEventPipeWrite);
@@ -338,7 +348,7 @@ DWORD WINAPI receive(LPVOID lpParam)
 
 		ReleaseMutex(dados->mtxHandles.mutexServerPipe);
 		WaitForSingleObject(dados->mtxHandles.mutexMapaChange, INFINITE);
-		HandleFroggeMovement(dados->clienteIdentificador, receiveInfo, dados->frogPos,dados->mapToShare,dados->structToSend.numRoads,dados->structToGetDirection);
+		HandleFroggeMovement(dados->clienteIdentificador, receiveInfo, dados->frogPos,dados->mapToShare,dados->structToSend.numRoads,dados->structToGetDirection,*dados->pGamemode);
 		ReleaseMutex(dados->mtxHandles.mutexMapaChange);
 	}
 
@@ -436,6 +446,7 @@ DWORD WINAPI ThreadRoads(LPVOID lpParam)
 		}
 
 		//TODO provavelmente tem de sair daqui.. (Reset do mapa antes de atualizar as posicoes dos carros)
+		//è preciso refazer esta lógica toda
 		for (int i = 1; i < MAX_COLS - 1; i++)
 		{
 			if (data->Map[data->id * MAX_COLS + i] == OBSTACLE_ELEMENT)
@@ -444,11 +455,12 @@ DWORD WINAPI ThreadRoads(LPVOID lpParam)
 			}
 			else if (data->Map[data->id * MAX_COLS + i] == FROGGE_ELEMENT)
 			{
-				if (data->frog_pos[0].row == data->id && data->frog_pos[0].col == i)
+				if (data->frog_pos[0].row == data->id && data->frog_pos[0].col == i || data->frog_pos[1].row == data->id && data->frog_pos[1].col == i)
 				{
 					data->Map[data->id * MAX_COLS + i] = FROGGE_ELEMENT;
 				}else
 					data->Map[data->id * MAX_COLS + i] = ROAD_ELEMENT;
+
 			}
 			else
 			{
