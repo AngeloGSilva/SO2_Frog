@@ -82,7 +82,7 @@ DWORD WINAPI send(LPVOID lpParam)
 	TCHAR buf[256];
 	DWORD n;
 		
-	dados->structToSend.frog_pos[0].time = dados->frogPos[0].time;
+	//dados->structToSend.frog_pos[0].time = dados->frogPos[0].time;
 	dados->structToSend.frog_pos[0].level = dados->frogPos[0].level;
 	dados->structToSend.frog_pos[0].score = dados->frogPos[0].score;
 
@@ -100,7 +100,7 @@ DWORD WINAPI send(LPVOID lpParam)
 		}
 		dados->structToSend.frog_pos->score = dados->frogPos->score;
 		dados->structToSend.frog_pos->level = dados->frogPos->level;
-		dados->structToSend.frog_pos->time = dados->frogPos->time;
+		//dados->structToSend.frog_pos->time = dados->frogPos->time;
 		//CopyMemory(dados->structToSend.map, dados->mapToShare, sizeof(dados->mapToShare));
 		for (int i = 0; i < dados->numClientes; i++) {
 			if (dados->hPipe[i].ready == TRUE) {
@@ -269,11 +269,6 @@ void HandleFroggeMovement(int frogge, PipeFroggeInput input, pFrogPos pos, TCHAR
 	ReleaseMutex(structToRoads->mtxHandles.mutexMapaChange);
 }
 
-//para dividir um pouco a logica
-//void HandleLevelUp(BOOL levelUp) {
-//
-//}
-
 DWORD WINAPI ThreadSapos(LPVOID lpParam)
 {
 	pTdadosUpdateSapoMapa data = (pTdadosUpdateSapoMapa)lpParam;
@@ -295,7 +290,7 @@ DWORD WINAPI ThreadSapos(LPVOID lpParam)
 DWORD WINAPI ThreadGameTimer(LPVOID lpParam) {
 	pTdadosPipeSendReceive data = (pTdadosPipeSendReceive)lpParam;
 
-	while (data->frogPos[0].time > 0)
+	/*while (data->frogPos[0].time > 0)
 	{
 		Sleep(1000);
 		data->frogPos[0].time = data->frogPos[0].time - 1;
@@ -303,7 +298,7 @@ DWORD WINAPI ThreadGameTimer(LPVOID lpParam) {
 		SetEvent(data->evtHandles.hEventPipeWrite);
 		ResetEvent(data->evtHandles.hEventPipeWrite);
 		ReleaseMutex(data->mtxHandles.mutexEventoEnviarMapaCliente);
-	}
+	}*/
 	_tprintf(TEXT("[INFO]TIME OVER!\n"));
 	SetEvent(data->evtHandles.hCountDownEvent);
 	ResetEvent(data->evtHandles.hCountDownEvent);
@@ -330,6 +325,15 @@ DWORD WINAPI receive(LPVOID lpParam)
 	ResetEvent(clientGamemode);
 
 	_tprintf(TEXT("CONEXÂO POR %s com o modo de jogo %d\n"), froginitialdata.username,froginitialdata.Gamemode);
+
+	if (*dados->pGamemode == MULTIPLAYER)
+	{	
+		while (*dados->numClientes < 2)
+		{
+			_tprintf(TEXT("Espera de outro jogador\n"));
+
+		}
+	}
 
 	HANDLE FroggeThread = CreateThread(
 		NULL,
@@ -361,7 +365,7 @@ DWORD WINAPI ThreadRoads(LPVOID lpParam)
 {
 	pTRoads data = (pTRoads)lpParam;
 	pCarPos temp;
-	_tprintf(TEXT("[INFO] INICIO DA THREAD %d\n"), data->id);
+	_tprintf(TEXT("[INFO] INICIO DA THREAD ROAD %d\n"), data->id);
 	while (*data->terminar == 0)
 	{
 		WaitForSingleObject(data->mtxHandles.mutexMapaChange, INFINITE);
@@ -447,18 +451,30 @@ DWORD WINAPI ThreadRoads(LPVOID lpParam)
 
 		//TODO provavelmente tem de sair daqui.. (Reset do mapa antes de atualizar as posicoes dos carros)
 		//è preciso refazer esta lógica toda
+		BOOL existe = FALSE;
 		for (int i = 1; i < MAX_COLS - 1; i++)
 		{
+			existe = FALSE;
 			if (data->Map[data->id * MAX_COLS + i] == OBSTACLE_ELEMENT)
 			{
 				data->Map[data->id * MAX_COLS + i] = OBSTACLE_ELEMENT;
 			}
 			else if (data->Map[data->id * MAX_COLS + i] == FROGGE_ELEMENT)
 			{
-				if (data->frog_pos[0].row == data->id && data->frog_pos[0].col == i || data->frog_pos[1].row == data->id && data->frog_pos[1].col == i)
+				
+				for (int j = 0; j < *data->numClientes; j++)
 				{
+					if (data->frog_pos[j].row == data->id && data->frog_pos[j].col == i) 
+					{
+						existe = TRUE;
+					}
+
+				}
+
+				if(existe) {
 					data->Map[data->id * MAX_COLS + i] = FROGGE_ELEMENT;
-				}else
+				}
+				else
 					data->Map[data->id * MAX_COLS + i] = ROAD_ELEMENT;
 
 			}
@@ -467,6 +483,9 @@ DWORD WINAPI ThreadRoads(LPVOID lpParam)
 				data->Map[data->id * MAX_COLS + i] = ROAD_ELEMENT;
 			}
 		}
+
+
+
 
 		// refazer linha
 		for (int i = 0; i < *data->numCars; i++)
@@ -477,12 +496,19 @@ DWORD WINAPI ThreadRoads(LPVOID lpParam)
 				//isto meio q faz o programa ir com o caracas.. mas nao percebi bem pq
 				if (data->Map[temp[i].row * MAX_COLS + temp[i].col] == FROGGE_ELEMENT) {
 					//isto vai depois ser um flag q é atualizada para informar que o sapo perdeu ou no multiplayer tem de voltar para o inicio
-					_tprintf(TEXT("PERDEU PQ ESTA NUM CARRO\n"));
-					//ou simplemente fazer isto... podes ver a melhor maneira
-					data->frog_pos[0].row = data->numRoads + 2;
-					data->frog_pos[0].col = (rand() % (MAX_COLS - 2)) + 1;
-					//isto nao pode ser assim pq deixa o 'corpo' do sapo para tras e nao o reseta... ou nao pq depois meto o carro.. ja nao sei bem
-					data->Map[data->frog_pos[0].row * MAX_COLS + data->frog_pos[0].col] = FROGGE_ELEMENT;
+					_tprintf(TEXT("[DEBUG] Carro bateu em sapo\n"));
+
+					for (int j = 0; j < *data->numClientes; j++)
+					{
+						if (data->frog_pos[j].row == temp[i].row && data->frog_pos[j].col == temp[i].col) 
+						{
+							data->frog_pos[j].row = data->numRoads + 2;
+							data->frog_pos[j].col = (rand() % (MAX_COLS - 2)) + 1;
+							//isto nao pode ser assim pq deixa o 'corpo' do sapo para tras e nao o reseta... ou nao pq depois meto o carro.. ja nao sei bem
+							data->Map[data->frog_pos[j].row * MAX_COLS + data->frog_pos[j].col] = FROGGE_ELEMENT;
+						}
+					}
+					
 				}
 				data->Map[temp[i].row * MAX_COLS + temp[i].col] = CAR_ELEMENT;
 			}
@@ -806,6 +832,7 @@ int _tmain(int argc, TCHAR* argv[]) {
 	data.nivel = 1;
 	data.numCars = 0;
 	data.num_frogs = 0;
+	data.time = 100;
 
 	//TODO
 
@@ -832,6 +859,7 @@ int _tmain(int argc, TCHAR* argv[]) {
 		RoadsData[i].sharedMap = InitSharedMemoryMapThreadRoads();
 
 		//temporario acho
+		RoadsData[i].numClientes = &data.num_frogs;
 		RoadsData[i].frog_pos = &data.frog_pos;
 		RoadsData[i].numRoads = data.numRoads;
 		RoadsData[i].Map = &data.map;
@@ -1038,12 +1066,13 @@ int _tmain(int argc, TCHAR* argv[]) {
 					data.frog_pos[dadosPipeSend.numClientes].row = sapRowRandom;
 					data.frog_pos[dadosPipeSend.numClientes].level = 1;
 					data.frog_pos[dadosPipeSend.numClientes].score = 0;
-					data.frog_pos[dadosPipeSend.numClientes].time = 30;
+					//data.frog_pos[dadosPipeSend.numClientes].time = 30;
 					if(i==0)
 					{
 						dadosPipeReceive1.clienteIdentificador = dadosPipeSend.numClientes;
 						dadosPipeReceive1.hPipe.hPipe = pipes[i].hPipe;
 						dadosPipeReceive1.hPipe.oOverlap = pipes[i].oOverlap;
+						dadosPipeReceive1.numClientes = &dadosPipeSend.numClientes;
 						threadRPipe0 = CreateThread(NULL, 0, receive, &dadosPipeReceive1, 0, NULL);
 						if (threadWPipe == NULL) {
 							_tprintf(TEXT("[Erro] ao criar thread send!\n"));
@@ -1055,6 +1084,7 @@ int _tmain(int argc, TCHAR* argv[]) {
 						dadosPipeReceive2.clienteIdentificador = dadosPipeSend.numClientes;
 						dadosPipeReceive2.hPipe.hPipe = pipes[i].hPipe;
 						dadosPipeReceive2.hPipe.oOverlap = pipes[i].oOverlap;
+						dadosPipeReceive2.numClientes = &dadosPipeSend.numClientes;
 						threadRPipe1 = CreateThread(NULL, 0, receive, &dadosPipeReceive2, 0, NULL);
 						if (threadWPipe == NULL) {
 							_tprintf(TEXT("[Erro] ao criar thread send!\n"));

@@ -122,8 +122,6 @@ EspacoBuffer ReadSharedMemoryServer(pBuffer BufferCircular) {
 		BufferCircular->posLeitura = 0;
 	}
 
-	//e o codigo???
-
 	ReleaseMutex(hMutex);
 	ReleaseSemaphore(hSemEscrita, 1, NULL);
 	return space;

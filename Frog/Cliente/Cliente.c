@@ -164,7 +164,9 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR lpCmdLine, int nC
 
 
 	//Janela de Inicio :D
+	EnableWindow(hWnd,FALSE);
 	HWND hDialog = CreateDialogParam(hInst, MAKEINTRESOURCE(IDD_INICIAL), hWnd, TrataEventosInicial,0);
+	EnableWindow(hDialog, TRUE);
 	ShowWindow(hDialog, SW_SHOW);
 
 	//// definir as posicoes inicias da imagem
@@ -244,6 +246,11 @@ LRESULT CALLBACK TrataEventos(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPara
 	static BITMAP beginend;
 	static BITMAP obstacle; //NEED
 
+	int x;
+	int y;
+
+
+
 	//buffer
 	static HDC memDC = NULL;
 
@@ -258,6 +265,8 @@ LRESULT CALLBACK TrataEventos(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPara
 	case WM_CREATE:
 		
 		AllGameData = (PipeSendToClient*)malloc(sizeof(PipeSendToClient));
+		AllGameData->identifier = 0;
+		//_tcscpy_s(AllGameData->frog_pos[0].name, 20, TEXT('adsadsad'));
 		if (!WaitNamedPipe(PIPE_NAME, NMPWAIT_WAIT_FOREVER)) {
 		}
 		hPipe = CreateFile(PIPE_NAME, GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
@@ -458,7 +467,7 @@ LRESULT CALLBACK TrataEventos(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPara
 		char gameInfoText[200];
 		//Tem de ir buscar esta info ao AllGameInfo.
 		//_tcscpy_s(gameData.name, sizeof(TEXT("WORKING")), TEXT("WORKING"));
-		wsprintf(gameInfoText, TEXT("Name: Hodler  Time: %d   Score: %d  Level: %d"),  AllGameData->frog_pos[0].time, AllGameData->frog_pos[0].score, AllGameData->frog_pos[0].level);
+		//wsprintf(gameInfoText, TEXT("Name: %s  Time: %d   Score: %d  Level: %d"), username,  AllGameData->frog_pos[AllGameData->identifier, AllGameData->frog_pos[AllGameData->identifier].score, AllGameData->frog_pos[AllGameData->identifier].level);
 		SetTextColor(memDC, RGB(255, 255, 255));
 		SetBkMode(memDC, TRANSPARENT);
 		DrawText(memDC, gameInfoText, -1, &rcGameInfo, DT_CENTER);
@@ -478,6 +487,10 @@ LRESULT CALLBACK TrataEventos(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPara
 	//case WM_SIZE:
 	//	memDC = NULL; // metemos novamente a NULL para que caso haja um resize na janela no WM_PAINT a janela em memoria é sempre atualizada com o tamanho novo
 	//	break;
+	case WM_LBUTTONDOWN:
+		x = GET_X_LPARAM(lParam);
+		y = GET_Y_LPARAM(lParam);
+		break;
 	case WM_KEYDOWN:
 		
 		switch (wParam)

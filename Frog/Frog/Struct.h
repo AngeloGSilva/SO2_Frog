@@ -11,7 +11,7 @@ typedef struct {
 //talvez trocar nome
 typedef struct {
 	char name[100];
-	int time;
+	//int time;
 	int score;
 	int level;
 	int col;
@@ -44,6 +44,7 @@ typedef struct {
 }MutexHandles, * pMutexHandles;
 
 typedef struct {
+	int time;
 	int nivel;
 	int *terminar;
 	HANDLE Serv_HMutex, Serv_HEvent;
@@ -73,6 +74,7 @@ typedef struct {
 
 //Estrutura para movimento das Estradas Thread
 typedef struct {
+	int* numClientes;
 	int *terminar;
 	int speed;
 	int numRoads; //so para reset do sapo.. temporario
@@ -155,7 +157,7 @@ typedef struct {
 	pFrogPos frogPos;
 	int* directions;
 	TCHAR *mapToShare;
-	int numClientes;
+	int *numClientes;
 	int terminar;
 	pTRoads structToGetDirection;
 	int* pGamemode;
