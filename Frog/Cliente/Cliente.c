@@ -52,6 +52,8 @@ BOOL GameOption;
 int currentFrogpos = POSUP; // 1 up 2 left 3 right 5 down
 BOOL GameEnd = FALSE;
 FrogInitialdata froginitialdata;
+int FrogX,FrogY;
+
 HANDLE hcommand;
 
 
@@ -94,7 +96,6 @@ DWORD WINAPI CountDownTimer(LPVOID lpParam) {
 		InvalidateRect(hWndGlobal, NULL, FALSE);
 	}
 }
-
 
 int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR lpCmdLine, int nCmdShow) {
 	HWND hWnd;		// hWnd é o handler da janela, gerado mais abaixo por CreateWindow()
@@ -248,6 +249,8 @@ LRESULT CALLBACK TrataEventos(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPara
 
 	int x;
 	int y;
+	TCHAR* direction;
+
 
 
 
@@ -442,13 +445,29 @@ LRESULT CALLBACK TrataEventos(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPara
 				}
 				else if (buffer == FROGGE_ELEMENT) {
 					if(currentFrogpos == POSUP)
-						BitBlt(memDC, posX, posY,frog.bmWidth, frog.bmHeight, bmpFrogUp, 0, 0, SRCCOPY);
+					{
+						FrogX = posX;
+						FrogY = posY;
+						BitBlt(memDC, posX, posY, frog.bmWidth, frog.bmHeight, bmpFrogUp, 0, 0, SRCCOPY);
+					}
 					else if (currentFrogpos == POSLEFT)
+					{
+						FrogX = posX;
+						FrogY = posY;
 						BitBlt(memDC, posX, posY, frogLeft.bmWidth, frogLeft.bmHeight, bmpFrogLeft, 0, 0, SRCCOPY);
+					}
 					else if (currentFrogpos == POSRIGHT)
+					{
+						FrogX = posX;
+						FrogY = posY;
 						BitBlt(memDC, posX, posY, frogRight.bmWidth, frogRight.bmHeight, bmpFrogRight, 0, 0, SRCCOPY);
+					}
 					else if (currentFrogpos == POSDOWN)
+					{
+						FrogX = posX;
+						FrogY = posY;
 						BitBlt(memDC, posX, posY, frogDown.bmWidth, frogDown.bmHeight, bmpFrogDown, 0, 0, SRCCOPY);
+					}
 				}
 				else if (buffer == OBSTACLE_ELEMENT) {
 					BitBlt(memDC, posX, posY, obstacle.bmWidth, obstacle.bmHeight, bmpObstacle, 0, 0, SRCCOPY);
@@ -488,8 +507,112 @@ LRESULT CALLBACK TrataEventos(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPara
 	//	memDC = NULL; // metemos novamente a NULL para que caso haja um resize na janela no WM_PAINT a janela em memoria é sempre atualizada com o tamanho novo
 	//	break;
 	case WM_LBUTTONDOWN:
+		//localização click
+		
 		x = GET_X_LPARAM(lParam);
 		y = GET_Y_LPARAM(lParam);
+		//separar os clicks
+		int squareSize = 20;
+
+		if (x > FrogX + squareSize) {
+			if (y > FrogY + squareSize) {
+				currentFrogpos = POSDOWN;
+				sendInfo.pressInput = VK_DOWN;
+				sendInfo.x = -1;
+				sendInfo.y = -1;
+				WaitForSingleObject(hMutex, INFINITE);
+				WriteFile(hPipe, &sendInfo, sizeof(PipeFroggeInput), &n, NULL);
+				ReleaseMutex(hMutex);
+				SetEvent(hcommand);
+				ResetEvent(hcommand);
+			}
+			else if (y < FrogY - squareSize) {
+				currentFrogpos = POSUP;
+				sendInfo.pressInput = VK_UP;
+				sendInfo.x = -1;
+				sendInfo.y = -1;
+				WaitForSingleObject(hMutex, INFINITE);
+				WriteFile(hPipe, &sendInfo, sizeof(PipeFroggeInput), &n, NULL);
+				ReleaseMutex(hMutex);
+				SetEvent(hcommand);
+				ResetEvent(hcommand);
+			}
+			else {
+				currentFrogpos = POSRIGHT;
+				sendInfo.pressInput = VK_RIGHT;
+				sendInfo.x = -1;
+				sendInfo.y = -1;
+				WaitForSingleObject(hMutex, INFINITE);
+				WriteFile(hPipe, &sendInfo, sizeof(PipeFroggeInput), &n, NULL);
+				ReleaseMutex(hMutex);
+				SetEvent(hcommand);
+				ResetEvent(hcommand);
+			}
+		}
+		else if (x < FrogX - squareSize) {
+			if (y > FrogY + squareSize) {
+				currentFrogpos = POSDOWN;
+				sendInfo.pressInput = VK_DOWN;
+				sendInfo.x = -1;
+				sendInfo.y = -1;
+				WaitForSingleObject(hMutex, INFINITE);
+				WriteFile(hPipe, &sendInfo, sizeof(PipeFroggeInput), &n, NULL);
+				ReleaseMutex(hMutex);
+				SetEvent(hcommand);
+				ResetEvent(hcommand);
+			}
+			else if (y < FrogY - squareSize) {
+				currentFrogpos = POSUP;
+				sendInfo.pressInput = VK_UP;
+				sendInfo.x = -1;
+				sendInfo.y = -1;
+				WaitForSingleObject(hMutex, INFINITE);
+				WriteFile(hPipe, &sendInfo, sizeof(PipeFroggeInput), &n, NULL);
+				ReleaseMutex(hMutex);
+				SetEvent(hcommand);
+				ResetEvent(hcommand);
+			}
+			else {
+				currentFrogpos = POSLEFT;
+				sendInfo.pressInput = VK_LEFT;
+				sendInfo.x = -1;
+				sendInfo.y = -1;
+				WaitForSingleObject(hMutex, INFINITE);
+				WriteFile(hPipe, &sendInfo, sizeof(PipeFroggeInput), &n, NULL);
+				ReleaseMutex(hMutex);
+				SetEvent(hcommand);
+				ResetEvent(hcommand);
+			}
+		}
+		else {
+			if (y > FrogY + squareSize) {
+				currentFrogpos = POSDOWN;
+				sendInfo.pressInput = VK_DOWN;
+				sendInfo.x = -1;
+				sendInfo.y = -1;
+				WaitForSingleObject(hMutex, INFINITE);
+				WriteFile(hPipe, &sendInfo, sizeof(PipeFroggeInput), &n, NULL);
+				ReleaseMutex(hMutex);
+				SetEvent(hcommand);
+				ResetEvent(hcommand);
+			}
+			else if (y < FrogY - squareSize) {
+				currentFrogpos = POSUP;
+				sendInfo.pressInput = VK_UP;
+				sendInfo.x = -1;
+				sendInfo.y = -1;
+				WaitForSingleObject(hMutex, INFINITE);
+				WriteFile(hPipe, &sendInfo, sizeof(PipeFroggeInput), &n, NULL);
+				ReleaseMutex(hMutex);
+				SetEvent(hcommand);
+				ResetEvent(hcommand);
+			}
+			else {
+				direction = "click on the frog";
+			}
+		}
+
+		
 		break;
 	case WM_KEYDOWN:
 		
@@ -549,7 +672,6 @@ LRESULT CALLBACK TrataEventos(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPara
 			SetEvent(hcommand);
 			ResetEvent(hcommand);
 			Sleep(100);
-
 			break;
 		}
 
