@@ -328,12 +328,12 @@ DWORD WINAPI receive(LPVOID lpParam)
 		WaitForSingleObject(dados->evtHandles.hEventFroggeMovement, INFINITE);
 
 		WaitForSingleObject(dados->mtxHandles.mutexServerPipe, INFINITE);
-		ret = ReadFile(dados->hPipe[0], &receiveInfo, sizeof(PipeFroggeInput), &n, NULL);
+		ret = ReadFile(dados->hPipe[dados->clienteIdentificador], &receiveInfo, sizeof(PipeFroggeInput), &n, NULL);
 		_tprintf(TEXT("[receive] Recebi %d bytes: '%d'... (ReadFile)\n"), n, receiveInfo.pressInput);
 
 		ReleaseMutex(dados->mtxHandles.mutexServerPipe);
 		WaitForSingleObject(dados->mtxHandles.mutexMapaChange, INFINITE);
-		HandleFroggeMovement(0, receiveInfo, dados->frogPos,dados->mapToShare,dados->structToSend.numRoads,dados->structToGetDirection);
+		HandleFroggeMovement(dados->clienteIdentificador, receiveInfo, dados->frogPos,dados->mapToShare,dados->structToSend.numRoads,dados->structToGetDirection);
 		ReleaseMutex(dados->mtxHandles.mutexMapaChange);
 	}
 
@@ -954,8 +954,9 @@ int _tmain(int argc, TCHAR* argv[]) {
 		WaitForSingleObject(dadosPipe.mtxHandles.mutexPipe, INFINITE);
 
 		dadosPipe.hPipe[dadosPipe.numClientes] = hPipe;
+		dadosPipe.clienteIdentificador = dadosPipe.numClientes;
 		int sapRowRandom = data.numRoads + 2; //+3 para ficar na penultima estrada.
-
+		_tprintf(TEXT("[DEBUG] Cliente Identificador %d\n"), dadosPipe.clienteIdentificador);
 		//Depende de modo de jogo, a ser feito depois da conexão TODO
 
 		int sapColRandom = (rand() % (MAX_COLS - 2)) + 1;
@@ -971,7 +972,13 @@ int _tmain(int argc, TCHAR* argv[]) {
 		data.map[sapRowRandom][sapColRandom] = FROGGE_ELEMENT;
 		dadosPipe.numClientes++;
 		ReleaseMutex(dadosPipe.mtxHandles.mutexPipe);
-
+		//mandar o handle de apenas um dos clientes para cada thread... basicamente cada receive apenas tem o handle do seu cliente...
+		//e o send vai ter q ter os dois handles
+		//threadRPipe = CreateThread(NULL, 0, receive, &dadosPipe, 0, NULL);
+		//if (threadRPipe == NULL) {
+		//	_tprintf(TEXT("[Erro] ao criar thread receive!\n"));
+		//	return -1;
+		//}
 		//WAIT RESPOSTA (SINGLE OU MULTIPLE)
 		//if resposta é single, waiting fica a 0
 		HANDLE clientGamemode = CreateEvent(NULL, TRUE, FALSE, TEXT("clientgamemode"));

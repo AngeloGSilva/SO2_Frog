@@ -150,6 +150,7 @@ typedef struct {
 	int terminar;
 	pTRoads structToGetDirection;
 	int* pGamemode;
+	int clienteIdentificador;
 }TdadosPipeSendReceive, * pTdadosPipeSendReceive;
 
 //estrutura que é enviada do cliente para o server com o input
