@@ -48,7 +48,7 @@ typedef struct {
 	int *terminar;
 	HANDLE Serv_HMutex, Serv_HEvent;
 	DWORD carSpeed;
-	DWORD numCars;
+	int numCars;
 	int numRoads;
 	int num_frogs;
 	CarPos car_pos[MAX_CARS]; 
@@ -76,7 +76,7 @@ typedef struct {
 	int *terminar;
 	int speed;
 	int numRoads; //so para reset do sapo.. temporario
-	int numCars;
+	int* numCars;
 	pCarPos car_pos;
 	TCHAR* Map;
 	int* direction;

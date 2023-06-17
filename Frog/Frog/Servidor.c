@@ -14,9 +14,11 @@
 
 
 void resetMapCars(TCHAR* map, int numRoads, pCarPos car_pos, int* numCars,HANDLE hmutex) {
-	*numCars = 0;
+
 		//desenho do mapa... limites do mapa e numero de estradas
 		WaitForSingleObject(hmutex, INFINITE);
+		*numCars = 0;
+
 	for (int i = 0; i < numRoads + SKIP_BEGINING_END; i++)
 	{
 		for (int j = 0; j < MAX_COLS; j++)
@@ -240,7 +242,7 @@ void HandleFroggeMovement(int frogge, PipeFroggeInput input, pFrogPos pos, TCHAR
 		}
 
 		//alterar numero de carros, ainda tenho de ver como se pode fazer (nao faço ideia)
-		resetMapCars(map,numRoads,structToRoads->car_pos,&structToRoads->numCars, structToRoads->mtxHandles.mutexMapaChange);
+		resetMapCars(map,numRoads,structToRoads->car_pos,structToRoads->numCars, structToRoads->mtxHandles.mutexMapaChange);
 	}
 	if (colisaoReset) {
 		_tprintf(TEXT("PERDEU PQ ESTA NUM CARRO\n"));
@@ -350,7 +352,7 @@ DWORD WINAPI ThreadRoads(LPVOID lpParam)
 		WaitForSingleObject(data->mtxHandles.mutexMapaChange, INFINITE);
 		temp = data->car_pos;
 		//movimento carros
-		for (int i = 0; i < data->numCars; i++)
+		for (int i = 0; i < *data->numCars; i++)
 		{
 			int x = temp[i].row;
 			if (x == data->id)
@@ -450,7 +452,7 @@ DWORD WINAPI ThreadRoads(LPVOID lpParam)
 		}
 
 		// refazer linha
-		for (int i = 0; i < data->numCars; i++)
+		for (int i = 0; i < *data->numCars; i++)
 		{
 			int x = temp[i].row;
 			if (x == data->id)
@@ -814,7 +816,7 @@ int _tmain(int argc, TCHAR* argv[]) {
 		RoadsData[i].numRoads = data.numRoads;
 		RoadsData[i].Map = &data.map;
 		RoadsData[i].car_pos = &data.car_pos;
-		RoadsData[i].numCars = data.numCars;
+		RoadsData[i].numCars = &data.numCars;
 		evtHandles.hEventRoads[i] = CreateEvent(NULL, TRUE, FALSE, THREAD_ROADS_EVENT + i);
 		RoadsData[i].id = i + SKIP_BEGINING; 
 		RoadsData[i].speed = data.carSpeed;
