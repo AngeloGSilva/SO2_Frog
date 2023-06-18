@@ -33,6 +33,9 @@ LRESULT CALLBACK KeyboardHookProc(int nCode, WPARAM wParam, LPARAM lParam)
 
 DWORD WINAPI ThreadKeyHook(LPVOID lpParam)
 {
+
+	//getAsyncState(VK_DOWN) & 0x8000
+		//setEvent();
 	pTKeyBoardHook data = (pTKeyBoardHook)lpParam;
 	HANDLE eventKeyBoard = CreateEvent(NULL, TRUE, FALSE, KEYBOARD_EVENT);
 	g_keyboardHook = SetWindowsHookEx(WH_KEYBOARD_LL, KeyboardHookProc, NULL, 0);
