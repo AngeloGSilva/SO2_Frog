@@ -10,7 +10,7 @@
 #include <time.h>
 #include <stdlib.h>
 
-HHOOK g_keyboardHook = NULL;
+//HHOOK g_keyboardHook = NULL;
 
 //Estrutura para KeyHook Thread
 typedef struct {
@@ -19,36 +19,34 @@ typedef struct {
 	int numRoads;
 } TKeyBoardHook, * pTKeyBoardHook;
 
-LRESULT CALLBACK KeyboardHookProc(int nCode, WPARAM wParam, LPARAM lParam)
-{
-	if (nCode >= 0 && wParam == WM_KEYDOWN)
-	{
-		if (((KBDLLHOOKSTRUCT*)lParam)->vkCode == VK_LSHIFT)
-		{
-			MessageBox(NULL, TEXT("Escondes te o jogo, podes digitar um comando"), TEXT("Modo Comando"), MB_OK);
-		}
-	}
-	return CallNextHookEx(g_keyboardHook, nCode, wParam, lParam);
-}
+//LRESULT CALLBACK KeyboardHookProc(int nCode, WPARAM wParam, LPARAM lParam)
+//{
+//	if (nCode >= 0 && wParam == WM_KEYDOWN)
+//	{
+//		if (((KBDLLHOOKSTRUCT*)lParam)->vkCode == VK_LSHIFT)
+//		{
+//			MessageBox(NULL, TEXT("Escondes te o jogo, podes digitar um comando"), TEXT("Modo Comando"), MB_OK);
+//		}
+//	}
+//	return CallNextHookEx(g_keyboardHook, nCode, wParam, lParam);
+//}
 
 DWORD WINAPI ThreadKeyHook(LPVOID lpParam)
 {
-
+	HWND hwnd = GetConsoleWindow();
+	SetFocus(hwnd);
 	//getAsyncState(VK_DOWN) & 0x8000
 		//setEvent();
 	pTKeyBoardHook data = (pTKeyBoardHook)lpParam;
 	HANDLE eventKeyBoard = CreateEvent(NULL, TRUE, FALSE, KEYBOARD_EVENT);
-	g_keyboardHook = SetWindowsHookEx(WH_KEYBOARD_LL, KeyboardHookProc, NULL, 0);
-	MSG msg;
-	while (GetMessage(&msg, NULL, 0, 0) > 0)
+	while (1)
 	{
-		TranslateMessage(&msg);
-		DispatchMessage(&msg);
-		SetEvent(eventKeyBoard);
-		//Sleep(500);
-		ResetEvent(eventKeyBoard);
-		UnhookWindowsHookEx(g_keyboardHook);
-	}// Enter the message loop to keep the program running
+		if (GetAsyncKeyState(VK_LSHIFT) & 0x8000) {
+			SetEvent(eventKeyBoard);
+			ResetEvent(eventKeyBoard);
+
+		}
+	}
 	return 0;
 }
 
@@ -92,24 +90,27 @@ DWORD WINAPI ThreadRoads(LPVOID lpParam)
 DWORD WINAPI ThreadBeginEnd(LPVOID lpParam)
 {
 	pTStartEnd data = (pTStartEnd)lpParam;
-	TCHAR* temp;
+	//TCHAR* temp;
+	while (*data->terminar == 0)
+	{
 	WaitForSingleObject(data->hMutex, INFINITE);
 	HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
 	COORD cursorPos;
-	for (int r = 0; r < 4; r++) {
-		int aux = r;
-		if (r > 1)
-			aux = r + data->numRoads;
-		for (int i = 0; i < MAX_COLS; i++)
-		{
-			DWORD numWritten; // Number of characters actually written
-			cursorPos.X = i;
-			cursorPos.Y = aux;
-			SetConsoleCursorPosition(hConsole, cursorPos);
-			WriteConsole(hConsole, &data->Map[aux * MAX_COLS + i], 1, &numWritten, NULL);
+		for (int r = 0; r < 4; r++) {
+			int aux = r;
+			if (r > 1)
+				aux = r + data->numRoads;
+			for (int i = 0; i < MAX_COLS; i++)
+			{
+				DWORD numWritten; // Number of characters actually written
+				cursorPos.X = i;
+				cursorPos.Y = aux;
+				SetConsoleCursorPosition(hConsole, cursorPos);
+				WriteConsole(hConsole, &data->sharedMap[aux * MAX_COLS + i], 1, &numWritten, NULL);
+			}
 		}
+		ReleaseMutex(data->hMutex);
 	}
-	ReleaseMutex(data->hMutex);
 	ExitThread(7);
 }
 
@@ -188,7 +189,7 @@ DWORD WINAPI ThreadBufferCircular(LPVOID lpParam)
 
 DWORD WINAPI ThreadGameInfo(LPVOID lpParam)
 {
-	int *terminar = (int)lpParam;
+	pGameData dados = (pGameData)lpParam;
 	HANDLE mutex = CreateMutex(NULL, FALSE, THREAD_ROADS_MUTEX);
 	HANDLE threadPontuacaoEvent = CreateEvent(NULL, TRUE, FALSE, GAMEDATA_EVENT);
 	while (1)
@@ -203,8 +204,15 @@ DWORD WINAPI ThreadGameInfo(LPVOID lpParam)
 		SetConsoleCursorPosition(hConsole, cursorPos);
 		WriteConsole(hConsole, TEXT("JOGO FROGGER"), 15, &numWritten, NULL);
 		cursorPos.Y = 8;
-		SetConsoleCursorPosition(hConsole, cursorPos);
-		WriteConsole(hConsole, TEXT("Pontuacao : 0 Tempo : 0"), 23, &numWritten, NULL);
+		for (int i = 0; i < dados->num_frogs; i++)
+		{
+			TCHAR str[20];
+			//wcscpy_s(arg1, wcslen(token) + 1, token);
+			wsprintf(str, TEXT("Pontuacao: %d"), dados->frog_pos[i].score);
+			SetConsoleCursorPosition(hConsole, cursorPos);
+			WriteConsole(hConsole, str, 14, &numWritten, NULL);
+		}
+		
 		cursorPos.Y = 9;
 		SetConsoleCursorPosition(hConsole, cursorPos);
 		WriteConsole(hConsole, TEXT("Comandos:"), 10, &numWritten, NULL);
@@ -276,7 +284,7 @@ int _tmain(int argc, TCHAR* argv[]) {
 		NULL,
 		0,
 		ThreadGameInfo,
-		&terminar,
+		pBuf,
 		0,
 		NULL);
 
