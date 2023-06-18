@@ -179,6 +179,7 @@ typedef struct {
 }TdadosPipeSend, * pTdadosPipeSend;
 
 //estrutura que é enviada do cliente para o server com o input
+//TODO X PARA IDENTIFICADOR
 typedef struct {
 	int x;
 	int y;

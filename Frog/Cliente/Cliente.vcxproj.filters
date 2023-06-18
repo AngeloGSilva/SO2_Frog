@@ -54,5 +54,14 @@
     <Image Include="bmp00006.bmp">
       <Filter>Resource Files</Filter>
     </Image>
+    <Image Include="bmp00007.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="bmp00008.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="bmp00009.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
   </ItemGroup>
 </Project>

@@ -40,7 +40,7 @@ HDC bmpDC; // hdc do bitmap
 BITMAP bmp; // informação sobre o bitmap
 
 HWND hWndGlobal; // handle para a janela
-HANDLE hMutex;
+HANDLE hMutex, hMutexDraw;
 
 HDC memDC = NULL; // copia do device context que esta em memoria, tem de ser inicializado a null
 HBITMAP hBitmapDB; // copia as filleracteristicas da janela original para a janela que vai estar em memoria
@@ -128,7 +128,7 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR lpCmdLine, int nC
 	wcApp.hCursor = LoadCursor(NULL, IDC_ARROW);	// "hCursor" = handler do cursor (rato)
 	// "NULL" = Forma definida no Windows
 	// "IDC_ARROW" Aspecto "seta"
-	wcApp.lpszMenuName = NULL;			// Classe do menu que a janela pode ter
+	wcApp.lpszMenuName = MAKEINTRESOURCE(ID_MENU_PRINCIPAL);			// Classe do menu que a janela pode ter
 	// (NULL = não tem menu)
 	wcApp.cbClsExtra = 0;				// Livre, para uso particular
 	wcApp.cbWndExtra = 0;				// Livre, para uso particular
@@ -167,6 +167,7 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR lpCmdLine, int nC
 	//Janela de Inicio :D
 	EnableWindow(hWnd,FALSE);
 	HWND hDialog = CreateDialogParam(hInst, MAKEINTRESOURCE(IDD_INICIAL), hWnd, TrataEventosInicial,0);
+	
 	EnableWindow(hDialog, TRUE);
 	ShowWindow(hDialog, SW_SHOW);
 
@@ -264,6 +265,181 @@ LRESULT CALLBACK TrataEventos(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPara
 	switch (messg)
 	{
 
+	case WM_COMMAND:
+		switch (LOWORD(wParam))
+		{
+		case ID_BITMAP_SET1:
+			WaitForSingleObject(hMutexDraw, INFINITE);
+			hcar = (HBITMAP)LoadImage(NULL, TEXT("car.bmp"), IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE);
+			GetObject(hcar, sizeof(car), &car);
+
+			hcarRight = (HBITMAP)LoadImage(NULL, TEXT("carRight.bmp"), IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE);
+			GetObject(hcarRight, sizeof(carRight), &carRight);
+
+			//FROG BITMAPS
+
+			hfrog = LoadBitmap(GetModuleHandle(NULL), MAKEINTRESOURCE(IDB_BITMAP_SAPO));
+
+			GetObject(hfrog, sizeof(frog), &frog);
+
+			hfrogLeft = LoadBitmap(GetModuleHandle(NULL), MAKEINTRESOURCE(IDB_BITMAP_SAPO_LEFT));
+
+			GetObject(hfrogLeft, sizeof(frogLeft), &frogLeft);
+
+			hfrogRight = LoadBitmap(GetModuleHandle(NULL), MAKEINTRESOURCE(IDB_BITMAP_SAPO_RIGHT));
+
+			GetObject(hfrogRight, sizeof(frogRight), &frogRight);
+
+			hfrogDown = LoadBitmap(GetModuleHandle(NULL), MAKEINTRESOURCE(IDB_BITMAP_SAPO_DOWN));
+
+			GetObject(hfrogDown, sizeof(frogDown), &frogDown);
+
+			//ROAD BITMAPS
+			hroad = LoadBitmap(GetModuleHandle(NULL), MAKEINTRESOURCE(IDB_BITMAP_ROAD));
+
+			GetObject(hroad, sizeof(road), &road);
+
+			//LIMIT BITMAPS
+			hlimit = LoadBitmap(GetModuleHandle(NULL), MAKEINTRESOURCE(IDB_BITMAP_LIMIT));
+
+			GetObject(hlimit, sizeof(limit), &limit);
+
+			//BEGIN AND END AREA BITMAPS
+
+			hbeginend = LoadBitmap(GetModuleHandle(NULL), MAKEINTRESOURCE(IDB_BITMAP_BEGINEND));
+
+			GetObject(hbeginend, sizeof(beginend), &beginend);
+
+			//OBSTACLE ELEMENT
+
+			hObstacle = LoadBitmap(GetModuleHandle(NULL), MAKEINTRESOURCE(IDB_BITMAP_OBSTACLE));
+
+			GetObject(hObstacle, sizeof(obstacle), &obstacle);
+
+			hdc = GetDC(hWnd);
+
+			bmpCar = CreateCompatibleDC(hdc);
+			SelectObject(bmpCar, hcar);
+
+			bmpFrogUp = CreateCompatibleDC(hdc);
+			SelectObject(bmpFrogUp, hfrog);
+
+			bmpRoad = CreateCompatibleDC(hdc);
+			SelectObject(bmpRoad, hroad);
+
+			bmpLimit = CreateCompatibleDC(hdc);
+			SelectObject(bmpLimit, hlimit);
+
+			bmpBeginEnd = CreateCompatibleDC(hdc);
+			SelectObject(bmpBeginEnd, hbeginend);
+
+			bmpObstacle = CreateCompatibleDC(hdc);
+			SelectObject(bmpObstacle, hObstacle);
+
+			bmpFrogLeft = CreateCompatibleDC(hdc);
+			SelectObject(bmpFrogLeft, hfrogLeft);
+
+			bmpFrogRight = CreateCompatibleDC(hdc);
+			SelectObject(bmpFrogRight, hfrogRight);
+
+			bmpFrogDown = CreateCompatibleDC(hdc);
+			SelectObject(bmpFrogDown, hfrogDown);
+
+			bmpCarRight = CreateCompatibleDC(hdc);
+			SelectObject(bmpCarRight, hcarRight);
+
+			ReleaseDC(hWnd, hdc);
+
+			ReleaseMutex(hMutexDraw);
+			MessageBox(hWnd, TEXT("Choosen bitmap set 1!"), TEXT("Bitmap 1"), MB_OK | MB_ICONINFORMATION);
+			break;
+
+		case ID_BITMAP_SET2:
+			WaitForSingleObject(hMutexDraw,INFINITE);
+
+			hcar = (HBITMAP)LoadImage(NULL, TEXT("bitmapsV2/meteorite.bmp"), IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE);
+			GetObject(hcar, sizeof(car), &car);
+
+			hcarRight = (HBITMAP)LoadImage(NULL, TEXT("bitmapsV2/ufo.bmp"), IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE);
+			GetObject(hcarRight, sizeof(carRight), &carRight);
+
+			//FROG BITMAPS
+
+			hfrog = (HBITMAP)LoadImage(NULL, TEXT("bitmapsV2/rocketUp.bmp"), IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE);
+
+			GetObject(hfrog, sizeof(frog), &frog);
+
+			hfrogLeft = (HBITMAP)LoadImage(NULL, TEXT("bitmapsV2/rocketLeft.bmp"), IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE);
+
+			GetObject(hfrogLeft, sizeof(frogLeft), &frogLeft);
+
+			hfrogRight = (HBITMAP)LoadImage(NULL, TEXT("bitmapsV2/rocketRight.bmp"), IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE);
+
+			GetObject(hfrogRight, sizeof(frogRight), &frogRight);
+
+			hfrogDown = (HBITMAP)LoadImage(NULL, TEXT("bitmapsV2/rocketDown.bmp"), IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE);
+
+			GetObject(hfrogDown, sizeof(frogDown), &frogDown);
+
+			//ROAD BITMAPS
+			hroad = (HBITMAP)LoadImage(NULL, TEXT("bitmapsV2/stars.bmp"), IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE);;
+
+			GetObject(hroad, sizeof(road), &road);
+
+			//LIMIT BITMAPS
+			hlimit = NULL;
+
+			GetObject(hlimit, sizeof(limit), &limit);
+
+			//BEGIN AND END AREA BITMAPS
+
+			hbeginend = NULL;
+
+			GetObject(hbeginend, sizeof(beginend), &beginend);
+
+			//OBSTACLE ELEMENT
+
+			hObstacle = (HBITMAP)LoadImage(NULL, TEXT("bitmapsV2/satellite.bmp"), IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE);
+
+			GetObject(hObstacle, sizeof(obstacle), &obstacle);
+			ReleaseMutex(hMutexDraw);
+			hdc = GetDC(hWnd);
+
+			bmpCar = CreateCompatibleDC(hdc);
+			SelectObject(bmpCar, hcar);
+
+			bmpFrogUp = CreateCompatibleDC(hdc);
+			SelectObject(bmpFrogUp, hfrog);
+
+			bmpRoad = CreateCompatibleDC(hdc);
+			SelectObject(bmpRoad, hroad);
+
+			bmpLimit = CreateCompatibleDC(hdc);
+			SelectObject(bmpLimit, hlimit);
+
+			bmpBeginEnd = CreateCompatibleDC(hdc);
+			SelectObject(bmpBeginEnd, hbeginend);
+
+			bmpObstacle = CreateCompatibleDC(hdc);
+			SelectObject(bmpObstacle, hObstacle);
+
+			bmpFrogLeft = CreateCompatibleDC(hdc);
+			SelectObject(bmpFrogLeft, hfrogLeft);
+
+			bmpFrogRight = CreateCompatibleDC(hdc);
+			SelectObject(bmpFrogRight, hfrogRight);
+
+			bmpFrogDown = CreateCompatibleDC(hdc);
+			SelectObject(bmpFrogDown, hfrogDown);
+
+			bmpCarRight = CreateCompatibleDC(hdc);
+			SelectObject(bmpCarRight, hcarRight);
+
+			ReleaseDC(hWnd, hdc);
+			MessageBox(hWnd, TEXT("Choosen bitmap set 2!"), TEXT("Bitmap 2"), MB_ICONINFORMATION);
+			break;
+		}
+		break;
 	case WM_CREATE:
 		
 		AllGameData = (PipeSendToClient*)malloc(sizeof(PipeSendToClient));
@@ -277,6 +453,7 @@ LRESULT CALLBACK TrataEventos(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPara
 		}
 		
 		hMutex = CreateMutex(NULL, FALSE, TEXT("MutexClientPipe"));
+		hMutexDraw = CreateMutex(NULL, FALSE, TEXT("Bitmap change draw"));
 
 		HANDLE hThreadMapPipe = CreateThread(
 			NULL,    // Thread attributes
@@ -300,52 +477,52 @@ LRESULT CALLBACK TrataEventos(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPara
 
 		//CAR BITMAPS
 
-		hcar = (HBITMAP)LoadImage(NULL, TEXT("car.bmp"),IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE);
+		hcar = (HBITMAP)LoadImage(NULL, TEXT("bitmapsV2/meteorite.bmp"), IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE);
 		GetObject(hcar, sizeof(car), &car);
-		
-		hcarRight = (HBITMAP)LoadImage(NULL, TEXT("carRight.bmp"), IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE);
+
+		hcarRight = (HBITMAP)LoadImage(NULL, TEXT("bitmapsV2/ufo.bmp"), IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE);
 		GetObject(hcarRight, sizeof(carRight), &carRight);
 
 		//FROG BITMAPS
 
-		hfrog = LoadBitmap(GetModuleHandle(NULL), MAKEINTRESOURCE(IDB_BITMAP_SAPO));
+		hfrog = (HBITMAP)LoadImage(NULL, TEXT("bitmapsV2/rocketUp.bmp"), IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE);
 
 		GetObject(hfrog, sizeof(frog), &frog);
 
-		hfrogLeft = LoadBitmap(GetModuleHandle(NULL), MAKEINTRESOURCE(IDB_BITMAP_SAPO_LEFT));
+		hfrogLeft = (HBITMAP)LoadImage(NULL, TEXT("bitmapsV2/rocketLeft.bmp"), IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE);
 
 		GetObject(hfrogLeft, sizeof(frogLeft), &frogLeft);
 
-		hfrogRight = LoadBitmap(GetModuleHandle(NULL), MAKEINTRESOURCE(IDB_BITMAP_SAPO_RIGHT));
+		hfrogRight = (HBITMAP)LoadImage(NULL, TEXT("bitmapsV2/rocketRight.bmp"), IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE);
 
 		GetObject(hfrogRight, sizeof(frogRight), &frogRight);
 
-		hfrogDown = LoadBitmap(GetModuleHandle(NULL), MAKEINTRESOURCE(IDB_BITMAP_SAPO_DOWN));
+		hfrogDown = (HBITMAP)LoadImage(NULL, TEXT("bitmapsV2/rocketDown.bmp"), IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE);
 
 		GetObject(hfrogDown, sizeof(frogDown), &frogDown);
 
 		//ROAD BITMAPS
-		hroad = LoadBitmap(GetModuleHandle(NULL), MAKEINTRESOURCE(IDB_BITMAP_ROAD));
+		hroad = LoadBitmap(GetModuleHandle(NULL), MAKEINTRESOURCE(IDB_BITMAP_STARS));
 
 		GetObject(hroad, sizeof(road), &road);
 
 		//LIMIT BITMAPS
-		hlimit = LoadBitmap(GetModuleHandle(NULL), MAKEINTRESOURCE(IDB_BITMAP_LIMIT));
+		hlimit = LoadBitmap(GetModuleHandle(NULL), MAKEINTRESOURCE(IDB_BITMAP_STARLIMIT));
 
 		GetObject(hlimit, sizeof(limit), &limit);
 
 		//BEGIN AND END AREA BITMAPS
 
-		hbeginend = LoadBitmap(GetModuleHandle(NULL), MAKEINTRESOURCE(IDB_BITMAP_BEGINEND));
+		hbeginend = LoadBitmap(GetModuleHandle(NULL), MAKEINTRESOURCE(IDB_BITMAP_LANDING));
 
 		GetObject(hbeginend, sizeof(beginend), &beginend);
 
 		//OBSTACLE ELEMENT
 
-		hObstacle = LoadBitmap(GetModuleHandle(NULL), MAKEINTRESOURCE(IDB_BITMAP_OBSTACLE));
+		hObstacle = (HBITMAP)LoadImage(NULL, TEXT("bitmapsV2/satellite.bmp"), IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE);
 
 		GetObject(hObstacle, sizeof(obstacle), &obstacle);
-
+		ReleaseMutex(hMutexDraw);
 		hdc = GetDC(hWnd);
 
 		bmpCar = CreateCompatibleDC(hdc);
@@ -378,13 +555,14 @@ LRESULT CALLBACK TrataEventos(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPara
 		bmpCarRight = CreateCompatibleDC(hdc);
 		SelectObject(bmpCarRight, hcarRight);
 
-
 		ReleaseDC(hWnd, hdc);
+
 		break;
 
 		// evento que é disparado sempre que o sistema pede um refrescamento da janela
 	case WM_PAINT:
 		// Inicio da pintura da janela, que substitui o GetDC
+		WaitForSingleObject(hMutexDraw, INFINITE);
 		hdc = BeginPaint(hWnd, &ps);
 		GetClientRect(hWnd, &rect);
 
@@ -511,6 +689,7 @@ LRESULT CALLBACK TrataEventos(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPara
 
 		//BitBlt(hdc, 0, 0, rect.right, rect.bottom,memDC, 0, 0, SRCCOPY);
 		EndPaint(hWnd, &ps);
+		ReleaseMutex(hMutexDraw);
 		break;
 
 	case WM_ERASEBKGND:

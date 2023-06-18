@@ -12,7 +12,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-
 void resetMapCars(TCHAR* map, int numRoads, pCarPos car_pos, int* numCars,HANDLE hmutex) {
 
 		//desenho do mapa... limites do mapa e numero de estradas
