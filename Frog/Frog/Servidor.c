@@ -105,6 +105,8 @@ DWORD WINAPI send(LPVOID lpParam)
 		for (int i = 0; i < dados->numClientes; i++) {
 			if (dados->hPipe[i].ready == TRUE) {
 				dados->structToSend.identifier = i;
+				dados->structToSend.frog_pos->col = dados->frogPos[i].col;
+				dados->structToSend.frog_pos->row = dados->frogPos[i].row;
 				if (!WriteFile(dados->hPipe[i].hPipe, &dados->structToSend, sizeof(PipeSendToClient), &n, NULL)) {
 					_tprintf(TEXT("[ERRO] Escrever no pipe! (WriteFile)\n"));
 					exit(-1);
@@ -219,8 +221,16 @@ void HandleFroggeMovement(int frogge, PipeFroggeInput input, pFrogPos pos, TCHAR
 			if (map[pos[frogge].row * MAX_COLS + pos[frogge].col] == CAR_ELEMENT) {
 				colisaoReset = TRUE;
 			}
-			
 		}
+		break;
+	case REPOSITION:
+		if (pos[input.x].row == numRoads + 2)
+			map[pos[frogge].row * MAX_COLS + pos[frogge].col] = BEGIN_END_ELEMENT;
+		else
+			map[pos[frogge].row * MAX_COLS + pos[frogge].col] = ROAD_ELEMENT;
+
+		pos[input.x].row = numRoads + 2;
+		pos[input.x].col = (rand() % (MAX_COLS - 2)) + 1;
 		break;
 	default:
 		break;
@@ -1047,7 +1057,6 @@ int _tmain(int argc, TCHAR* argv[]) {
 					// se entrarmos aqui significa que a funcao correu tudo bem
 					// fazemos reset do evento porque queremos que o WaitForMultipleObject desbloqueio com base noutro evento e nao neste
 					ResetEvent(pipes[i].oOverlap.hEvent);
-
 					//vamos esperar que o mutex esteja livre
 					dadosPipeSend.hPipe[i].ready = TRUE; // dizemos que esta instancia do named pipe está ativa para receber info do servidor
 					

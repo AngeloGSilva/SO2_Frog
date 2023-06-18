@@ -445,26 +445,39 @@ LRESULT CALLBACK TrataEventos(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPara
 				else if (buffer == FROGGE_ELEMENT) {
 					if(currentFrogpos == POSUP)
 					{
-						FrogX = posX;
-						FrogY = posY;
+						//é a posição do ultimo frog, nao do atual, temos de guardar o Frox e FrogY do que tiver id igual
+						if(i == AllGameData->frog_pos->row && j==AllGameData->frog_pos->col)
+						{
+							FrogX = posX;
+							FrogY = posY;
+						}
 						BitBlt(memDC, posX, posY, frog.bmWidth, frog.bmHeight, bmpFrogUp, 0, 0, SRCCOPY);
 					}
 					else if (currentFrogpos == POSLEFT)
 					{
-						FrogX = posX;
-						FrogY = posY;
+						if (i == AllGameData->frog_pos->row && j == AllGameData->frog_pos->col)
+						{
+							FrogX = posX;
+							FrogY = posY;
+						}
 						BitBlt(memDC, posX, posY, frogLeft.bmWidth, frogLeft.bmHeight, bmpFrogLeft, 0, 0, SRCCOPY);
 					}
 					else if (currentFrogpos == POSRIGHT)
 					{
-						FrogX = posX;
-						FrogY = posY;
+						if (i == AllGameData->frog_pos->row && j == AllGameData->frog_pos->col)
+						{
+							FrogX = posX;
+							FrogY = posY;
+						}
 						BitBlt(memDC, posX, posY, frogRight.bmWidth, frogRight.bmHeight, bmpFrogRight, 0, 0, SRCCOPY);
 					}
 					else if (currentFrogpos == POSDOWN)
 					{
-						FrogX = posX;
-						FrogY = posY;
+						if (i == AllGameData->frog_pos->row && j == AllGameData->frog_pos->col)
+						{
+							FrogX = posX;
+							FrogY = posY;
+						}
 						BitBlt(memDC, posX, posY, frogDown.bmWidth, frogDown.bmHeight, bmpFrogDown, 0, 0, SRCCOPY);
 					}
 				}
@@ -490,7 +503,7 @@ LRESULT CALLBACK TrataEventos(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPara
 		SetBkMode(memDC, TRANSPARENT);
 		DrawText(memDC, gameInfoText, -1, &rcGameInfo, DT_CENTER);
 		
-		SetPixel(memDC, FrogX + 10, FrogY + 10, RGB(255, 0, 0));
+		//SetPixel(memDC, FrogX + 10, FrogY + 10, RGB(255, 0, 0));
 		}
 
 		// Copy the content from the memory DC to the actual DC
@@ -507,6 +520,28 @@ LRESULT CALLBACK TrataEventos(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPara
 	//case WM_SIZE:
 	//	memDC = NULL; // metemos novamente a NULL para que caso haja um resize na janela no WM_PAINT a janela em memoria é sempre atualizada com o tamanho novo
 	//	break;
+	case WM_RBUTTONDOWN:
+		x = GET_X_LPARAM(lParam);
+		y = GET_Y_LPARAM(lParam);
+		
+		FrogX = FrogX + 10;
+		FrogY = FrogY + 10;
+
+		if (x < (FrogX + 10) && x > (FrogX - 10) && y < (FrogY + 10) && y > (FrogY - 10)) {
+			//Reposicionar Válido!
+			currentFrogpos = POSUP;
+			sendInfo.pressInput = REPOSITION;
+			//ID vai no X, a mudar
+			sendInfo.x = AllGameData->identifier;
+			sendInfo.y = -1;
+			WaitForSingleObject(hMutex, INFINITE);
+			WriteFile(hPipe, &sendInfo, sizeof(PipeFroggeInput), &n, NULL);
+			ReleaseMutex(hMutex);
+			SetEvent(hcommand);
+			ResetEvent(hcommand);
+		}
+
+		break;
 	case WM_LBUTTONDOWN:
 		//localização click
 		
@@ -566,7 +601,6 @@ LRESULT CALLBACK TrataEventos(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPara
 			SetEvent(hcommand);
 			ResetEvent(hcommand);
 		}
-
 		
 		break;
 	case WM_KEYDOWN:
