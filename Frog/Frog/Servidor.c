@@ -723,15 +723,7 @@ DWORD WINAPI ThreadBufferCircular(LPVOID lpParam)
 	HANDLE hThreadStopGame = NULL;
 	while (*dados->terminar == 0)
 	{
-		//WaitForSingleObject(dados->hSemLeitura, INFINITE);
-		//WaitForSingleObject(dados->hMutex, INFINITE);
-		////copiar o conteudo para a memoria partilhada
-		//CopyMemory(&space, &dados->BufferCircular->espacosDeBuffer[dados->BufferCircular->posLeitura], sizeof(EspacoBuffer));
-		//dados->BufferCircular->posLeitura++;
-		//if (dados->BufferCircular->posLeitura == 10)
-		//{
-		//	dados->BufferCircular->posLeitura = 0;
-		//}
+		
 
 		space = ReadSharedMemoryServer(dados->BufferCircular);
 
@@ -898,7 +890,6 @@ int _tmain(int argc, TCHAR* argv[]) {
 	mtxHandles.mutexFrogMovement = CreateMutex(NULL, FALSE, TEXT("mutexsaposmovimento"));
 
 	evtHandles.hCountDownEvent = CreateEvent(NULL, TRUE, FALSE, TEXT("eventoPipeRead"));
-
 
 	//Verificar handles criados
 
@@ -1130,7 +1121,7 @@ int _tmain(int argc, TCHAR* argv[]) {
 	
 		_tprintf(TEXT("[SERVIDOR] Esperar ligação de um leitor... (ConnectNamedPipe)\n"));
 
-		while (1) {
+		while (waiting) {
 			offset = WaitForMultipleObjects(2, hEvents, FALSE, INFINITE);
 			i = offset - WAIT_OBJECT_0;
 			_tprintf(TEXT("[SERVIDOR] Connection\n"), i);
@@ -1190,24 +1181,17 @@ int _tmain(int argc, TCHAR* argv[]) {
 					ReleaseMutex(dadosPipeSend.mtxHandles.mutexPipe);
 				}
 			}
-		}
+			HANDLE clientGamemode = CreateEvent(NULL, TRUE, FALSE, TEXT("clientgamemode"));
 
-		//mandar o handle de apenas um dos clientes para cada thread... basicamente cada receive apenas tem o handle do seu cliente...
-		//e o send vai ter q ter os dois handles
-		//threadRPipe = CreateThread(NULL, 0, receive, &dadosPipe, 0, NULL);
-		//if (threadRPipe == NULL) {
-		//	_tprintf(TEXT("[Erro] ao criar thread receive!\n"));
-		//	return -1;
-		//}
-		//WAIT RESPOSTA (SINGLE OU MULTIPLE)
-		//if resposta é single, waiting fica a 0
-
-		HANDLE clientGamemode = CreateEvent(NULL, TRUE, FALSE, TEXT("clientgamemode"));
-		
 		WaitForSingleObject(clientGamemode, INFINITE);
-		//Gerar sapos (Primeira meta....) // alterar para ser com opcao do menu
-
-	//} while(data.gamemode == 1);
+		{
+			if (data.gamemode == 0)
+			{
+				waiting = 0;
+				DisconnectNamedPipe(pipes[1].hPipe);
+			}
+		}
+		}
 
 	while (terminar == 0)
 	{
@@ -1220,12 +1204,22 @@ int _tmain(int argc, TCHAR* argv[]) {
 	HANDLE ending_event = CreateEvent(NULL, TRUE, FALSE, ENDING_EVENT);
 	SetEvent(ending_event);
 
-	/*UnmapViewOfFile(HMapFile);
-	UnmapViewOfFile(HMapFileBuffer);*/
 	// Close thread handles
 	for (int i = 0; i < data.numRoads; i++) {
 		CloseHandle(RoadThreads[i]);
 	}
+
+	CloseHandle(evtHandles.InitialEvent);
+	CloseHandle(evtHandles.GameDataEvent);
+	CloseHandle(evtHandles.SharedMemoryEvent);
+	CloseHandle(evtHandles.hEventPipeWrite);
+	CloseHandle(mtxHandles.mutexEventoEnviarMapaCliente);
+	CloseHandle(mtxHandles.mutexServerPipe);
+	CloseHandle(evtHandles.hEventPipeRead);
+	CloseHandle(evtHandles.hEventFroggeMovement[0]);
+	CloseHandle(evtHandles.hEventFroggeMovement[1]);
+	CloseHandle(mtxHandles.mutexMapaChange);
+	CloseHandle(evtHandles.hCountDownEvent);
 	CloseHandle(hThreads);
 	CloseHandle(tHCheckOpearators);
 	

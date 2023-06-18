@@ -56,6 +56,29 @@ int FrogX,FrogY;
 
 HANDLE hcommand;
 
+typedef struct {
+	HBITMAP hBmp; // handle para o bitmap
+	HDC bmpDC; // hdc do bitmap
+	BITMAP bmp; // informação sobre o bitmap
+	HWND hWndGlobal; // handle para a janela
+	HANDLE hMutex, hMutexDraw;
+	HDC memDC; // copia do device context que esta em memoria, tem de ser inicializado a null
+	HBITMAP hBitmapDB; // copia as filleracteristicas da janela original para a janela que vai estar em memoria
+	pPipeSendToClient AllGameData;
+	HANDLE hPipe;
+	TCHAR username[100];
+	BOOL GameOption;
+	int currentFrogpos; // 1 up 2 left 3 right 5 down
+	BOOL GameEnd;
+	FrogInitialdata froginitialdata;
+	int FrogX, FrogY;
+	HANDLE hcommand;
+}Win, *pWin;
+
+//pWin data = (pWin)GetWindowLongPtr(hWnd, GWLP_USERDATA);
+//SetWindowLongPtr(hWnd, GWLP_USERDATA, (data));
+
+
 
 DWORD WINAPI mapPipe(LPVOID lpParam)
 {
@@ -100,56 +123,35 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR lpCmdLine, int nC
 	HWND hWnd;		// hWnd é o handler da janela, gerado mais abaixo por CreateWindow()
 	MSG lpMsg;		// MSG é uma estrutura definida no Windows para as mensagens
 	WNDCLASSEX wcApp;	// WNDCLASSEX é uma estrutura cujos membros servem para
-	// definir as filleracterísticas da classe da janela
-	//mapa
-	
-// ============================================================================
-// 1. Definição das filleracterísticas da janela "wcApp"
-//    (Valores dos elementos da estrutura "wcApp" do tipo WNDCLASSEX)
-// ============================================================================
+
 	wcApp.cbSize = sizeof(WNDCLASSEX);      // Tamanho da estrutura WNDCLASSEX
 	wcApp.hInstance = hInst;		         // Instância da janela actualmente exibida
-	// ("hInst" é parâmetro de WinMain e vem
-		  // inicializada daí)
+	
 	wcApp.lpszClassName = szProgName;       // Nome da janela (neste caso = nome do programa)
 	wcApp.lpfnWndProc = TrataEventos;       // Endereço da função de processamento da janela
-	// ("TrataEventos" foi declarada no início e
-	// encontra-se mais abaixo)
+	
 	wcApp.style = CS_HREDRAW | CS_VREDRAW;  // Estilo da janela: Fazer o redraw se for
-	// modificada horizontal ou verticalmente
 
 	wcApp.hIcon = LoadIcon(NULL, IDI_APPLICATION);   // "hIcon" = handler do ícon normal
-	// "NULL" = Icon definido no Windows
-	// "IDI_AP..." Ícone "aplicação"
+
 	wcApp.hIconSm = LoadIcon(NULL, IDI_INFORMATION); // "hIconSm" = handler do ícon pequeno
-	// "NULL" = Icon definido no Windows
-	// "IDI_INF..." Ícon de informação
+
 	wcApp.hCursor = LoadCursor(NULL, IDC_ARROW);	// "hCursor" = handler do cursor (rato)
-	// "NULL" = Forma definida no Windows
-	// "IDC_ARROW" Aspecto "seta"
+
 	wcApp.lpszMenuName = MAKEINTRESOURCE(ID_MENU_PRINCIPAL);			// Classe do menu que a janela pode ter
 	// (NULL = não tem menu)
 	wcApp.cbClsExtra = 0;				// Livre, para uso particular
 	wcApp.cbWndExtra = 0;				// Livre, para uso particular
 
 	wcApp.hbrBackground = CreateSolidBrush(RGB(125, 125, 125));
-	//(HBRUSH)GetStockObject(WHITE_BRUSH);
-// "hbrBackground" = handler para "brush" de pintura do fundo da janela. Devolvido por
-// "GetStockObject".Neste caso o fundo será branco
 
-// ============================================================================
-// 2. Registar a classe "wcApp" no Windows
-// ============================================================================
 	if (!RegisterClassEx(&wcApp))
 		return(0);
 
-	// ============================================================================
-	// 3. Criar a janela
-	// ============================================================================
 	hWnd = CreateWindow(
 		szProgName,			// Nome da janela (programa) definido acima
 		TEXT("FROG"),// Texto que figura na barra do título
-		WS_OVERLAPPEDWINDOW,	// Estilo da janela (WS_OVERLAPPED= normal)
+		WS_OVERLAPPED | WS_MINIMIZEBOX,	// Estilo da janela (WS_OVERLAPPED= normal)
 		CW_USEDEFAULT,		// Posição x pixels (default=à direita da última)
 		CW_USEDEFAULT,		// Posição y pixels (default=abaixo da última)
 		1000,		// Largura da janela (em pixels)
@@ -437,7 +439,11 @@ LRESULT CALLBACK TrataEventos(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPara
 			ReleaseDC(hWnd, hdc);
 			MessageBox(hWnd, TEXT("Choosen bitmap set 2!"), TEXT("Bitmap 2"), MB_ICONINFORMATION);
 			break;
+		case ID_CLOSE:
+			PostQuitMessage(0);
+			break;
 		}
+		
 		break;
 	case WM_CREATE:
 		
@@ -580,13 +586,36 @@ LRESULT CALLBACK TrataEventos(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPara
 			// Cleanup
 		}
 		if (GameEnd) {
+			TCHAR gameoverText[100];
+			TCHAR gameOverText2[100];
 			FillRect(memDC, &rect, CreateSolidBrush(RGB(0, 0, 0)));
 			RECT rcGameInfo;
 			rcGameInfo.left = 20;
-			rcGameInfo.top = 20;
+			rcGameInfo.top = 200;
 			rcGameInfo.right = rect.right - 20;
 			rcGameInfo.bottom = rcGameInfo.top + 40;
-			DrawText(memDC, TEXT("YOU LOST BUT YOU AREA WINNER"), -1, &rcGameInfo, DT_CENTER);
+			DrawText(memDC, TEXT("Time is over!"), -1, &rcGameInfo, DT_CENTER);
+
+			rcGameInfo.left = 20;
+			rcGameInfo.top = 220;
+			rcGameInfo.right = rect.right - 20;
+			rcGameInfo.bottom = rcGameInfo.top + 40;
+			wsprintf(gameoverText, TEXT("Your Score:%d"), AllGameData->frog_pos[AllGameData->identifier].score);
+			DrawText(memDC, gameoverText, -1, &rcGameInfo, DT_CENTER);
+			int buf = AllGameData->identifier;
+			if (buf == 0)
+				buf = 1;
+			else
+				buf = 0;
+			if (AllGameData->frog_pos[buf].score >= 0) {
+				wsprintf(gameOverText2, TEXT("Your Oponents Score:%d"), AllGameData->frog_pos[buf].score);
+				rcGameInfo.left = 20;
+				rcGameInfo.top = 240;
+				rcGameInfo.right = rect.right - 20;
+				rcGameInfo.bottom = rcGameInfo.top + 40;
+				DrawText(memDC, gameOverText2, -1, &rcGameInfo, DT_CENTER);
+
+			}
 		}else{
 		int contentWidth = MAX_COLS * 20; // Width of the content
 		int contentHeight = (AllGameData->numRoads + 4) * 20; // Height of the content
@@ -869,6 +898,7 @@ LRESULT CALLBACK TrataEventosInicial(HWND hWnd, UINT messg, WPARAM wParam, LPARA
 {
 	BOOL result;
 	TCHAR message[256];
+	TCHAR messageMulti[256];
 
 	switch (messg)
 	{
@@ -879,7 +909,7 @@ LRESULT CALLBACK TrataEventosInicial(HWND hWnd, UINT messg, WPARAM wParam, LPARA
 		{
 			case IDOK:
 			result = GetDlgItemText(hWnd, IDC_EDIT_USERNAME, username, 16);
-			wsprintf(message, TEXT("[S] Hi %s"), username);
+			wsprintf(message, TEXT("Hi %s"), username);
 			if (SendMessage(GetDlgItem(hWnd, IDC_RADIO_SINGLEPLAYER), BM_GETCHECK, 0, 0) == BST_CHECKED && result>0)
 			{
 				GameOption = 0;
@@ -887,8 +917,9 @@ LRESULT CALLBACK TrataEventosInicial(HWND hWnd, UINT messg, WPARAM wParam, LPARA
 			}
 			else if (SendMessage(GetDlgItem(hWnd, IDC_RADIO_MULTIPLAYER), BM_GETCHECK, 0, 0) == BST_CHECKED && result > 0)
 			{
+				wsprintf(messageMulti, TEXT("Hi %s"), username);
 				GameOption = 1;
-				MessageBox(hWnd, message, TEXT("Multiplayer"), MB_OK | MB_ICONINFORMATION);
+				MessageBox(hWnd, messageMulti, TEXT("Multiplayer, Please wait"), MB_OK | MB_ICONINFORMATION);
 			}
 			else
 			{

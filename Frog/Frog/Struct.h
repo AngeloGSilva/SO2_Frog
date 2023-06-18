@@ -11,7 +11,6 @@ typedef struct {
 //talvez trocar nome
 typedef struct {
 	char name[20];
-	//int time;
 	int score;
 	int level;
 	int col;

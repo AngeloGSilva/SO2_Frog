@@ -14,7 +14,6 @@
 #define IDB_BITMAP_SAPO_DOWN            112
 #define IDB_BITMAP_STARS                114
 #define IDB_BITMAP_LANDING              115
-#define IDB_BITMAP2                     116
 #define IDB_BITMAP_STARLIMIT            116
 #define IDC_EDIT_USERNAME               1001
 #define IDC_RADIO_MULTIPLAYER           1002
@@ -22,13 +21,14 @@
 #define ID_BITMAP_SET1                  40001
 #define ID_BITMAP_SET2                  40002
 #define ID_MENU_PRINCIPAL               40003
+#define ID_CLOSE                        40004
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        117
-#define _APS_NEXT_COMMAND_VALUE         40004
+#define _APS_NEXT_COMMAND_VALUE         40005
 #define _APS_NEXT_CONTROL_VALUE         1004
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
