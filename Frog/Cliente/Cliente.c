@@ -249,7 +249,6 @@ LRESULT CALLBACK TrataEventos(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPara
 
 	int x;
 	int y;
-	TCHAR* direction;
 
 
 
@@ -490,6 +489,8 @@ LRESULT CALLBACK TrataEventos(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPara
 		SetTextColor(memDC, RGB(255, 255, 255));
 		SetBkMode(memDC, TRANSPARENT);
 		DrawText(memDC, gameInfoText, -1, &rcGameInfo, DT_CENTER);
+		
+		SetPixel(memDC, FrogX + 10, FrogY + 10, RGB(255, 0, 0));
 		}
 
 		// Copy the content from the memory DC to the actual DC
@@ -511,105 +512,59 @@ LRESULT CALLBACK TrataEventos(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPara
 		
 		x = GET_X_LPARAM(lParam);
 		y = GET_Y_LPARAM(lParam);
-		//separar os clicks
-		int squareSize = 20;
 
-		if (x > FrogX + squareSize) {
-			if (y > FrogY + squareSize) {
-				currentFrogpos = POSDOWN;
-				sendInfo.pressInput = VK_DOWN;
-				sendInfo.x = -1;
-				sendInfo.y = -1;
-				WaitForSingleObject(hMutex, INFINITE);
-				WriteFile(hPipe, &sendInfo, sizeof(PipeFroggeInput), &n, NULL);
-				ReleaseMutex(hMutex);
-				SetEvent(hcommand);
-				ResetEvent(hcommand);
-			}
-			else if (y < FrogY - squareSize) {
-				currentFrogpos = POSUP;
-				sendInfo.pressInput = VK_UP;
-				sendInfo.x = -1;
-				sendInfo.y = -1;
-				WaitForSingleObject(hMutex, INFINITE);
-				WriteFile(hPipe, &sendInfo, sizeof(PipeFroggeInput), &n, NULL);
-				ReleaseMutex(hMutex);
-				SetEvent(hcommand);
-				ResetEvent(hcommand);
-			}
-			else {
+		//separar os clicks
+		int squareSize = 30;
+
+		int direction=0;
+
+		int dx = x - (FrogX + 10);
+		int dy = y - (FrogY + 10);
+
+		int absDx = abs(dx);
+		int absDy = abs(dy);
+
+		if (absDx > absDy) {
+			if (dx > 0 && dx <= squareSize && absDy <= squareSize) {
+				// Clicked to the right of the frog within the square
 				currentFrogpos = POSRIGHT;
 				sendInfo.pressInput = VK_RIGHT;
-				sendInfo.x = -1;
-				sendInfo.y = -1;
-				WaitForSingleObject(hMutex, INFINITE);
-				WriteFile(hPipe, &sendInfo, sizeof(PipeFroggeInput), &n, NULL);
-				ReleaseMutex(hMutex);
-				SetEvent(hcommand);
-				ResetEvent(hcommand);
 			}
-		}
-		else if (x < FrogX - squareSize) {
-			if (y > FrogY + squareSize) {
-				currentFrogpos = POSDOWN;
-				sendInfo.pressInput = VK_DOWN;
-				sendInfo.x = -1;
-				sendInfo.y = -1;
-				WaitForSingleObject(hMutex, INFINITE);
-				WriteFile(hPipe, &sendInfo, sizeof(PipeFroggeInput), &n, NULL);
-				ReleaseMutex(hMutex);
-				SetEvent(hcommand);
-				ResetEvent(hcommand);
-			}
-			else if (y < FrogY - squareSize) {
-				currentFrogpos = POSUP;
-				sendInfo.pressInput = VK_UP;
-				sendInfo.x = -1;
-				sendInfo.y = -1;
-				WaitForSingleObject(hMutex, INFINITE);
-				WriteFile(hPipe, &sendInfo, sizeof(PipeFroggeInput), &n, NULL);
-				ReleaseMutex(hMutex);
-				SetEvent(hcommand);
-				ResetEvent(hcommand);
-			}
-			else {
+			else if (dx < 0 && absDx <= squareSize && absDy <= squareSize) {
+				// Clicked to the left of the frog within the square
 				currentFrogpos = POSLEFT;
 				sendInfo.pressInput = VK_LEFT;
-				sendInfo.x = -1;
-				sendInfo.y = -1;
-				WaitForSingleObject(hMutex, INFINITE);
-				WriteFile(hPipe, &sendInfo, sizeof(PipeFroggeInput), &n, NULL);
-				ReleaseMutex(hMutex);
-				SetEvent(hcommand);
-				ResetEvent(hcommand);
+			}
+			else {
+				// Clicked outside the valid range
+				direction = 1;
 			}
 		}
 		else {
-			if (y > FrogY + squareSize) {
+			if (dy > 0 && dy <= squareSize && absDx <= squareSize) {
+				// Clicked below the frog within the square
 				currentFrogpos = POSDOWN;
 				sendInfo.pressInput = VK_DOWN;
-				sendInfo.x = -1;
-				sendInfo.y = -1;
-				WaitForSingleObject(hMutex, INFINITE);
-				WriteFile(hPipe, &sendInfo, sizeof(PipeFroggeInput), &n, NULL);
-				ReleaseMutex(hMutex);
-				SetEvent(hcommand);
-				ResetEvent(hcommand);
 			}
-			else if (y < FrogY - squareSize) {
+			else if (dy < 0 && absDy <= squareSize && absDx <= squareSize) {
+				// Clicked above the frog within the square
 				currentFrogpos = POSUP;
 				sendInfo.pressInput = VK_UP;
-				sendInfo.x = -1;
-				sendInfo.y = -1;
-				WaitForSingleObject(hMutex, INFINITE);
-				WriteFile(hPipe, &sendInfo, sizeof(PipeFroggeInput), &n, NULL);
-				ReleaseMutex(hMutex);
-				SetEvent(hcommand);
-				ResetEvent(hcommand);
 			}
 			else {
-				direction = "click on the frog";
+				// Clicked outside the valid range
+				direction = 1;
 			}
+		}
+
+		if (direction != 1) {
+			sendInfo.x = -1;
+			sendInfo.y = -1;
+			WaitForSingleObject(hMutex, INFINITE);
+			WriteFile(hPipe, &sendInfo, sizeof(PipeFroggeInput), &n, NULL);
+			ReleaseMutex(hMutex);
+			SetEvent(hcommand);
+			ResetEvent(hcommand);
 		}
 
 		
