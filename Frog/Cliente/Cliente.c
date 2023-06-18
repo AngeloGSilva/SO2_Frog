@@ -83,7 +83,6 @@ DWORD WINAPI mapPipe(LPVOID lpParam)
 	//receber o mapa e atualizar a variavel que possui o mapa
 
 	//invalidar a janela para o paint correr outra vez
-	Sleep(1);
 
 	return 0;
 }
@@ -382,18 +381,18 @@ LRESULT CALLBACK TrataEventos(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPara
 			GetObject(hfrogDown, sizeof(frogDown), &frogDown);
 
 			//ROAD BITMAPS
-			hroad = (HBITMAP)LoadImage(NULL, TEXT("bitmapsV2/stars.bmp"), IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE);;
+			hroad = LoadBitmap(GetModuleHandle(NULL), MAKEINTRESOURCE(IDB_BITMAP_STARS));
 
 			GetObject(hroad, sizeof(road), &road);
 
 			//LIMIT BITMAPS
-			hlimit = NULL;
+			hlimit = LoadBitmap(GetModuleHandle(NULL), MAKEINTRESOURCE(IDB_BITMAP_STARLIMIT));
 
 			GetObject(hlimit, sizeof(limit), &limit);
 
 			//BEGIN AND END AREA BITMAPS
 
-			hbeginend = NULL;
+			hbeginend = LoadBitmap(GetModuleHandle(NULL), MAKEINTRESOURCE(IDB_BITMAP_LANDING));
 
 			GetObject(hbeginend, sizeof(beginend), &beginend);
 
@@ -445,7 +444,8 @@ LRESULT CALLBACK TrataEventos(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPara
 		AllGameData = (PipeSendToClient*)malloc(sizeof(PipeSendToClient));
 		AllGameData->identifier = 0;
 		//_tcscpy_s(AllGameData->frog_pos[0].name, 20, TEXT('adsadsad'));
-		if (!WaitNamedPipe(PIPE_NAME, NMPWAIT_WAIT_FOREVER)) {
+		if (!WaitNamedPipe(PIPE_NAME, 10000)) {
+			PostQuitMessage(0); // Fecha se nao existir named pipe
 		}
 		hPipe = CreateFile(PIPE_NAME, GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
 		if (hPipe == NULL) {
@@ -624,7 +624,7 @@ LRESULT CALLBACK TrataEventos(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPara
 					if(currentFrogpos == POSUP)
 					{
 						//é a posição do ultimo frog, nao do atual, temos de guardar o Frox e FrogY do que tiver id igual
-						if(i == AllGameData->frog_pos->row && j==AllGameData->frog_pos->col)
+						if(i == AllGameData->frog_pos[AllGameData->identifier].row && j == AllGameData->frog_pos[AllGameData->identifier].col)
 						{
 							FrogX = posX;
 							FrogY = posY;
@@ -633,8 +633,7 @@ LRESULT CALLBACK TrataEventos(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPara
 					}
 					else if (currentFrogpos == POSLEFT)
 					{
-						if (i == AllGameData->frog_pos->row && j == AllGameData->frog_pos->col)
-						{
+						if (i == AllGameData->frog_pos[AllGameData->identifier].row && j == AllGameData->frog_pos[AllGameData->identifier].col) {
 							FrogX = posX;
 							FrogY = posY;
 						}
@@ -642,8 +641,7 @@ LRESULT CALLBACK TrataEventos(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPara
 					}
 					else if (currentFrogpos == POSRIGHT)
 					{
-						if (i == AllGameData->frog_pos->row && j == AllGameData->frog_pos->col)
-						{
+						if (i == AllGameData->frog_pos[AllGameData->identifier].row && j == AllGameData->frog_pos[AllGameData->identifier].col) {
 							FrogX = posX;
 							FrogY = posY;
 						}
@@ -651,8 +649,7 @@ LRESULT CALLBACK TrataEventos(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPara
 					}
 					else if (currentFrogpos == POSDOWN)
 					{
-						if (i == AllGameData->frog_pos->row && j == AllGameData->frog_pos->col)
-						{
+						if (i == AllGameData->frog_pos[AllGameData->identifier].row && j == AllGameData->frog_pos[AllGameData->identifier].col) {
 							FrogX = posX;
 							FrogY = posY;
 						}
@@ -676,7 +673,7 @@ LRESULT CALLBACK TrataEventos(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPara
 		char gameInfoText[200];
 		//Tem de ir buscar esta info ao AllGameInfo.
 		//_tcscpy_s(gameData.name, sizeof(TEXT("WORKING")), TEXT("WORKING"));
-		//wsprintf(gameInfoText, TEXT("Name: %s  Time: %d   Score: %d  Level: %d"), username,  AllGameData->frog_pos[AllGameData->identifier, AllGameData->frog_pos[AllGameData->identifier].score, AllGameData->frog_pos[AllGameData->identifier].level);
+		wsprintf(gameInfoText, TEXT("Name: %s  Time: %d   Score: %d  Level: %d"), username,  AllGameData->time, AllGameData->frog_pos[AllGameData->identifier].score, AllGameData->frog_pos[AllGameData->identifier].level);
 		SetTextColor(memDC, RGB(255, 255, 255));
 		SetBkMode(memDC, TRANSPARENT);
 		DrawText(memDC, gameInfoText, -1, &rcGameInfo, DT_CENTER);

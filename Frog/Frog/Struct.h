@@ -10,7 +10,7 @@ typedef struct {
 
 //talvez trocar nome
 typedef struct {
-	char name[100];
+	char name[20];
 	//int time;
 	int score;
 	int level;
@@ -44,7 +44,6 @@ typedef struct {
 }MutexHandles, * pMutexHandles;
 
 typedef struct {
-	int time;
 	int nivel;
 	int *terminar;
 	HANDLE Serv_HMutex, Serv_HEvent;
@@ -57,6 +56,7 @@ typedef struct {
 	TCHAR map[MAX_ROWS + 4][MAX_COLS];
 	int directions[MAX_ROWS];
 	int gamemode;
+	int time;
 }GameData, *pGameData;
 
 typedef struct {
@@ -96,10 +96,11 @@ typedef struct {
 	TCHAR* Map;
 	TRoads* RoadsDirection;
 	int numRoads;
-	HANDLE* threadsHandles;
+	HANDLE* threadsHandles, StartEndThreads, hThreadsINFO;
 	pBuffer BufferCircular;
 	HANDLE hSemEscrita, hSemLeitura, hMutex, hMutexInsertRoad;
 	int id;
+
 } TDados, *pTDados;
 
 //Estrutura para Desenhar Inicio e fim Thread
@@ -139,6 +140,7 @@ typedef struct {
 	int directions[MAX_ROWS];
 	FrogPos frog_pos[MAX_FROGS];
 	int identifier;
+	int time;
 }PipeSendToClient, *pPipeSendToClient;
 
 typedef struct {
@@ -162,6 +164,10 @@ typedef struct {
 	pTRoads structToGetDirection;
 	int* pGamemode;
 	int clienteIdentificador;
+	int* time;
+	pGameData gameToShare;
+	pGameData realGame;
+	int timeInactive;
 }TdadosPipeSendReceive, * pTdadosPipeSendReceive;
 
 
@@ -176,6 +182,7 @@ typedef struct {
 	int terminar;
 	pTRoads structToGetDirection;
 	int* pGamemode;
+	int* time;
 }TdadosPipeSend, * pTdadosPipeSend;
 
 //estrutura que é enviada do cliente para o server com o input

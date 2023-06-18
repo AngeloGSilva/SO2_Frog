@@ -81,9 +81,10 @@ DWORD WINAPI send(LPVOID lpParam)
 	TCHAR buf[256];
 	DWORD n;
 		
-	//dados->structToSend.frog_pos[0].time = dados->frogPos[0].time;
-	dados->structToSend.frog_pos[0].level = dados->frogPos[0].level;
-	dados->structToSend.frog_pos[0].score = dados->frogPos[0].score;
+	for (int i = 0; i < dados->numClientes; i++) {
+		dados->structToSend.frog_pos[i].level = dados->frogPos[i].level;
+		dados->structToSend.frog_pos[i].score = dados->frogPos[i].score;
+	}
 
 	while(1){
 		//WaitForSingleObject(dados->hMutex, INFINITE);
@@ -97,15 +98,17 @@ DWORD WINAPI send(LPVOID lpParam)
 			dados->structToSend.directions[i] = dados->structToGetDirection[i].direction;
 			//_tprintf(TEXT("[DEBUG] direcao [%d]... (WriteFile)\n"), dados->structToGetDirection[i].direction);
 		}
-		dados->structToSend.frog_pos->score = dados->frogPos->score;
-		dados->structToSend.frog_pos->level = dados->frogPos->level;
+		
 		//dados->structToSend.frog_pos->time = dados->frogPos->time;
 		//CopyMemory(dados->structToSend.map, dados->mapToShare, sizeof(dados->mapToShare));
 		for (int i = 0; i < dados->numClientes; i++) {
 			if (dados->hPipe[i].ready == TRUE) {
 				dados->structToSend.identifier = i;
-				dados->structToSend.frog_pos->col = dados->frogPos[i].col;
-				dados->structToSend.frog_pos->row = dados->frogPos[i].row;
+				dados->structToSend.frog_pos[i].score = dados->frogPos[i].score;
+				dados->structToSend.frog_pos[i].level = dados->frogPos[i].level;
+				dados->structToSend.frog_pos[i].col = dados->frogPos[i].col;
+				dados->structToSend.frog_pos[i].row = dados->frogPos[i].row;
+				dados->structToSend.time = *dados->time;
 				if (!WriteFile(dados->hPipe[i].hPipe, &dados->structToSend, sizeof(PipeSendToClient), &n, NULL)) {
 					_tprintf(TEXT("[ERRO] Escrever no pipe! (WriteFile)\n"));
 					exit(-1);
@@ -139,7 +142,7 @@ void HandleFroggeMovement(int frogge, PipeFroggeInput input, pFrogPos pos, TCHAR
 		{
 			if(pos[frogge].row == 1 || pos[frogge].row == numRoads + 2)
 				map[pos[frogge].row * MAX_COLS + pos[frogge].col] = BEGIN_END_ELEMENT;
-			else if (map[(pos[frogge].row - 1) * MAX_COLS + pos[frogge].col] == OBSTACLE_ELEMENT) {
+			else if (map[(pos[frogge].row - 1) * MAX_COLS + pos[frogge].col] == OBSTACLE_ELEMENT || map[(pos[frogge].row - 1) * MAX_COLS + pos[frogge].col] == FROGGE_ELEMENT) {
 				_tprintf(TEXT("[DEBUG] Ouch iobstacle\n"));
 				break;
 			}
@@ -162,7 +165,11 @@ void HandleFroggeMovement(int frogge, PipeFroggeInput input, pFrogPos pos, TCHAR
 		//passar as estradas para aqui
 		if (pos[frogge].row + 1 != numRoads + 3)
 		{
-			if (pos[frogge].row == 1 || pos[frogge].row == numRoads + 2)
+			if (map[(pos[frogge].row + 1) * MAX_COLS + pos[frogge].col] == FROGGE_ELEMENT) {
+				_tprintf(TEXT("[DEBUG] Ouch Frog!\n"));
+				break;
+			}
+		else if (pos[frogge].row == 1 || pos[frogge].row == numRoads + 2)
 				map[pos[frogge].row * MAX_COLS + pos[frogge].col] = BEGIN_END_ELEMENT;
 			else if (map[(pos[frogge].row + 1) * MAX_COLS + pos[frogge].col] == OBSTACLE_ELEMENT) {
 				_tprintf(TEXT("[DEBUG] Ouch iobstacle\n"));
@@ -183,7 +190,11 @@ void HandleFroggeMovement(int frogge, PipeFroggeInput input, pFrogPos pos, TCHAR
 	case KEY_LEFT:
 		if (pos[frogge].col - 1 != 0)
 		{
-			if (pos[frogge].row == 1 || pos[frogge].row == numRoads + 2)
+			if (map[pos[frogge].row * MAX_COLS + (pos[frogge].col - 1)] == FROGGE_ELEMENT) {
+				_tprintf(TEXT("[DEBUG] Ouch Frog!\n"));
+				break;
+			}
+			else if (pos[frogge].row == 1 || pos[frogge].row == numRoads + 2)
 				map[pos[frogge].row * MAX_COLS + pos[frogge].col] = BEGIN_END_ELEMENT;
 			else if (map[pos[frogge].row * MAX_COLS + (pos[frogge].col - 1)] == OBSTACLE_ELEMENT) {
 				_tprintf(TEXT("[DEBUG] Ouch iobstacle\n"));
@@ -205,6 +216,10 @@ void HandleFroggeMovement(int frogge, PipeFroggeInput input, pFrogPos pos, TCHAR
 		//esta merda ta foda e nao sei pq
 		if (pos[frogge].col + 1 != MAX_COLS - 1)
 		{
+			if (map[pos[frogge].row * MAX_COLS + (pos[frogge].col + 1)] == FROGGE_ELEMENT) {
+				_tprintf(TEXT("[DEBUG] Ouch Frog!\n"));
+				break;
+			}
 			if (pos[frogge].row == 1 || pos[frogge].row == numRoads + 2)
 				map[pos[frogge].row * MAX_COLS + pos[frogge].col] = BEGIN_END_ELEMENT;
 			else if (map[pos[frogge].row * MAX_COLS + (pos[frogge].col + 1)] == OBSTACLE_ELEMENT) {
@@ -237,7 +252,13 @@ void HandleFroggeMovement(int frogge, PipeFroggeInput input, pFrogPos pos, TCHAR
 	if (levelUp) {
 		_tprintf(TEXT("[DEBUG] PASSOU DE NIVEL\n"));
 		pos[frogge].score += 1;
-		pos[frogge].level += 1;
+		if (Gamemode == MULTIPLAYER) {
+			for (int i = 0; i < 2; i++) {
+				pos[i].level += 1;
+			}
+		}else
+			pos[frogge].level += 1;
+
 		_tprintf(TEXT("[DEBUG] Pontuacao passou a %d\n"), pos[frogge].score);
 
 		//int newSpeed = ((rand() % 8) + 1) * 1000;
@@ -298,19 +319,57 @@ DWORD WINAPI ThreadSapos(LPVOID lpParam)
 
 DWORD WINAPI ThreadGameTimer(LPVOID lpParam) {
 	pTdadosPipeSendReceive data = (pTdadosPipeSendReceive)lpParam;
-
-	/*while (data->frogPos[0].time > 0)
+	HANDLE timerevent = CreateEvent(NULL, TRUE, FALSE, TEXT("countdownevent"));
+	HANDLE gamedataevent= CreateEvent(NULL, TRUE, FALSE, GAMEDATA_EVENT);
+	while (*data->time > 0)
 	{
+		SharedMemoryMap(data->gameToShare, data->realGame);
 		Sleep(1000);
-		data->frogPos[0].time = data->frogPos[0].time - 1;
+		*data->time = *data->time - 1;
 		WaitForSingleObject(data->mtxHandles.mutexEventoEnviarMapaCliente, INFINITE);
 		SetEvent(data->evtHandles.hEventPipeWrite);
 		ResetEvent(data->evtHandles.hEventPipeWrite);
+		SetEvent(gamedataevent);
+		ResetEvent(gamedataevent);
+
 		ReleaseMutex(data->mtxHandles.mutexEventoEnviarMapaCliente);
-	}*/
+	}
 	_tprintf(TEXT("[INFO]TIME OVER!\n"));
-	SetEvent(data->evtHandles.hCountDownEvent);
-	ResetEvent(data->evtHandles.hCountDownEvent);
+	SetEvent(timerevent);
+	ResetEvent(timerevent);
+	return 1;
+}
+
+DWORD WINAPI ThreadInactivePlayer(LPVOID lpParam) {
+	pTdadosPipeSendReceive data = (pTdadosPipeSendReceive)lpParam;
+	HANDLE Active = CreateEvent(NULL, TRUE, FALSE, TEXT("Active"));
+	HANDLE hmutexInactive = CreateMutex(NULL, FALSE, TEXT("inactive"));
+
+	BOOL inactive = FALSE;
+	while (1)
+	{
+		for (int i = 0; i < 10; i++) {
+			Sleep(1000);
+			WaitForSingleObject(hmutexInactive,INFINITE);
+			data->timeInactive = data->timeInactive + 1;
+			ReleaseMutex(hmutexInactive);
+		}
+		if (data->timeInactive > 10) {
+			WaitForSingleObject(data->mtxHandles.mutexMapaChange, INFINITE);
+			WaitForSingleObject(data->mtxHandles.mutexFrogMovement, INFINITE);
+			if (data->frogPos[data->clienteIdentificador].row == data->structToGetDirection->numRoads + 2)
+				data->mapToShare[data->frogPos[data->clienteIdentificador].row * MAX_COLS + data->frogPos[data->clienteIdentificador].col] = BEGIN_END_ELEMENT;
+			else
+				data->mapToShare[data->frogPos[data->clienteIdentificador].row * MAX_COLS + data->frogPos[data->clienteIdentificador].col] = ROAD_ELEMENT;
+
+			data->frogPos[data->clienteIdentificador].row = data->structToGetDirection->numRoads + 2;
+			data->frogPos[data->clienteIdentificador].col = (rand() % (MAX_COLS - 2)) + 1;
+			ReleaseMutex(data->mtxHandles.mutexMapaChange);
+			ReleaseMutex(data->mtxHandles.mutexFrogMovement);
+			SetEvent(data->evtHandles.hEventFrogMovement);
+			ResetEvent(data->evtHandles.hEventFrogMovement);
+		}
+	}
 	return 1;
 }
 
@@ -322,35 +381,49 @@ DWORD WINAPI receive(LPVOID lpParam)
 	DWORD n;
 	PipeFroggeInput receiveInfo;
 	FrogInitialdata froginitialdata;
-
+	HANDLE clientGamemode = CreateEvent(NULL, TRUE, FALSE, TEXT("clientgamemode"));
+	HANDLE Active = CreateEvent(NULL, TRUE, FALSE, TEXT("Active"));
+	HANDLE hmutexInactive = CreateMutex(NULL, FALSE, TEXT("inactive"));
 	//Passar para a outra thread
 	WaitForSingleObject(dados->evtHandles.hEventFroggeMovement[dados->clienteIdentificador], INFINITE);
 	ReadFile(dados->hPipe.hPipe, &froginitialdata, sizeof(FrogInitialdata), &n, NULL);
 	_tprintf(TEXT("[receive] Recebi %d bytes... (ReadFile)\n"), n);
 	
 	*dados->pGamemode = froginitialdata.Gamemode;
-	HANDLE clientGamemode = CreateEvent(NULL, TRUE, FALSE, TEXT("clientgamemode"));
 	SetEvent(clientGamemode);
 	ResetEvent(clientGamemode);
 
 	_tprintf(TEXT("CONEXÂO POR %s com o modo de jogo %d\n"), froginitialdata.username,froginitialdata.Gamemode);
+
+	//altera o nivel e pontuação por alguma razão
+	//_tcscpy_s(dados->frogPos[dados->clienteIdentificador].name, sizeof(froginitialdata.username), froginitialdata.username);
 
 	if (*dados->pGamemode == MULTIPLAYER)
 	{	
 		while (*dados->numClientes < 2)
 		{
 			_tprintf(TEXT("Espera de outro jogador\n"));
-
 		}
 	}
-
-	HANDLE FroggeThread = CreateThread(
-		NULL,
-		0,
-		ThreadGameTimer,
-		dados,
-		0,
-		NULL);
+	//Thread do game timer
+	if (dados->clienteIdentificador == 0) {
+		HANDLE FroggeThread = CreateThread(
+			NULL,
+			0,
+			ThreadGameTimer,
+			dados,
+			0,
+			NULL);
+	}
+	//Thread de inatividade
+	
+		HANDLE FroggeThread = CreateThread(
+			NULL,
+			0,
+			ThreadInactivePlayer,
+			dados,
+			0,
+			NULL);
 	
 	while (1) {
 		WaitForSingleObject(dados->evtHandles.hEventFroggeMovement[dados->clienteIdentificador], INFINITE);
@@ -358,7 +431,9 @@ DWORD WINAPI receive(LPVOID lpParam)
 		WaitForSingleObject(dados->mtxHandles.mutexServerPipe, INFINITE);
 		ret = ReadFile(dados->hPipe.hPipe, &receiveInfo, sizeof(PipeFroggeInput), &n, NULL);
 		_tprintf(TEXT("[receive] Recebi %d bytes: '%d' do %d... (ReadFile)\n"), n, receiveInfo.pressInput, dados->clienteIdentificador);
-
+		WaitForSingleObject(hmutexInactive, INFINITE);
+		dados->timeInactive = 0;
+		ReleaseMutex(hmutexInactive);
 		ReleaseMutex(dados->mtxHandles.mutexServerPipe);
 		WaitForSingleObject(dados->mtxHandles.mutexMapaChange, INFINITE);
 		HandleFroggeMovement(dados->clienteIdentificador, receiveInfo, dados->frogPos,dados->mapToShare,dados->structToSend.numRoads,dados->structToGetDirection,*dados->pGamemode);
@@ -822,6 +897,9 @@ int _tmain(int argc, TCHAR* argv[]) {
 	evtHandles.hEventFrogMovement = CreateEvent(NULL, TRUE, FALSE, TEXT("eventoSapoMOVEMENT"));
 	mtxHandles.mutexFrogMovement = CreateMutex(NULL, FALSE, TEXT("mutexsaposmovimento"));
 
+	evtHandles.hCountDownEvent = CreateEvent(NULL, TRUE, FALSE, TEXT("eventoPipeRead"));
+
+
 	//Verificar handles criados
 
 	HANDLE tHCheckOpearators = CreateThread(
@@ -841,7 +919,7 @@ int _tmain(int argc, TCHAR* argv[]) {
 	data.nivel = 1;
 	data.numCars = 0;
 	data.num_frogs = 0;
-	data.time = 100;
+	data.time = 80;
 
 	//TODO
 
@@ -968,6 +1046,7 @@ int _tmain(int argc, TCHAR* argv[]) {
 	dadosPipeSend.pGamemode = &data.gamemode;
 	dadosPipeSend.frogPos = &data.frog_pos;
 	dadosPipeSend.structToGetDirection = &RoadsData;
+	dadosPipeSend.time = &data.time;
 
 	dadosPipeReceive1.evtHandles = evtHandles;
 	dadosPipeReceive1.mtxHandles = mtxHandles;
@@ -978,6 +1057,9 @@ int _tmain(int argc, TCHAR* argv[]) {
 	dadosPipeReceive1.pGamemode = &data.gamemode;
 	dadosPipeReceive1.frogPos = &data.frog_pos;
 	dadosPipeReceive1.structToGetDirection = &RoadsData;
+	dadosPipeReceive1.time = &data.time;
+	dadosPipeReceive1.gameToShare = pMemoriaPartilhada;
+	dadosPipeReceive1.realGame = &data;
 
 	dadosPipeReceive2.evtHandles = evtHandles;
 	dadosPipeReceive2.mtxHandles = mtxHandles;
@@ -987,7 +1069,10 @@ int _tmain(int argc, TCHAR* argv[]) {
 	dadosPipeReceive2.structToSend.numRoads = data.numRoads;
 	dadosPipeReceive2.pGamemode = &data.gamemode;
 	dadosPipeReceive2.frogPos = &data.frog_pos;
+	dadosPipeReceive2.time = &data.time;
 	dadosPipeReceive2.structToGetDirection = &RoadsData;
+	dadosPipeReceive2.gameToShare = pMemoriaPartilhada;
+	dadosPipeReceive2.realGame = &data;
 	mtxHandles.mutexPipe = CreateMutex(NULL, FALSE, NULL);
 
 	if (dadosPipeSend.mtxHandles.mutexPipe == NULL) {

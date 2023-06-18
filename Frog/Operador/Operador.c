@@ -33,10 +33,7 @@ typedef struct {
 
 DWORD WINAPI ThreadKeyHook(LPVOID lpParam)
 {
-	HWND hwnd = GetConsoleWindow();
-	SetFocus(hwnd);
-	//getAsyncState(VK_DOWN) & 0x8000
-		//setEvent();
+	
 	pTKeyBoardHook data = (pTKeyBoardHook)lpParam;
 	HANDLE eventKeyBoard = CreateEvent(NULL, TRUE, FALSE, KEYBOARD_EVENT);
 	while (1)
@@ -149,6 +146,8 @@ DWORD WINAPI ThreadBufferCircular(LPVOID lpParam)
 		for (int i = 0; i < dados->numRoads; i++) {
 			SuspendThread(TDataKeyHook.threadsHandlesOperator[i]);
 		}
+		SuspendThread(dados->StartEndThreads);
+		SuspendThread(dados->hThreadsINFO);
 		DWORD numWritten; // Number of characters actually written
 		cursorPos.X = 0;
 		cursorPos.Y = 20;
@@ -183,6 +182,8 @@ DWORD WINAPI ThreadBufferCircular(LPVOID lpParam)
 		for (int i = 0; i < dados->numRoads; i++) {
 			ResumeThread(TDataKeyHook.threadsHandlesOperator[i]);
 		}
+		ResumeThread(dados->StartEndThreads);
+		ResumeThread(dados->hThreadsINFO);
 	}
 	return 0;
 }
@@ -203,20 +204,25 @@ DWORD WINAPI ThreadGameInfo(LPVOID lpParam)
 		cursorPos.Y = 7;
 		SetConsoleCursorPosition(hConsole, cursorPos);
 		WriteConsole(hConsole, TEXT("JOGO FROGGER"), 15, &numWritten, NULL);
+		TCHAR buff[5];
+		wsprintf(buff, TEXT("Timer: %d"), dados->time);
+		WriteConsole(hConsole, buff, sizeof(buff), &numWritten, NULL);
+
 		cursorPos.Y = 8;
 		for (int i = 0; i < dados->num_frogs; i++)
 		{
-			TCHAR str[20];
+			cursorPos.Y = cursorPos.Y + i;
+			TCHAR str[40];
 			//wcscpy_s(arg1, wcslen(token) + 1, token);
-			wsprintf(str, TEXT("Pontuacao: %d"), dados->frog_pos[i].score);
+			wsprintf(str, TEXT("Pontuacao Player %d: %d"),i ,dados->frog_pos[i].score);
 			SetConsoleCursorPosition(hConsole, cursorPos);
 			WriteConsole(hConsole, str, 14, &numWritten, NULL);
 		}
 		
-		cursorPos.Y = 9;
+		cursorPos.Y = 10;
 		SetConsoleCursorPosition(hConsole, cursorPos);
 		WriteConsole(hConsole, TEXT("Comandos:"), 10, &numWritten, NULL);
-		cursorPos.Y = 10;
+		cursorPos.Y = 11;
 		SetConsoleCursorPosition(hConsole, cursorPos);
 		WriteConsole(hConsole, TEXT("stop [Tempo em Segundo]"), 24, &numWritten, NULL);
 		/*cursorPos.Y = 11;
@@ -289,20 +295,20 @@ int _tmain(int argc, TCHAR* argv[]) {
 		NULL);
 
 	//Threads de geração do inicio e fim
-	HANDLE StartEndThreads[1];
+	HANDLE StartEndThreads;
 
-	TStartEnd StartEndData[1];
+	TStartEnd StartEndData;
 
-	StartEndData[0].sharedMap = InitSharedMemoryMapThreadRoads();
-	StartEndData[0].hMutex = CreateMutex(NULL, FALSE, THREAD_ROADS_MUTEX);
-	StartEndData[0].numRoads = pBuf->numRoads;
-	StartEndData[0].Map = pBuf->map;
-	StartEndData[0].terminar = &terminar;
-	StartEndThreads[0] = CreateThread(
+	StartEndData.sharedMap = InitSharedMemoryMapThreadRoads();
+	StartEndData.hMutex = CreateMutex(NULL, FALSE, THREAD_ROADS_MUTEX);
+	StartEndData.numRoads = pBuf->numRoads;
+	StartEndData.Map = pBuf->map;
+	StartEndData.terminar = &terminar;
+	StartEndThreads = CreateThread(
 		NULL,
 		0,
 		ThreadBeginEnd,
-		&StartEndData[0],
+		&StartEndData,
 		0,
 		NULL);
 
@@ -317,38 +323,23 @@ int _tmain(int argc, TCHAR* argv[]) {
 	//criar Threads para lidar com os carros por estrada
 	for (int i = 0; i < pBuf->numRoads; i++)
 	{
-		////TODO Nao me lembro o porque de isto ser preciso
-		//HANDLE HMapFile = createMemoryMapping(sizeof(TCHAR) * (MAX_ROWS + SKIP_BEGINING_END) * MAX_COLS, FILE_MAPPING_THREAD_ROADS);
-		////_tprintf(TEXT("SO2_MAP_OLA") + (i + 2));
-		//if (HMapFile == NULL)
-		//{
-		//	_tprintf(TEXT("[ERRO] CreateFileMapping Thread da estrada %d\n"),i);
-		//	return 0;
-		//}
 
-		//RoadsData[i].sharedMap = (TCHAR*)MapViewOfFile(HMapFile, FILE_MAP_ALL_ACCESS, 0, 0, 0);
-		//if (RoadsData[i].sharedMap == NULL)
-		//{
-		//	_tprintf(TEXT("[ERRO] CreateFileMapping Thread da estrada %d\n"), i);
-		//	return 0;
-		//}
 		RoadsData[i].sharedMap = InitSharedMemoryMapThreadRoads();
 		RoadsData[i].numCars = pBuf->numCars;
 		evtHandles.hEventRoads[i] = CreateEvent(NULL, TRUE, FALSE, THREAD_ROADS_EVENT + i);
-		RoadsData[i].id = i + SKIP_BEGINING; //o numero do id é a estrada q elas estao encarregues
+		RoadsData[i].id = i + SKIP_BEGINING;
 		RoadsData[i].speed = 0;
 		RoadsData[i].terminar = &terminar;
 		RoadsData[i].mtxHandles = mtxHandles;
 		RoadsData[i].evtHandles = evtHandles;
-		//RoadsData[i].direction = 1;
 
 		RoadThreads[i] = CreateThread(
-			NULL,    // Thread attributes
-			0,       // Stack size (0 = use default)
-			ThreadRoads, // Thread start address
-			&RoadsData[i],    // Parameter to pass to the thread
-			0,       // Creation flags
-			NULL);   // Thread id   // returns the thread identifier 
+			NULL,
+			0,
+			ThreadRoads,
+			&RoadsData[i],
+			0,
+			NULL);
 		if (RoadThreads[i] == NULL)
 		{
 			_tprintf(TEXT("[ERRO] Thread da estrada %d\n"),i);
@@ -358,10 +349,8 @@ int _tmain(int argc, TCHAR* argv[]) {
 
 	TDados dataThread;
 
-	/*dataThread.hMutex = CreateMutex(NULL, FALSE, BUFFER_CIRCULAR_MUTEX_ESCRITOR);
-	dataThread.hSemEscrita = CreateSemaphore(NULL, 10, 10, BUFFER_CIRCULAR_SEMAPHORE_ESCRITOR);
-	dataThread.hSemLeitura = CreateSemaphore(NULL, 0, 10, BUFFER_CIRCULAR_SEMAPHORE_LEITORE);*/
-
+	dataThread.StartEndThreads = StartEndThreads;
+	dataThread.hThreadsINFO = hThreadsINFO;
 	dataThread.threadsHandles = &RoadThreads;
 	dataThread.numRoads = pBuf->numRoads;
 	dataThread.BufferCircular = InitSharedMemoryBufferCircular();
@@ -382,11 +371,11 @@ int _tmain(int argc, TCHAR* argv[]) {
 	}
 
 	HANDLE fCheckEnding = CreateThread(
-		NULL,    // Thread attributes
-		0,       // Stack size (0 = use default)
-		CheckEnding, // Thread start address
-		&terminar,    // Parameter to pass to the thread
-		0,       // Creation flags
+		NULL,
+		0,
+		CheckEnding,
+		&terminar,
+		0,
 		NULL);
 	if (fCheckEnding == NULL)
 	{
